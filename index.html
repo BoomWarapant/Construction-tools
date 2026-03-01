@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เครื่องมือสำหรับงานก่อสร้าง</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1rem;
+      color: #718096;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+    }
+
+    .icon-blue   { background: #ebf4ff; }
+    .icon-green  { background: #e6fffa; }
+    .icon-orange { background: #fffaf0; }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: #718096;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .btn {
+      margin-top: 24px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+
+    .btn-blue   { background: #3b82f6; color: #fff; }
+    .btn-green  { background: #10b981; color: #fff; }
+    .btn-orange { background: #f97316; color: #fff; }
+
+    footer {
+      margin-top: 64px;
+      font-size: 0.8rem;
+      color: #a0aec0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏗️ เครื่องมือสำหรับงานก่อสร้าง</h1>
+    <p>เลือกเครื่องมือที่ต้องการใช้งาน</p>
+  </header>
+
+  <div class="grid">
+
+    <a class="card" href="ARH114_Dashboard.html">
+      <div class="icon icon-blue">📊</div>
+      <h2>ARH114 Dashboard</h2>
+      <p>แดชบอร์ดสำหรับโครงการ ARH114 แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
+      <span class="btn btn-blue">เปิดใช้งาน →</span>
+    </a>
+
+    <a class="card" href="RoomTracker_Dashboard.html">
+      <div class="icon icon-green">🏠</div>
+      <h2>Room Tracker Dashboard</h2>
+      <p>ติดตามสถานะห้องและงานในแต่ละพื้นที่ของโครงการอย่างเป็นระบบ</p>
+      <span class="btn btn-green">เปิดใช้งาน →</span>
+    </a>
+
+    <a class="card" href="WorkingDays_Calculator.html">
+      <div class="icon icon-orange">📅</div>
+      <h2>Working Days Calculator</h2>
+      <p>คำนวณจำนวนวันทำงาน หักวันหยุดและวันฝนตก เพื่อวางแผนงานก่อสร้างได้แม่นยำ</p>
+      <span class="btn btn-orange">เปิดใช้งาน →</span>
+    </a>
+
+  </div>
+
+  <footer>สร้างด้วย Claude · Cowork Mode</footer>
+
+</body>
+</html>

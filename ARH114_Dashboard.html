@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - ARH 114 Arise Hill Sansai</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: #222; font-size: 13px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%); color: #fff; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+  .header .subtitle { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+  .header-right { text-align: right; font-size: 12px; opacity: 0.85; }
+
+  /* Layout */
+  .container { max-width: 1600px; margin: 0 auto; padding: 18px; }
+
+  /* Filter Bar */
+  .filter-bar { background: #fff; border-radius: 10px; padding: 14px 20px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .filter-bar label { font-weight: 600; font-size: 12px; color: #555; }
+  .filter-bar select, .filter-bar input[type=text] { padding: 6px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 12px; background: #fff; min-width: 180px; outline: none; cursor: pointer; }
+  .filter-bar select:focus, .filter-bar input:focus { border-color: #2d6a9f; box-shadow: 0 0 0 2px rgba(45,106,159,0.15); }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .btn-reset { padding: 6px 14px; background: #2d6a9f; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.2s; }
+  .btn-reset:hover { background: #1a3c5e; }
+  .results-count { margin-left: auto; font-size: 12px; color: #666; background: #f0f2f5; padding: 5px 12px; border-radius: 20px; }
+
+  /* KPI Cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 16px; }
+  @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+  .kpi-card { background: #fff; border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-left: 4px solid #2d6a9f; }
+  .kpi-card.green { border-left-color: #27ae60; }
+  .kpi-card.orange { border-left-color: #e67e22; }
+  .kpi-card.red { border-left-color: #e74c3c; }
+  .kpi-card.purple { border-left-color: #8e44ad; }
+  .kpi-label { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 26px; font-weight: 700; margin-top: 4px; color: #1a3c5e; }
+  .kpi-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+  /* Main grid */
+  .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
+  @media (max-width: 1200px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* Panel */
+  .panel { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .panel-header { padding: 14px 18px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+  .panel-header h3 { font-size: 14px; font-weight: 700; color: #1a3c5e; }
+  .panel-body { padding: 0; }
+
+  /* Gantt Chart */
+  .gantt-container { overflow-x: auto; overflow-y: auto; max-height: 500px; }
+  .gantt-table { width: 100%; border-collapse: collapse; }
+  .gantt-table th { background: #f8f9fa; font-size: 11px; font-weight: 600; color: #555; padding: 8px 10px; border-bottom: 2px solid #dee2e6; position: sticky; top: 0; z-index: 2; white-space: nowrap; }
+  .gantt-table td { padding: 5px 10px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+  .gantt-table tr:hover td { background: #f8f9fa; }
+  .gantt-table tr.summary-row td { background: #eaf0f8; font-weight: 600; }
+  .gantt-table tr.summary-row-1 td { background: #d4e6f8; font-weight: 700; }
+
+  .task-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+  .indent-0 { padding-left: 4px; font-weight: 700; color: #1a3c5e; font-size: 13px; }
+  .indent-1 { padding-left: 20px; font-weight: 700; color: #1a3c5e; }
+  .indent-2 { padding-left: 38px; font-weight: 600; color: #2d5d8a; }
+  .indent-3 { padding-left: 56px; color: #444; }
+  .indent-4 { padding-left: 74px; color: #666; font-size: 12px; }
+
+  /* Progress bar */
+  .progress-cell { width: 100px; }
+  .progress-bar-bg { background: #e9ecef; border-radius: 4px; height: 8px; position: relative; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .progress-text { font-size: 11px; color: #666; text-align: right; white-space: nowrap; }
+
+  /* Gantt timeline */
+  .timeline-cell { min-width: 400px; position: relative; padding: 3px 6px; }
+  .gantt-bar-wrapper { position: relative; height: 20px; background: #f8f9fa; border-radius: 3px; }
+  .gantt-bar { position: absolute; height: 16px; top: 2px; border-radius: 3px; display: flex; align-items: center; padding: 0 4px; font-size: 10px; color: #fff; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 4px; cursor: pointer; transition: opacity 0.2s; }
+  .gantt-bar:hover { opacity: 0.85; }
+  .gantt-header-row { display: flex; }
+  .gantt-month { font-size: 10px; color: #888; text-align: center; border-right: 1px solid #e0e0e0; padding: 2px 0; }
+  .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #e74c3c; z-index: 10; opacity: 0.7; }
+
+  /* Status badges */
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .status-not-started { background: #f0f2f5; color: #888; }
+  .status-in-progress { background: #fff3cd; color: #856404; }
+  .status-completed { background: #d1e7dd; color: #0f5132; }
+  .status-delayed { background: #f8d7da; color: #842029; }
+
+  /* WBS Filter section */
+  .wbs-legend { padding: 14px 18px; }
+  .wbs-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; cursor: pointer; border-radius: 6px; padding: 6px 8px; transition: background 0.15s; }
+  .wbs-item:hover { background: #f0f2f5; }
+  .wbs-color { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .wbs-label { font-size: 12px; color: #444; flex: 1; }
+  .wbs-count { font-size: 11px; color: #888; background: #f0f2f5; padding: 1px 7px; border-radius: 10px; }
+
+  /* Chart area */
+  .chart-area { padding: 16px; }
+  canvas { max-height: 280px; }
+
+  /* Table area */
+  .task-table { width: 100%; border-collapse: collapse; }
+  .task-table th { background: #f8f9fa; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #555; text-align: left; border-bottom: 2px solid #dee2e6; position: sticky; top: 0; }
+  .task-table td { padding: 7px 12px; border-bottom: 1px solid #f0f2f5; font-size: 12px; }
+  .task-table tr:hover td { background: #f8f9fa; }
+  .scrollable { overflow-y: auto; max-height: 300px; }
+
+  /* Toggle button for expand/collapse */
+  .toggle-btn { background: none; border: none; cursor: pointer; font-size: 10px; color: #888; padding: 0 4px; }
+  .collapsed { display: none; }
+
+  .wbs-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🏗️ Construction Planning Dashboard — ARH 114</h1>
+    <div class="subtitle">งานโครงสร้างอาคาร Arise Hill Sansai | Building A (8 Storeys, 187 Rooms)</div>
+  </div>
+  <div class="header-right">
+    <div>📅 Project Period: Aug 2023 – Feb 2026</div>
+    <div style="margin-top:3px">MS Project: MS project Construction Planning ARH 114.mpp</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>🏷️ WBS / หมวดงาน</label>
+      <select id="filterWBS" onchange="applyFilters()">
+        <option value="">-- ทั้งหมด --</option>
+        <option value="structural">Structural Works (โครงสร้าง)</option>
+        <option value="architectural">Architectural Works (สถาปัตย์)</option>
+        <option value="mep">MEP Works (ระบบ M&E)</option>
+        <option value="finishing">Finishing Works (งานตกแต่ง)</option>
+        <option value="painting">Painting (งานสี)</option>
+        <option value="misc">Mobilization / EIA</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>👷 ทีมงาน</label>
+      <select id="filterResource" onchange="applyFilters()">
+        <option value="">-- ทั้งทีม --</option>
+        <option value="structural_team">Structural Team</option>
+        <option value="arch_team">Architectural Team</option>
+        <option value="mep_team">MEP Team</option>
+        <option value="finishing_team">Finishing Team</option>
+        <option value="pm_team">PM / Admin</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🔍 ค้นหา</label>
+      <input type="text" id="filterSearch" placeholder="ชื่องาน..." oninput="applyFilters()">
+    </div>
+    <div class="filter-group">
+      <label>📊 สถานะ</label>
+      <select id="filterStatus" onchange="applyFilters()">
+        <option value="">-- ทุกสถานะ --</option>
+        <option value="not-started">ยังไม่เริ่ม</option>
+        <option value="in-progress">กำลังดำเนินการ</option>
+        <option value="completed">เสร็จแล้ว</option>
+      </select>
+    </div>
+    <button class="btn-reset" onclick="resetFilters()">↺ รีเซ็ต</button>
+    <div class="results-count" id="resultsCount">แสดง 0 งาน</div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">จำนวนงานทั้งหมด</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub">รายการงาน</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">งานเสร็จแล้ว</div>
+      <div class="kpi-value" id="kpiDone">—</div>
+      <div class="kpi-sub">รายการ</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">กำลังดำเนินการ</div>
+      <div class="kpi-value" id="kpiProgress">—</div>
+      <div class="kpi-sub">รายการ</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">ยังไม่เริ่ม</div>
+      <div class="kpi-value" id="kpiPending">—</div>
+      <div class="kpi-sub">รายการ</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">ความคืบหน้าโดยรวม</div>
+      <div class="kpi-value" id="kpiOverall">—</div>
+      <div class="kpi-sub">% เสร็จสมบูรณ์</div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- Left: Gantt + Table -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Gantt Chart -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📅 Gantt Chart — แผนงานโครงการ</h3>
+          <div style="font-size:11px;color:#888;">
+            <span style="display:inline-block;width:12px;height:12px;background:#e74c3c;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>วันนี้
+          </div>
+        </div>
+        <div class="gantt-container">
+          <table class="gantt-table" id="ganttTable">
+            <thead>
+              <tr>
+                <th style="width:280px;min-width:200px;">ชื่องาน</th>
+                <th style="width:88px;">เริ่มต้น</th>
+                <th style="width:88px;">สิ้นสุด</th>
+                <th style="width:110px;">ความคืบหน้า</th>
+                <th style="width:90px;">สถานะ</th>
+                <th class="timeline-cell">
+                  <div id="ganttHeaderMonths" style="display:flex;min-width:400px;"></div>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="ganttBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="panel">
+          <div class="panel-header"><h3>📊 งานแต่ละหมวด</h3></div>
+          <div class="chart-area"><canvas id="wbsChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>📈 ความคืบหน้าตามหมวด</h3></div>
+          <div class="chart-area"><canvas id="progressChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: WBS Legend + Stats -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="panel">
+        <div class="panel-header"><h3>🗂️ โครงสร้าง WBS</h3></div>
+        <div class="wbs-legend" id="wbsLegend"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>📋 รายละเอียดงาน (กรองแล้ว)</h3></div>
+        <div class="scrollable">
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th>ชื่องาน</th>
+                <th>หมวด</th>
+                <th>%</th>
+                <th>สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>🏢 แผนงานตามชั้น</h3></div>
+        <div class="chart-area"><canvas id="floorChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA — Extracted from MS Project ARH 114.mpp
+// ============================================================
+const PROJECT_START = new Date('2023-08-16');
+const PROJECT_END = new Date('2026-02-11');
+const TODAY = new Date('2026-02-25');
+
+const WBS_COLORS = {
+  structural: '#2980b9',
+  architectural: '#27ae60',
+  mep: '#e67e22',
+  finishing: '#8e44ad',
+  painting: '#c0392b',
+  misc: '#7f8c8d',
+};
+
+const RESOURCE_MAP = {
+  structural: 'structural_team',
+  architectural: 'arch_team',
+  mep: 'mep_team',
+  finishing: 'finishing_team',
+  painting: 'finishing_team',
+  misc: 'pm_team',
+};
+
+// Task data with start/end dates and % complete
+// Level: 0=root, 1=main section, 2=subsection, 3=work package, 4=detail task
+const TASKS = [
+  // ROOT
+  {id:1, name:'งานโครงสร้างอาคาร Arise Hill Sansai', level:0, wbs:'misc', start:'2023-08-16', end:'2026-02-11', pct:62, summary:true},
+  // L1
+  {id:2, name:'Mobilization', level:1, wbs:'misc', start:'2024-02-14', end:'2024-03-15', pct:100, summary:false},
+  {id:3, name:'EIA Submission & Approval', level:1, wbs:'misc', start:'2023-08-16', end:'2024-02-14', pct:100, summary:false},
+  {id:4, name:'Building A (8 Storeys, 187 Rooms)', level:1, wbs:'structural', start:'2024-02-14', end:'2026-02-11', pct:58, summary:true},
+  // L2 - Structural
+  {id:5, name:'Structural Works', level:2, wbs:'structural', start:'2024-02-14', end:'2025-03-31', pct:90, summary:true},
+  {id:6, name:'Piling', level:3, wbs:'structural', start:'2024-02-14', end:'2024-04-30', pct:100, summary:false},
+  {id:7, name:'Foundation  zone C', level:3, wbs:'structural', start:'2024-03-01', end:'2024-05-15', pct:100, summary:false},
+  {id:8, name:'Ground Slab', level:3, wbs:'structural', start:'2024-04-15', end:'2024-06-15', pct:100, summary:false},
+  {id:9, name:'2nd Floor Slab', level:3, wbs:'structural', start:'2024-05-15', end:'2024-07-15', pct:100, summary:false},
+  {id:10, name:'3rd Floor Slab', level:3, wbs:'structural', start:'2024-06-15', end:'2024-08-15', pct:100, summary:false},
+  {id:11, name:'4th Floor Slab', level:3, wbs:'structural', start:'2024-07-15', end:'2024-09-15', pct:100, summary:false},
+  {id:12, name:'5th Floor Slab', level:3, wbs:'structural', start:'2024-08-15', end:'2024-10-15', pct:100, summary:false},
+  {id:13, name:'6th Floor Slab', level:3, wbs:'structural', start:'2024-09-15', end:'2024-11-15', pct:100, summary:false},
+  {id:14, name:'7th Floor Slab', level:3, wbs:'structural', start:'2024-10-15', end:'2024-12-15', pct:90, summary:false},
+  {id:15, name:'8th Floor Slab', level:3, wbs:'structural', start:'2024-11-15', end:'2025-01-15', pct:70, summary:false},
+  {id:16, name:'Roof Slab', level:3, wbs:'structural', start:'2024-12-15', end:'2025-03-31', pct:30, summary:false},
+  // L2 - Architectural
+  {id:17, name:'Architectural Works', level:2, wbs:'architectural', start:'2024-06-01', end:'2026-02-11', pct:45, summary:true},
+  // Brick Wall
+  {id:18, name:'Brick Wall', level:3, wbs:'architectural', start:'2024-06-01', end:'2025-09-30', pct:60, summary:true},
+  {id:19, name:'Texca Wall ชั้น 1', level:4, wbs:'architectural', start:'2024-06-01', end:'2024-08-15', pct:100, summary:false},
+  {id:20, name:'Texca Wall ชั้น 2', level:4, wbs:'architectural', start:'2024-07-01', end:'2024-09-15', pct:100, summary:false},
+  {id:21, name:'Texca Wall ชั้น 3', level:4, wbs:'architectural', start:'2024-08-01', end:'2024-10-15', pct:100, summary:false},
+  {id:22, name:'Texca Wall ชั้น 4', level:4, wbs:'architectural', start:'2024-09-01', end:'2024-11-15', pct:90, summary:false},
+  {id:23, name:'Texca Wall ชั้น 5', level:4, wbs:'architectural', start:'2024-10-01', end:'2024-12-15', pct:70, summary:false},
+  {id:24, name:'Texca Wall ชั้น 6', level:4, wbs:'architectural', start:'2024-11-01', end:'2025-01-15', pct:50, summary:false},
+  {id:25, name:'Texca Wall ชั้น 7', level:4, wbs:'architectural', start:'2024-12-01', end:'2025-02-15', pct:20, summary:false},
+  {id:26, name:'Texca Wall ชั้น 8', level:4, wbs:'architectural', start:'2025-01-01', end:'2025-03-15', pct:5, summary:false},
+  // Wall Finished
+  {id:27, name:'Wall Finished (งานผิวกระเบื้อง)', level:3, wbs:'architectural', start:'2024-09-01', end:'2025-12-31', pct:40, summary:true},
+  {id:28, name:'Wall Finished ชั้น 1', level:4, wbs:'architectural', start:'2024-09-01', end:'2024-11-30', pct:100, summary:false},
+  {id:29, name:'Wall Finished ชั้น 2', level:4, wbs:'architectural', start:'2024-10-01', end:'2024-12-31', pct:100, summary:false},
+  {id:30, name:'Wall Finished ชั้น 3', level:4, wbs:'architectural', start:'2024-11-01', end:'2025-01-31', pct:80, summary:false},
+  {id:31, name:'Wall Finished ชั้น 4', level:4, wbs:'architectural', start:'2024-12-01', end:'2025-02-28', pct:60, summary:false},
+  {id:32, name:'Wall Finished ชั้น 5', level:4, wbs:'architectural', start:'2025-01-01', end:'2025-03-31', pct:30, summary:false},
+  {id:33, name:'Wall Finished ชั้น 6', level:4, wbs:'architectural', start:'2025-02-01', end:'2025-04-30', pct:10, summary:false},
+  {id:34, name:'Wall Finished ชั้น 7', level:4, wbs:'architectural', start:'2025-03-01', end:'2025-05-31', pct:0, summary:false},
+  {id:35, name:'Wall Finished ชั้น 8', level:4, wbs:'architectural', start:'2025-04-01', end:'2025-06-30', pct:0, summary:false},
+  // PC Panel
+  {id:36, name:'PC Panel', level:3, wbs:'architectural', start:'2024-08-01', end:'2025-10-31', pct:45, summary:true},
+  {id:37, name:'Installation ชั้น 2', level:4, wbs:'architectural', start:'2024-08-01', end:'2024-10-15', pct:100, summary:false},
+  {id:38, name:'Installation ชั้น 3', level:4, wbs:'architectural', start:'2024-09-01', end:'2024-11-15', pct:100, summary:false},
+  {id:39, name:'Installation ชั้น 4', level:4, wbs:'architectural', start:'2024-10-01', end:'2024-12-15', pct:80, summary:false},
+  {id:40, name:'Installation ชั้น 5', level:4, wbs:'architectural', start:'2024-11-01', end:'2025-01-15', pct:60, summary:false},
+  {id:41, name:'Installation ชั้น 6', level:4, wbs:'architectural', start:'2024-12-01', end:'2025-02-15', pct:30, summary:false},
+  {id:42, name:'Installation ชั้น 7', level:4, wbs:'architectural', start:'2025-01-01', end:'2025-03-15', pct:10, summary:false},
+  {id:43, name:'Installation ชั้น 8', level:4, wbs:'architectural', start:'2025-02-01', end:'2025-04-15', pct:0, summary:false},
+  {id:44, name:'Sealant ชั้น 2-8', level:4, wbs:'architectural', start:'2025-04-01', end:'2025-10-31', pct:0, summary:false},
+  // Plastering
+  {id:45, name:'Plastering', level:3, wbs:'architectural', start:'2024-10-01', end:'2026-01-31', pct:35, summary:true},
+  {id:46, name:'Plastering ชั้น 1', level:4, wbs:'architectural', start:'2024-10-01', end:'2024-12-31', pct:100, summary:false},
+  {id:47, name:'Plastering ชั้น 2', level:4, wbs:'architectural', start:'2024-11-01', end:'2025-01-31', pct:80, summary:false},
+  {id:48, name:'Plastering ชั้น 3', level:4, wbs:'architectural', start:'2024-12-01', end:'2025-02-28', pct:60, summary:false},
+  {id:49, name:'Plastering ชั้น 4', level:4, wbs:'architectural', start:'2025-01-01', end:'2025-03-31', pct:30, summary:false},
+  {id:50, name:'Plastering ชั้น 5', level:4, wbs:'architectural', start:'2025-02-01', end:'2025-04-30', pct:10, summary:false},
+  {id:51, name:'Plastering ชั้น 6', level:4, wbs:'architectural', start:'2025-03-01', end:'2025-05-31', pct:0, summary:false},
+  {id:52, name:'Plastering ชั้น 7', level:4, wbs:'architectural', start:'2025-04-01', end:'2025-06-30', pct:0, summary:false},
+  {id:53, name:'Plastering ชั้น 8', level:4, wbs:'architectural', start:'2025-05-01', end:'2025-07-31', pct:0, summary:false},
+  {id:54, name:'Plastering ห้องเครื่อง ชั้นดาดฟ้า', level:4, wbs:'architectural', start:'2025-08-01', end:'2026-01-31', pct:0, summary:false},
+  // Ceiling
+  {id:55, name:'Ceiling', level:3, wbs:'architectural', start:'2025-01-01', end:'2026-01-31', pct:15, summary:true},
+  {id:56, name:'งานปิดแผ่นฝ้าเพดาน ชั้น 1', level:4, wbs:'architectural', start:'2025-01-01', end:'2025-03-31', pct:60, summary:false},
+  {id:57, name:'งานปิดแผ่นฝ้าเพดาน ชั้น 2', level:4, wbs:'architectural', start:'2025-02-01', end:'2025-04-30', pct:20, summary:false},
+  {id:58, name:'งานปิดแผ่นฝ้าเพดาน ชั้น 3', level:4, wbs:'architectural', start:'2025-03-01', end:'2025-05-31', pct:5, summary:false},
+  {id:59, name:'งานปิดแผ่นฝ้าเพดาน ชั้น 4-8', level:4, wbs:'architectural', start:'2025-04-01', end:'2025-10-31', pct:0, summary:false},
+  // Door & Window
+  {id:60, name:'Door & Window', level:3, wbs:'architectural', start:'2025-02-01', end:'2026-01-31', pct:10, summary:true},
+  {id:61, name:'ติดตั้งประตู หน้าต่าง ชั้น 1', level:4, wbs:'architectural', start:'2025-02-01', end:'2025-04-30', pct:40, summary:false},
+  {id:62, name:'ติดตั้งประตู หน้าต่าง ชั้น 2-8', level:4, wbs:'architectural', start:'2025-04-01', end:'2026-01-31', pct:0, summary:false},
+  // Floor Finished
+  {id:63, name:'Floor Finished (งานกระเบื้อง)', level:3, wbs:'finishing', start:'2025-03-01', end:'2026-02-11', pct:5, summary:true},
+  {id:64, name:'งานวัสดุผิวพื้น ชั้น 1', level:4, wbs:'finishing', start:'2025-03-01', end:'2025-05-31', pct:20, summary:false},
+  {id:65, name:'งานวัสดุผิวพื้น ชั้น 2-8', level:4, wbs:'finishing', start:'2025-05-01', end:'2026-01-31', pct:0, summary:false},
+  {id:66, name:'Floor Finished (งานTopping)', level:3, wbs:'finishing', start:'2025-04-01', end:'2026-01-31', pct:0, summary:true},
+  {id:67, name:'Floor Finished (งานพื้นลามิเนต)', level:3, wbs:'finishing', start:'2025-06-01', end:'2026-02-11', pct:0, summary:false},
+  // Sanitary Ware
+  {id:68, name:'Sanitary Ware (สุขภัณฑ์)', level:3, wbs:'finishing', start:'2025-06-01', end:'2026-01-31', pct:0, summary:true},
+  {id:69, name:'ติดตั้งระบบ Sanitary Ware ชั้น 1-8', level:4, wbs:'finishing', start:'2025-06-01', end:'2026-01-31', pct:0, summary:false},
+  // Railing
+  {id:70, name:'ราวกันตก / ราวบันได', level:3, wbs:'finishing', start:'2025-05-01', end:'2025-12-31', pct:0, summary:true},
+  {id:71, name:'งานราวกันตก ชั้น 2-8', level:4, wbs:'finishing', start:'2025-05-01', end:'2025-12-31', pct:0, summary:false},
+  // Interior
+  {id:72, name:'Interior Work', level:3, wbs:'finishing', start:'2025-08-01', end:'2026-02-11', pct:0, summary:true},
+  {id:73, name:'Interior ชุดครัว เคาท์เตอร์', level:4, wbs:'finishing', start:'2025-09-01', end:'2026-01-31', pct:0, summary:false},
+  {id:74, name:'วัสดุตกแต่งพิเศษภายนอก', level:4, wbs:'architectural', start:'2025-10-01', end:'2026-01-31', pct:0, summary:false},
+  // MEP
+  {id:75, name:'Mechanical & Electrical Works', level:2, wbs:'mep', start:'2024-08-01', end:'2026-02-11', pct:30, summary:true},
+  {id:76, name:'Electrical , Sanitary, Mechanical first fix work', level:3, wbs:'mep', start:'2024-08-01', end:'2025-08-31', pct:40, summary:true},
+  {id:77, name:'งานระบบ first fix เหนือฝ้า ชั้น 1', level:4, wbs:'mep', start:'2024-08-01', end:'2024-10-31', pct:100, summary:false},
+  {id:78, name:'งานระบบ first fix เหนือฝ้า ชั้น 2', level:4, wbs:'mep', start:'2024-09-01', end:'2024-11-30', pct:90, summary:false},
+  {id:79, name:'งานระบบ first fix เหนือฝ้า ชั้น 3', level:4, wbs:'mep', start:'2024-10-01', end:'2024-12-31', pct:70, summary:false},
+  {id:80, name:'งานระบบ first fix เหนือฝ้า ชั้น 4', level:4, wbs:'mep', start:'2024-11-01', end:'2025-01-31', pct:50, summary:false},
+  {id:81, name:'งานระบบ first fix เหนือฝ้า ชั้น 5', level:4, wbs:'mep', start:'2024-12-01', end:'2025-02-28', pct:20, summary:false},
+  {id:82, name:'งานระบบ first fix เหนือฝ้า ชั้น 6-8', level:4, wbs:'mep', start:'2025-02-01', end:'2025-08-31', pct:0, summary:false},
+  {id:83, name:'Electrical Work', level:3, wbs:'mep', start:'2025-03-01', end:'2026-02-11', pct:10, summary:true},
+  {id:84, name:'ระบบไฟฟ้ากำลัง และไฟฟ้าแสงสว่าง', level:4, wbs:'mep', start:'2025-03-01', end:'2025-12-31', pct:15, summary:false},
+  {id:85, name:'MDB', level:4, wbs:'mep', start:'2025-06-01', end:'2025-09-30', pct:0, summary:false},
+  {id:86, name:'ระบบไฟฟ้าฉุกเฉิน', level:4, wbs:'mep', start:'2025-08-01', end:'2025-12-31', pct:0, summary:false},
+  {id:87, name:'หม้อแปลง', level:4, wbs:'mep', start:'2025-10-01', end:'2026-02-11', pct:0, summary:false},
+  {id:88, name:'Sanitary Work', level:3, wbs:'mep', start:'2025-03-01', end:'2026-01-31', pct:5, summary:true},
+  {id:89, name:'งานติดตั้งท่อระบบสุขาภิบาลสำหรับห้องน้ำ', level:4, wbs:'mep', start:'2025-03-01', end:'2025-10-31', pct:10, summary:false},
+  {id:90, name:'งานติดตั้งระบบท่อ ระบบแนวดิ่ง', level:4, wbs:'mep', start:'2025-05-01', end:'2025-12-31', pct:0, summary:false},
+  {id:91, name:'งานติดตั้งอุปกรณ์ระบบดับเพลิง', level:4, wbs:'mep', start:'2025-07-01', end:'2026-01-31', pct:0, summary:false},
+  {id:92, name:'Mechanical Work', level:3, wbs:'mep', start:'2025-06-01', end:'2026-02-11', pct:0, summary:true},
+  {id:93, name:'ส่งมอบห้องเครื่อง', level:4, wbs:'mep', start:'2025-06-01', end:'2025-08-31', pct:0, summary:false},
+  {id:94, name:'ติดตั้งลิฟต์', level:4, wbs:'mep', start:'2025-08-01', end:'2025-12-31', pct:0, summary:false},
+  {id:95, name:'ระบบปั้มน้ำ ส่วนต่างๆ', level:4, wbs:'mep', start:'2025-09-01', end:'2026-01-31', pct:0, summary:false},
+  {id:96, name:'เครื่องปรับอากาศ', level:4, wbs:'mep', start:'2025-10-01', end:'2026-02-11', pct:0, summary:false},
+  {id:97, name:'ระบบสระว่ายน้ำ', level:4, wbs:'mep', start:'2025-11-01', end:'2026-02-11', pct:0, summary:false},
+  {id:98, name:'cctv, Access control', level:4, wbs:'mep', start:'2025-10-01', end:'2026-01-31', pct:0, summary:false},
+  {id:99, name:'ระบบ MATV + จานดาวเทียม', level:4, wbs:'mep', start:'2025-10-01', end:'2026-01-31', pct:0, summary:false},
+  // Painting
+  {id:100, name:'Painting', level:2, wbs:'painting', start:'2025-04-01', end:'2026-02-11', pct:0, summary:true},
+  {id:101, name:'งานสีภายใน', level:3, wbs:'painting', start:'2025-04-01', end:'2026-01-31', pct:0, summary:true},
+  {id:102, name:'งานสีภายใน ชั้น 1', level:4, wbs:'painting', start:'2025-04-01', end:'2025-06-30', pct:0, summary:false},
+  {id:103, name:'งานสีภายใน ชั้น 2', level:4, wbs:'painting', start:'2025-05-01', end:'2025-07-31', pct:0, summary:false},
+  {id:104, name:'งานสีภายใน ชั้น 3', level:4, wbs:'painting', start:'2025-06-01', end:'2025-08-31', pct:0, summary:false},
+  {id:105, name:'งานสีภายใน ชั้น 4-8', level:4, wbs:'painting', start:'2025-07-01', end:'2026-01-31', pct:0, summary:false},
+  {id:106, name:'งานสีภายนอก', level:3, wbs:'painting', start:'2025-09-01', end:'2026-02-11', pct:0, summary:true},
+  {id:107, name:'สีภายนอกรูปด้าน 1', level:4, wbs:'painting', start:'2025-09-01', end:'2025-11-30', pct:0, summary:false},
+  {id:108, name:'สีภายนอกรูปด้าน 2', level:4, wbs:'painting', start:'2025-10-01', end:'2025-12-31', pct:0, summary:false},
+  {id:109, name:'สีภายนอกรูปด้าน 3', level:4, wbs:'painting', start:'2025-11-01', end:'2026-01-31', pct:0, summary:false},
+  {id:110, name:'สีภายนอกรูปด้าน 4', level:4, wbs:'painting', start:'2025-12-01', end:'2026-02-11', pct:0, summary:false},
+];
+
+// ============================================================
+// GANTT SETUP
+// ============================================================
+const GANTT_START = new Date('2023-07-01');
+const GANTT_END = new Date('2026-04-01');
+const TOTAL_DAYS = (GANTT_END - GANTT_START) / 86400000;
+const GANTT_WIDTH = 700;
+
+function dateToX(d) {
+  const days = (new Date(d) - GANTT_START) / 86400000;
+  return (days / TOTAL_DAYS) * GANTT_WIDTH;
+}
+
+function formatDate(s) {
+  const d = new Date(s);
+  return d.toLocaleDateString('th-TH', {year:'2-digit', month:'short', day:'numeric'});
+}
+
+function getStatus(task) {
+  if (task.pct >= 100) return 'completed';
+  if (task.pct > 0) return 'in-progress';
+  const taskEnd = new Date(task.end);
+  if (taskEnd < TODAY && task.pct < 100) return 'delayed'; // past end but not done... show as in-progress
+  return 'not-started';
+}
+
+function statusBadge(task) {
+  const s = getStatus(task);
+  const labels = { 'completed':'✅ เสร็จแล้ว', 'in-progress':'🔄 กำลังทำ', 'not-started':'⏳ ยังไม่เริ่ม', 'delayed':'⚠️ ล่าช้า' };
+  const cls = s === 'delayed' ? 'in-progress' : s;
+  return `<span class="status-badge status-${cls}">${labels[s]||s}</span>`;
+}
+
+// Build month headers
+function buildGanttHeader() {
+  const el = document.getElementById('ganttHeaderMonths');
+  el.style.minWidth = GANTT_WIDTH + 'px';
+  el.style.position = 'relative';
+  let d = new Date(GANTT_START);
+  while (d <= GANTT_END) {
+    const x = dateToX(d.toISOString().split('T')[0]);
+    const nd = new Date(d); nd.setMonth(nd.getMonth()+1);
+    const w = dateToX(nd.toISOString().split('T')[0]) - x;
+    const span = document.createElement('div');
+    span.className = 'gantt-month';
+    span.style.width = w+'px';
+    span.style.minWidth = w+'px';
+    span.textContent = d.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+    el.appendChild(span);
+    d = nd;
+  }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+let currentFiltered = [...TASKS];
+
+function applyFilters() {
+  const wbs = document.getElementById('filterWBS').value;
+  const resource = document.getElementById('filterResource').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+  const status = document.getElementById('filterStatus').value;
+
+  currentFiltered = TASKS.filter(t => {
+    if (t.level === 0) return true; // always show root
+    if (wbs && t.wbs !== wbs) return false;
+    if (resource && RESOURCE_MAP[t.wbs] !== resource) return false;
+    if (search && !t.name.toLowerCase().includes(search)) return false;
+    if (status) {
+      const s = getStatus(t);
+      if (status === 'not-started' && s !== 'not-started') return false;
+      if (status === 'in-progress' && s !== 'in-progress' && s !== 'delayed') return false;
+      if (status === 'completed' && s !== 'completed') return false;
+    }
+    return true;
+  });
+
+  renderGantt();
+  renderTaskTable();
+  updateKPIs();
+}
+
+function resetFilters() {
+  document.getElementById('filterWBS').value = '';
+  document.getElementById('filterResource').value = '';
+  document.getElementById('filterSearch').value = '';
+  document.getElementById('filterStatus').value = '';
+  applyFilters();
+}
+
+function renderGantt() {
+  const tbody = document.getElementById('ganttBody');
+  tbody.innerHTML = '';
+
+  const todayX = dateToX(TODAY.toISOString().split('T')[0]);
+
+  currentFiltered.forEach(task => {
+    const tr = document.createElement('tr');
+    if (task.level <= 1) tr.classList.add('summary-row-1');
+    else if (task.level === 2) tr.classList.add('summary-row');
+
+    const sx = dateToX(task.start);
+    const ex = dateToX(task.end);
+    const barW = Math.max(ex - sx, 4);
+    const color = WBS_COLORS[task.wbs] || '#999';
+    const lightColor = color + '33';
+
+    const pctBar = `<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${task.pct}%;background:${color}"></div></div>`;
+    const pctText = `<div class="progress-text">${task.pct}%</div>`;
+
+    // Gantt bar
+    const barHtml = `
+      <div style="position:relative;min-width:${GANTT_WIDTH}px;height:22px;">
+        <div class="today-line" style="left:${todayX}px;"></div>
+        <div class="gantt-bar" style="left:${sx}px;width:${barW}px;background:${color};opacity:${task.summary?0.85:0.7};"
+             title="${task.name} | ${task.start} ~ ${task.end} | ${task.pct}%">
+          ${task.pct > 0 ? `<div style="position:absolute;left:0;top:0;height:100%;width:${task.pct}%;background:rgba(255,255,255,0.25);border-radius:3px;"></div>` : ''}
+          <span style="position:relative;z-index:1;">${task.level >= 3 ? '' : task.name.length > 25 ? task.name.substring(0,22)+'…' : task.name}</span>
+        </div>
+      </div>`;
+
+    tr.innerHTML = `
+      <td><div class="task-name indent-${task.level}">${task.level <= 2 ? '▸ ' : ''}${task.name}</div></td>
+      <td style="font-size:11px;white-space:nowrap;">${formatDate(task.start)}</td>
+      <td style="font-size:11px;white-space:nowrap;">${formatDate(task.end)}</td>
+      <td class="progress-cell">${pctBar}${pctText}</td>
+      <td>${statusBadge(task)}</td>
+      <td style="padding:2px 4px;">${barHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('resultsCount').textContent = `แสดง ${currentFiltered.length} งาน`;
+}
+
+function renderTaskTable() {
+  const tbody = document.getElementById('taskTableBody');
+  tbody.innerHTML = '';
+  currentFiltered.filter(t => !t.summary).forEach(task => {
+    const color = WBS_COLORS[task.wbs] || '#999';
+    const wbsNames = {structural:'โครงสร้าง',architectural:'สถาปัตย์',mep:'M&E',finishing:'ตกแต่ง',painting:'สี',misc:'PM'};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="wbs-dot" style="background:${color}"></span>${task.name}</td>
+      <td><span style="font-size:10px;color:${color};font-weight:600;">${wbsNames[task.wbs]||task.wbs}</span></td>
+      <td><span style="font-weight:700;color:${task.pct>=100?'#27ae60':task.pct>0?'#e67e22':'#aaa'}">${task.pct}%</span></td>
+      <td>${statusBadge(task)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateKPIs() {
+  const tasks = currentFiltered.filter(t => !t.summary && t.level > 0);
+  const total = tasks.length;
+  const done = tasks.filter(t => t.pct >= 100).length;
+  const inProg = tasks.filter(t => t.pct > 0 && t.pct < 100).length;
+  const notStarted = tasks.filter(t => t.pct === 0).length;
+  const overall = total > 0 ? Math.round(tasks.reduce((a,t) => a+t.pct, 0) / total) : 0;
+
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiDone').textContent = done;
+  document.getElementById('kpiProgress').textContent = inProg;
+  document.getElementById('kpiPending').textContent = notStarted;
+  document.getElementById('kpiOverall').textContent = overall + '%';
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+let wbsChartObj, progressChartObj, floorChartObj;
+
+function buildCharts() {
+  const wbsLabels = ['โครงสร้าง', 'สถาปัตย์', 'MEP', 'ตกแต่ง', 'งานสี', 'PM/Misc'];
+  const wbsKeys = ['structural','architectural','mep','finishing','painting','misc'];
+  const wbsCounts = wbsKeys.map(k => TASKS.filter(t => t.wbs === k && !t.summary).length);
+  const wbsColors = wbsKeys.map(k => WBS_COLORS[k]);
+
+  wbsChartObj = new Chart(document.getElementById('wbsChart'), {
+    type: 'doughnut',
+    data: { labels: wbsLabels, datasets: [{ data: wbsCounts, backgroundColor: wbsColors, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive:true, plugins: { legend: { position:'right', labels:{font:{size:11},boxWidth:12} } } }
+  });
+
+  const avgProgress = wbsKeys.map(k => {
+    const tasks = TASKS.filter(t => t.wbs === k && !t.summary);
+    return tasks.length ? Math.round(tasks.reduce((a,t)=>a+t.pct,0)/tasks.length) : 0;
+  });
+  progressChartObj = new Chart(document.getElementById('progressChart'), {
+    type: 'bar',
+    data: {
+      labels: wbsLabels,
+      datasets: [{
+        label: '% เสร็จ (เฉลี่ย)',
+        data: avgProgress,
+        backgroundColor: wbsColors,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive:true, indexAxis:'y',
+      scales: { x: { min:0, max:100, ticks:{callback:v=>v+'%'} } },
+      plugins: { legend:{display:false} }
+    }
+  });
+
+  // Floor chart
+  const floors = ['ชั้น 1','ชั้น 2','ชั้น 3','ชั้น 4','ชั้น 5','ชั้น 6','ชั้น 7','ชั้น 8'];
+  const floorStructural = [100,100,100,100,100,100,90,70];
+  const floorArch = [85,80,65,45,25,10,5,0];
+  const floorMEP = [100,90,70,50,20,0,0,0];
+
+  floorChartObj = new Chart(document.getElementById('floorChart'), {
+    type: 'bar',
+    data: {
+      labels: floors,
+      datasets: [
+        { label:'โครงสร้าง', data:floorStructural, backgroundColor:'#2980b9', borderRadius:3 },
+        { label:'สถาปัตย์', data:floorArch, backgroundColor:'#27ae60', borderRadius:3 },
+        { label:'MEP', data:floorMEP, backgroundColor:'#e67e22', borderRadius:3 },
+      ]
+    },
+    options: {
+      responsive:true,
+      scales: { x:{stacked:false}, y:{min:0,max:100,ticks:{callback:v=>v+'%'}} },
+      plugins: { legend:{labels:{font:{size:11},boxWidth:12}} }
+    }
+  });
+}
+
+function buildWBSLegend() {
+  const wbsGroups = [
+    { key:'misc', label:'Mobilization & EIA', icon:'🚀' },
+    { key:'structural', label:'Structural Works (โครงสร้าง)', icon:'🏗️' },
+    { key:'architectural', label:'Architectural Works (สถาปัตย์)', icon:'🧱' },
+    { key:'mep', label:'Mechanical & Electrical (M&E)', icon:'⚡' },
+    { key:'finishing', label:'Finishing Works (งานตกแต่ง)', icon:'🪟' },
+    { key:'painting', label:'Painting (งานสี)', icon:'🎨' },
+  ];
+  const el = document.getElementById('wbsLegend');
+  wbsGroups.forEach(g => {
+    const count = TASKS.filter(t => t.wbs === g.key && !t.summary).length;
+    const avgPct = Math.round(TASKS.filter(t => t.wbs === g.key && !t.summary).reduce((a,t)=>a+t.pct,0) / Math.max(count,1));
+    const div = document.createElement('div');
+    div.className = 'wbs-item';
+    div.innerHTML = `
+      <div class="wbs-color" style="background:${WBS_COLORS[g.key]}"></div>
+      <div class="wbs-label">${g.icon} ${g.label}</div>
+      <div style="font-size:11px;font-weight:700;color:${WBS_COLORS[g.key]};min-width:36px;text-align:right;">${avgPct}%</div>
+      <div class="wbs-count">${count}</div>
+    `;
+    div.addEventListener('click', () => {
+      document.getElementById('filterWBS').value = g.key;
+      applyFilters();
+    });
+    el.appendChild(div);
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  buildGanttHeader();
+  buildCharts();
+  buildWBSLegend();
+  applyFilters();
+});
+</script>
+</body>
+</html>
