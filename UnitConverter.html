@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แปลงหน่วยงานก่อสร้าง</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+[data-theme="dark"]{
+  --bg:#050d1a; --bg2:#0a1628; --card:#0e1f38; --card2:#122644;
+  --border:#1e3a5f; --border2:#2a4f7c; --text:#ddeeff; --text2:#7fa8cc;
+  --accent:#2d8cff; --accent2:#5ba8ff; --acbg:rgba(45,140,255,.13); --acbdr:rgba(45,140,255,.35);
+  --green:#22d58a; --gbg:rgba(34,213,138,.12); --gbdr:rgba(34,213,138,.3);
+  --inp:#0a1628; --red:#ff5c6a; --copbg:rgba(45,140,255,.18); --numhov:#162f50;
+  --shadow:0 4px 24px rgba(0,80,200,.18);
+}
+[data-theme="light"]{
+  --bg:#eef4fb; --bg2:#dde9f7; --card:#ffffff; --card2:#f0f6ff;
+  --border:#b8d0eb; --border2:#90b8de; --text:#0d2340; --text2:#4a6f96;
+  --accent:#1a6fd4; --accent2:#2d8cff; --acbg:rgba(26,111,212,.09); --acbdr:rgba(26,111,212,.3);
+  --green:#0da870; --gbg:rgba(13,168,112,.1); --gbdr:rgba(13,168,112,.3);
+  --inp:#f4f9ff; --red:#d63848; --copbg:rgba(26,111,212,.12); --numhov:#e2edf9;
+  --shadow:0 4px 18px rgba(0,60,150,.1);
+}
+*{box-sizing:border-box;transition:background .22s,color .16s,border-color .16s}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh}
+.hdr{background:var(--bg2);border-bottom:2.5px solid var(--accent);padding:.8rem 1.2rem;
+  box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+.hdr-l{display:flex;align-items:center;gap:.75rem}
+.hdr h1{font-size:1.28rem;font-weight:800;color:var(--accent);margin:0}
+.hdr small{color:var(--text2);font-size:.74rem}
+.tbtn{background:var(--acbg);border:1px solid var(--acbdr);color:var(--accent);border-radius:20px;
+  padding:.3rem .85rem;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem;white-space:nowrap;flex-shrink:0}
+.tbtn:hover{background:var(--accent);color:#fff}
+.nav-wrap{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.ntab{background:none;border:none;border-bottom:3px solid transparent;color:var(--text2);
+  padding:.68rem 1rem;font-size:.86rem;font-weight:700;cursor:pointer;transition:.18s;white-space:nowrap}
+.ntab:hover{color:var(--text)}.ntab.act{color:var(--accent);border-bottom-color:var(--accent)}
+.pane{display:none}.pane.show{display:block}
+.cd{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:1.2rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.cd h5{color:var(--accent);font-size:.94rem;font-weight:800;margin-bottom:1rem}
+.form-label{color:var(--text2);font-size:.79rem;font-weight:700;margin-bottom:.23rem}
+.form-control,.form-select{background:var(--inp);border:1.5px solid var(--border);color:var(--text);border-radius:9px;font-size:.9rem}
+.form-control:focus,.form-select:focus{background:var(--inp);color:var(--text);border-color:var(--accent);box-shadow:0 0 0 3px var(--acbg)}
+.form-select option{background:var(--card)}
+.rbox{background:var(--acbg);border:1.5px solid var(--acbdr);border-radius:11px;padding:.9rem;text-align:center;margin-top:.75rem}
+.rval{font-family:'Courier New',monospace;font-size:1.95rem;font-weight:800;color:var(--accent2);word-break:break-all}
+.runit{color:var(--text2);font-size:.82rem;margin-top:.2rem}
+.fbadge{background:var(--gbg);border:1px solid var(--gbdr);color:var(--green);border-radius:6px;
+  padding:.22rem .6rem;font-size:.75rem;font-family:'Courier New',monospace;margin-top:.4rem;display:inline-block}
+.bprim{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;
+  border-radius:9px;font-weight:700;padding:.44rem 1.05rem;cursor:pointer;transition:.2s;font-size:.87rem}
+.bprim:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(45,140,255,.45);color:#fff}
+.bout{background:transparent;color:var(--accent);border:1.5px solid var(--accent);border-radius:9px;
+  font-weight:700;padding:.42rem 1.05rem;cursor:pointer;transition:.2s;font-size:.87rem}
+.bout:hover{background:var(--accent);color:#fff}
+.fcard{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:.82rem;margin-bottom:.58rem;cursor:pointer;transition:.18s}
+.fcard:hover{border-color:var(--accent);background:var(--acbg)}
+.fcard.static{cursor:default}
+.fcard h6{color:var(--text);font-size:.86rem;margin-bottom:.2rem;font-weight:700}
+.feq{font-family:'Courier New',monospace;color:var(--green);font-size:.78rem}
+.fdesc{color:var(--text2);font-size:.74rem;margin-top:.15rem}
+.arr{color:var(--accent);font-size:1.4rem;display:flex;align-items:center;justify-content:center}
+.htbl th{color:var(--accent);background:var(--acbg);font-weight:700;border-color:var(--border);font-size:.78rem}
+.htbl td{color:var(--text);border-color:var(--border);background:var(--card2);font-size:.78rem}
+/* DYNAMIC FORMULA PANEL */
+#fmlPanel{border-top:1.5px solid var(--border);margin-top:1rem;padding-top:.85rem}
+.fml-title{font-size:.82rem;font-weight:800;color:var(--accent);margin-bottom:.6rem}
+.fml-grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+@media(max-width:480px){.fml-grid{grid-template-columns:1fr}}
+.fml-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:.58rem .72rem}
+.fml-item .fh{font-size:.77rem;font-weight:700;color:var(--text);margin-bottom:.12rem}
+.fml-item .fe{font-family:'Courier New',monospace;color:var(--green);font-size:.74rem}
+.fml-item .fd{color:var(--text2);font-size:.69rem;margin-top:.1rem}
+/* CALC */
+.cdsp{background:var(--bg);border:1.5px solid var(--border);border-radius:11px;
+  padding:.82rem 1.05rem;text-align:right;margin-bottom:.7rem;min-height:76px}
+.cexpr{color:var(--text2);font-size:.8rem;font-family:'Courier New',monospace;min-height:1.2em;word-break:break-all}
+.cres{font-family:'Courier New',monospace;font-size:1.95rem;color:var(--text);font-weight:800;word-break:break-all}
+.cbtn{width:100%;padding:.66rem .1rem;border-radius:9px;font-size:.96rem;font-weight:700;border:none;cursor:pointer;transition:.12s}
+.cbtn:hover{transform:scale(1.06)}
+.cnum{background:var(--card2);color:var(--text);border:1.5px solid var(--border)}
+.cnum:hover{background:var(--numhov)}
+.cop{background:var(--copbg);color:var(--accent2);border:1.5px solid var(--acbdr)}
+.ceq{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none}
+.cclr{background:rgba(255,92,106,.14);color:var(--red);border:1.5px solid rgba(255,92,106,.28)}
+.cfn{background:var(--gbg);color:var(--green);border:1.5px solid var(--gbdr);font-size:.79rem}
+/* BADGES */
+.catb{display:inline-block;padding:.17rem .55rem;border-radius:20px;font-size:.69rem;font-weight:700;margin-bottom:.35rem}
+.cb-len{background:rgba(52,152,219,.18);color:#3498DB}
+.cb-area{background:rgba(155,89,182,.18);color:#9B59B6}
+.cb-vol{background:rgba(230,126,34,.18);color:#E67E22}
+.cb-wt{background:rgba(34,213,138,.14);color:var(--green)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+#toast{position:fixed;bottom:1.3rem;right:1.3rem;z-index:9999;display:none}
+#toastMsg{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  padding:.68rem 1.2rem;border-radius:10px;font-weight:700;box-shadow:var(--shadow)}
+@media(max-width:576px){.hdr h1{font-size:1rem}.ntab{padding:.52rem .62rem;font-size:.77rem}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <rect x="1" y="13" width="28" height="5" rx="2.5" fill="var(--accent)"/>
+      <rect x="7" y="5" width="5" height="20" rx="2.5" fill="var(--accent2)"/>
+      <rect x="18" y="5" width="5" height="20" rx="2.5" fill="var(--accent2)"/>
+      <circle cx="9.5" cy="4.5" r="2.5" fill="var(--accent)"/>
+      <circle cx="20.5" cy="4.5" r="2.5" fill="var(--accent)"/>
+    </svg>
+    <div>
+      <h1>แปลงหน่วยงานก่อสร้าง</h1>
+      <small>Construction Unit Converter &amp; Engineering Calculator — Offline</small>
+    </div>
+  </div>
+  <button class="tbtn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+</div>
+
+<div class="nav-wrap">
+  <div class="d-flex overflow-auto px-1">
+    <button class="ntab act" onclick="showTab('conv')">🔄 แปลงหน่วย</button>
+    <button class="ntab" onclick="showTab('form')">📐 สูตรที่ใช้บ่อย</button>
+    <button class="ntab" onclick="showTab('calc')">🔢 เครื่องคิดเลข</button>
+    <button class="ntab" onclick="showTab('hist')">🗂 ประวัติ</button>
+  </div>
+</div>
+
+<div class="container-fluid py-3" style="max-width:1100px">
+
+<!-- TAB CONVERTER -->
+<div id="tab-conv" class="pane show">
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="cd">
+        <h5>⚙️ ตัวแปลงหน่วย</h5>
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label">ประเภทหน่วย</label>
+            <select id="uType" class="form-select" onchange="updateUnits()">
+              <option value="length">📏 ความยาว (Length)</option>
+              <option value="area">⬛ พื้นที่ (Area)</option>
+              <option value="volume">📦 ปริมาตร (Volume)</option>
+              <option value="weight">⚖️ น้ำหนัก (Weight)</option>
+              <option value="pressure">💨 แรงดัน (Pressure)</option>
+              <option value="force">💪 แรง (Force)</option>
+              <option value="steel">🔩 เหล็กเส้น (Steel)</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">ค่าที่ต้องการแปลง</label>
+            <input type="number" id="inVal" class="form-control" placeholder="0.00" step="any"
+              oninput="doCalc()" style="font-family:'Courier New',monospace;font-size:1.1rem">
+          </div>
+          <div class="col-5">
+            <label class="form-label">จากหน่วย</label>
+            <select id="uFrom" class="form-select" onchange="doCalc()"></select>
+          </div>
+          <div class="col-2 arr">⇄</div>
+          <div class="col-5">
+            <label class="form-label">เป็นหน่วย</label>
+            <select id="uTo" class="form-select" onchange="doCalc()"></select>
+          </div>
+        </div>
+        <div class="rbox">
+          <div class="rval" id="rval">—</div>
+          <div class="runit" id="runit">กรุณากรอกค่า</div>
+          <div id="rfml"></div>
+        </div>
+        <div class="d-flex gap-2 mt-3 flex-wrap align-items-center">
+          <button class="bprim" onclick="saveRec()">💾 บันทึก</button>
+          <button class="bout" onclick="swapU()">⇄ สลับหน่วย</button>
+          <button class="bout" onclick="clearF()">🗑️ ล้าง</button>
+          <button class="bout" onclick="showTab('calc')" style="margin-left:auto">🔢 เครื่องคิดเลข</button>
+        </div>
+        <!-- DYNAMIC FORMULA PANEL -->
+        <div id="fmlPanel">
+          <div class="fml-title" id="fmlTitle">📐 สูตรที่เกี่ยวข้อง</div>
+          <div class="fml-grid" id="fmlGrid"></div>
+        </div>
+      </div>
+      <div class="cd">
+        <h5>📊 ตารางอ้างอิงด่วน</h5>
+        <div id="qref"></div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-5">
+      <div class="cd">
+        <h5>⚡ แปลงด่วน</h5>
+        <div class="catb cb-len">ความยาว</div>
+        <div class="fcard" onclick="setQ(1,'length','meter','cm')"><div class="feq">1 เมตร = 100 เซนติเมตร</div></div>
+        <div class="fcard" onclick="setQ(1,'length','feet','meter')"><div class="feq">1 ฟุต = 0.3048 เมตร</div></div>
+        <div class="fcard" onclick="setQ(1,'length','inch','cm')"><div class="feq">1 นิ้ว = 2.54 เซนติเมตร</div></div>
+        <div class="fcard" onclick="setQ(1,'length','wa','meter')"><div class="feq">1 วา = 2 เมตร</div></div>
+        <div class="catb cb-area" style="margin-top:.35rem">พื้นที่</div>
+        <div class="fcard" onclick="setQ(1,'area','sqwa','sqm')"><div class="feq">1 ตร.วา = 4 ตร.เมตร</div></div>
+        <div class="fcard" onclick="setQ(1,'area','ngan','sqm')"><div class="feq">1 งาน = 100 ตร.วา = 400 ตร.ม.</div></div>
+        <div class="fcard" onclick="setQ(1,'area','rai','sqm')"><div class="feq">1 ไร่ = 4 งาน = 1,600 ตร.ม.</div></div>
+        <div class="catb cb-vol" style="margin-top:.35rem">ปริมาตร</div>
+        <div class="fcard" onclick="setQ(1,'volume','cbm','liter')"><div class="feq">1 ลบ.เมตร = 1,000 ลิตร</div></div>
+        <div class="fcard" onclick="setQ(1,'volume','cbf','cbm')"><div class="feq">1 ลบ.ฟุต = 0.02832 ม.³</div></div>
+        <div class="catb cb-wt" style="margin-top:.35rem">น้ำหนัก</div>
+        <div class="fcard" onclick="setQ(1,'weight','ton','kg')"><div class="feq">1 ตัน = 1,000 กก.</div></div>
+        <div class="fcard" onclick="setQ(1,'weight','kg','pound')"><div class="feq">1 กก. = 2.2046 ปอนด์</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB FORMULAS -->
+<div id="tab-form" class="pane">
+  <div class="row g-3">
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="cd">
+        <h5>🧱 คอนกรีต</h5>
+        <div class="fcard static"><h6>ปริมาตรคอนกรีต</h6><div class="feq">V = กว้าง × ยาว × หนา (ม.³)</div></div>
+        <div class="fcard static"><h6>ส่วนผสม 1:2:4 ต่อ 1 ม.³</h6><div class="feq">ปูน ≈ 7.5 ถุง (50กก.) / ทราย ≈ 0.44 ม.³</div></div>
+        <div class="fcard static"><h6>ส่วนผสม 1:1.5:3 ต่อ 1 ม.³</h6><div class="feq">ปูน ≈ 9 ถุง / ทราย ≈ 0.34 ม.³</div></div>
+        <div class="fcard static"><h6>น้ำหนักคอนกรีต</h6><div class="feq">γ = 2,400 กก./ม.³ (ไม่มีเหล็ก)</div><div class="feq">γ = 2,500 กก./ม.³ (เสริมเหล็ก)</div></div>
+        <div class="fcard static"><h6>กำลังอัด f'c</h6><div class="feq">240 ksc = 24 MPa | 320 ksc = 32 MPa</div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="cd">
+        <h5>🔩 เหล็กเส้น</h5>
+        <div class="fcard static"><h6>น้ำหนักต่อเมตร</h6><div class="feq">W = D² ÷ 162 (กก./เมตร)</div><div class="fdesc">D = เส้นผ่าศูนย์กลาง (มม.)</div></div>
+        <div class="fcard static"><h6>ตารางน้ำหนัก</h6>
+          <div class="feq">RB6=0.222 | RB9=0.499 กก./ม.</div>
+          <div class="feq">DB12=0.888 | DB16=1.578 กก./ม.</div>
+          <div class="feq">DB20=2.469 | DB25=3.854 กก./ม.</div>
+          <div class="feq">DB28=4.833 | DB32=6.313 กก./ม.</div>
+        </div>
+        <div class="fcard static"><h6>พื้นที่หน้าตัด</h6><div class="feq">As = π × D² / 4 (มม.²)</div></div>
+        <div class="fcard static"><h6>ระยะเผื่อ Hook</h6><div class="feq">Hook = 6D (DB) / 4D (RB)</div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="cd">
+        <h5>🏗️ โครงสร้างคาน</h5>
+        <div class="fcard static"><h6>โมเมนต์ Simple Beam</h6><div class="feq">M = wL² / 8 (โหลดกระจาย)</div><div class="feq">M = PL / 4 (โหลดจุดกลาง)</div></div>
+        <div class="fcard static"><h6>แรงเฉือน</h6><div class="feq">V = wL / 2</div></div>
+        <div class="fcard static"><h6>การแอ่นตัวสูงสุด</h6><div class="feq">δ = 5wL⁴ / (384EI)</div><div class="fdesc">E คอนกรีต = 4,700√f'c MPa</div></div>
+        <div class="fcard static"><h6>ค่า E วัสดุ</h6><div class="feq">เหล็ก = 200,000 MPa | คอนกรีต ≈ 25,000 MPa</div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="cd">
+        <h5>📐 พื้นที่ / ปริมาตร</h5>
+        <div class="fcard static"><h6>สี่เหลี่ยม</h6><div class="feq">A = กว้าง × ยาว</div></div>
+        <div class="fcard static"><h6>วงกลม</h6><div class="feq">A = πr² = πD²/4 | C = πD</div></div>
+        <div class="fcard static"><h6>สามเหลี่ยม</h6><div class="feq">A = ½ × ฐาน × สูง</div></div>
+        <div class="fcard static"><h6>ทรงกระบอก</h6><div class="feq">V = πr² × สูง</div></div>
+        <div class="fcard static"><h6>กรวย / พีระมิด</h6><div class="feq">V = ⅓ × พื้นที่ฐาน × สูง</div></div>
+        <div class="fcard static"><h6>ทรงกลม</h6><div class="feq">V = (4/3)πr³ | A = 4πr²</div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="cd">
+        <h5>🧮 ประมาณการวัสดุ</h5>
+        <div class="fcard static"><h6>อิฐมอญ (ครึ่งแผ่น)</h6><div class="feq">≈ 40–50 ก้อน / ตร.ม.</div></div>
+        <div class="fcard static"><h6>กระเบื้อง (เผื่อแตก 10%)</h6><div class="feq">จำนวน = (พื้นที่ / ขนาด) × 1.10</div></div>
+        <div class="fcard static"><h6>สีทาบ้าน</h6><div class="feq">≈ 10–12 ตร.ม. ต่อลิตร / ชั้น</div></div>
+        <div class="fcard static"><h6>ปูนฉาบผนัง 1.5 ซม.</h6><div class="feq">≈ 20 กก. / ตร.ม.</div></div>
+        <div class="fcard static"><h6>เหล็กในคอนกรีต</h6><div class="feq">เสา/คาน ≈ 80–150 กก. / ม.³</div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="cd">
+        <h5>💡 หน่วยไทย &amp; แปลงบ่อย</h5>
+        <div class="fcard static"><h6>ที่ดินไทย</h6><div class="feq">1 ไร่ = 4 งาน = 400 ตร.วา = 1,600 ตร.ม.</div></div>
+        <div class="fcard static"><h6>MPa ↔ ksc ↔ PSI</h6><div class="feq">1 MPa = 10.197 ksc = 145.04 PSI</div></div>
+        <div class="fcard static"><h6>กำลัง HP ↔ kW</h6><div class="feq">1 HP = 745.7 W = 0.7457 kW</div></div>
+        <div class="fcard static"><h6>อุณหภูมิ</h6><div class="feq">°C = (°F − 32) × 5/9</div></div>
+        <div class="fcard static"><h6>น้ำหนักทอง</h6><div class="feq">1 บาท = 15.244 กรัม</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB CALCULATOR -->
+<div id="tab-calc" class="pane">
+  <div class="row g-3 justify-content-center">
+    <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+      <div class="cd">
+        <h5>🔢 เครื่องคิดเลขวิศวกรรม</h5>
+        <div class="cdsp">
+          <div class="cexpr" id="cexpr"></div>
+          <div class="cres" id="cres">0</div>
+        </div>
+        <div class="row g-2">
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('sin(')">sin</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('cos(')">cos</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('tan(')">tan</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('sqrt(')">√</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('log10(')">log</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('log(')">ln</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cIn('3.14159265358979')">π</button></div>
+          <div class="col-3"><button class="cbtn cfn" onclick="cFn('pow(')">xⁿ</button></div>
+          <div class="col-3"><button class="cbtn cclr" onclick="cClr()">AC</button></div>
+          <div class="col-3"><button class="cbtn cclr" onclick="cDel()">⌫</button></div>
+          <div class="col-3"><button class="cbtn cop" onclick="cIn('%')">%</button></div>
+          <div class="col-3"><button class="cbtn cop" onclick="cIn('/')">÷</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('7')">7</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('8')">8</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('9')">9</button></div>
+          <div class="col-3"><button class="cbtn cop" onclick="cIn('*')">×</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('4')">4</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('5')">5</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('6')">6</button></div>
+          <div class="col-3"><button class="cbtn cop" onclick="cIn('-')">−</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('1')">1</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('2')">2</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('3')">3</button></div>
+          <div class="col-3"><button class="cbtn cop" onclick="cIn('+')">+</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('(')">(</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('0')">0</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn('.')">.</button></div>
+          <div class="col-3"><button class="cbtn ceq" onclick="cEq()">=</button></div>
+          <div class="col-3"><button class="cbtn cnum" onclick="cIn(')')">)</button></div>
+          <div class="col-9"><button class="cbtn cfn" onclick="copyCres()">📋 คัดลอกผลลัพธ์</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+      <div class="cd" style="max-height:370px;overflow-y:auto">
+        <h5>📋 ประวัติการคำนวณ</h5>
+        <div id="chist"><p style="color:var(--text2);font-size:.85rem;text-align:center">ยังไม่มีประวัติ</p></div>
+      </div>
+      <div class="cd">
+        <h5>🔩 คำนวณน้ำหนักเหล็กด่วน</h5>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label">ขนาดเหล็ก</label>
+            <select class="form-select" id="sDia" onchange="calcStl()">
+              <option value="6">RB6 (Ø6)</option>
+              <option value="9" selected>RB9 (Ø9)</option>
+              <option value="10">DB10</option>
+              <option value="12">DB12</option>
+              <option value="16">DB16</option>
+              <option value="20">DB20</option>
+              <option value="25">DB25</option>
+              <option value="28">DB28</option>
+              <option value="32">DB32</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label">ความยาว (เมตร)</label>
+            <input type="number" id="sLen" class="form-control" value="12" oninput="calcStl()" step="0.1">
+          </div>
+          <div class="col-6">
+            <label class="form-label">จำนวนเส้น</label>
+            <input type="number" id="sQty" class="form-control" value="1" oninput="calcStl()">
+          </div>
+          <div class="col-6">
+            <label class="form-label">น้ำหนัก/เมตร</label>
+            <div class="rbox" style="padding:.45rem;margin-top:0">
+              <div class="rval" style="font-size:.95rem" id="sPerM">—</div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="rbox" style="margin-top:0">
+              <div style="color:var(--text2);font-size:.73rem">น้ำหนักรวม</div>
+              <div class="rval" id="sTotal">—</div>
+              <div class="runit" id="sFml"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB HISTORY -->
+<div id="tab-hist" class="pane">
+  <div class="cd">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h5 class="mb-0">🗂 ประวัติการบันทึก</h5>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="bprim" style="font-size:.79rem;padding:.33rem .8rem" onclick="expCSV()">📄 CSV</button>
+        <button class="bprim" style="font-size:.79rem;padding:.33rem .8rem" onclick="expJSON()">📋 JSON</button>
+        <button class="bout" style="font-size:.79rem;padding:.31rem .8rem" onclick="clrHist()">🗑️ ล้างทั้งหมด</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover htbl">
+        <thead>
+          <tr><th>#</th><th>วันที่/เวลา</th><th>ประเภท</th><th>ค่าต้นทาง</th><th>หน่วยต้น</th><th>ผลลัพธ์</th><th>หน่วยผล</th><th></th></tr>
+        </thead>
+        <tbody id="htbody">
+          <tr><td colspan="8" style="text-align:center;color:var(--text2)">ยังไม่มีข้อมูล</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="hsum" style="color:var(--text2);font-size:.79rem;margin-top:.5rem"></div>
+  </div>
+</div>
+</div>
+
+<div id="toast"><div id="toastMsg"></div></div>
+
+<script>
+var U={
+  length:{lbl:'ความยาว',u:{
+    mm:{n:'มิลลิเมตร (mm)',f:function(v){return v/1000}},
+    cm:{n:'เซนติเมตร (cm)',f:function(v){return v/100}},
+    meter:{n:'เมตร (m)',f:function(v){return v}},
+    km:{n:'กิโลเมตร (km)',f:function(v){return v*1000}},
+    inch:{n:'นิ้ว (inch)',f:function(v){return v*0.0254}},
+    feet:{n:'ฟุต (ft)',f:function(v){return v*0.3048}},
+    yard:{n:'หลา (yd)',f:function(v){return v*0.9144}},
+    wa:{n:'วา',f:function(v){return v*2}},
+    sawk:{n:'ศอก',f:function(v){return v*0.5}}
+  }},
+  area:{lbl:'พื้นที่',u:{
+    sqmm:{n:'ตร.มิลลิเมตร (mm²)',f:function(v){return v/1e6}},
+    sqcm:{n:'ตร.เซนติเมตร (cm²)',f:function(v){return v/1e4}},
+    sqm:{n:'ตร.เมตร (m²)',f:function(v){return v}},
+    sqkm:{n:'ตร.กิโลเมตร (km²)',f:function(v){return v*1e6}},
+    sqin:{n:'ตร.นิ้ว (in²)',f:function(v){return v*6.4516e-4}},
+    sqft:{n:'ตร.ฟุต (ft²)',f:function(v){return v*0.092903}},
+    sqwa:{n:'ตร.วา',f:function(v){return v*4}},
+    ngan:{n:'งาน',f:function(v){return v*400}},
+    rai:{n:'ไร่',f:function(v){return v*1600}},
+    hectare:{n:'เฮกตาร์ (ha)',f:function(v){return v*1e4}},
+    acre:{n:'เอเคอร์',f:function(v){return v*4046.86}}
+  }},
+  volume:{lbl:'ปริมาตร',u:{
+    cbmm:{n:'ลบ.มิลลิเมตร (mm³)',f:function(v){return v/1e9}},
+    cbcm:{n:'ลบ.เซนติเมตร (cm³)',f:function(v){return v/1e6}},
+    liter:{n:'ลิตร (L)',f:function(v){return v/1000}},
+    cbm:{n:'ลบ.เมตร (m³)',f:function(v){return v}},
+    cbf:{n:'ลบ.ฟุต (ft³)',f:function(v){return v*0.0283168}},
+    cbin:{n:'ลบ.นิ้ว (in³)',f:function(v){return v*1.63871e-5}},
+    gallon:{n:'แกลลอน US',f:function(v){return v*0.00378541}}
+  }},
+  weight:{lbl:'น้ำหนัก',u:{
+    gram:{n:'กรัม (g)',f:function(v){return v/1000}},
+    kg:{n:'กิโลกรัม (kg)',f:function(v){return v}},
+    ton:{n:'ตัน Metric',f:function(v){return v*1000}},
+    pound:{n:'ปอนด์ (lb)',f:function(v){return v*0.453592}},
+    oz:{n:'ออนซ์ (oz)',f:function(v){return v*0.0283495}},
+    baht:{n:'บาท (ทอง)',f:function(v){return v*0.015244}}
+  }},
+  pressure:{lbl:'แรงดัน',u:{
+    pa:{n:'ปาสกาล (Pa)',f:function(v){return v}},
+    kpa:{n:'กิโลปาสกาล (kPa)',f:function(v){return v*1000}},
+    mpa:{n:'เมกะปาสกาล (MPa)',f:function(v){return v*1e6}},
+    bar:{n:'บาร์ (bar)',f:function(v){return v*1e5}},
+    psi:{n:'PSI (lb/in²)',f:function(v){return v*6894.76}},
+    ksc:{n:'ksc (กก./ซม²)',f:function(v){return v*98066.5}},
+    atm:{n:'บรรยากาศ (atm)',f:function(v){return v*101325}}
+  }},
+  force:{lbl:'แรง',u:{
+    nu:{n:'นิวตัน (N)',f:function(v){return v}},
+    kn:{n:'กิโลนิวตัน (kN)',f:function(v){return v*1000}},
+    mn:{n:'เมกะนิวตัน (MN)',f:function(v){return v*1e6}},
+    kgf:{n:'กิโลกรัมแรง (kgf)',f:function(v){return v*9.80665}},
+    tf:{n:'ตันแรง (tf)',f:function(v){return v*9806.65}},
+    lbf:{n:'ปอนด์แรง (lbf)',f:function(v){return v*4.44822}}
+  }},
+  steel:{lbl:'เหล็กเส้น',steel:true,u:{
+    rb6:{n:'RB6 (Ø6mm)',f:function(v){return v*0.222}},
+    rb9:{n:'RB9 (Ø9mm)',f:function(v){return v*0.499}},
+    db10:{n:'DB10 (Ø10mm)',f:function(v){return v*0.617}},
+    db12:{n:'DB12 (Ø12mm)',f:function(v){return v*0.888}},
+    db16:{n:'DB16 (Ø16mm)',f:function(v){return v*1.578}},
+    db20:{n:'DB20 (Ø20mm)',f:function(v){return v*2.469}},
+    db25:{n:'DB25 (Ø25mm)',f:function(v){return v*3.854}},
+    db28:{n:'DB28 (Ø28mm)',f:function(v){return v*4.833}},
+    db32:{n:'DB32 (Ø32mm)',f:function(v){return v*6.313}}
+  }}
+};
+
+var FML={
+  length:[
+    {h:'หน่วยไทย',e:'1 วา = 2 ม. | 1 ศอก = 0.5 ม.'},
+    {h:'เมตร ↔ ฟุต',e:'1 ม. = 3.281 ฟุต = 39.37 นิ้ว'},
+    {h:'เส้นรอบรูปวงกลม',e:'C = π × D',d:'D = เส้นผ่าศูนย์กลาง (ม.)'},
+    {h:'ทฤษฎีพีทาโกรัส',e:'c = √(a² + b²)',d:'ระยะทแยงมุม'}
+  ],
+  area:[
+    {h:'ที่ดินไทย',e:'1 ไร่ = 4 งาน = 400 ตร.วา = 1,600 ตร.ม.'},
+    {h:'สี่เหลี่ยม',e:'A = กว้าง × ยาว'},
+    {h:'วงกลม',e:'A = π × r² = πD²/4'},
+    {h:'สามเหลี่ยม',e:'A = ½ × ฐาน × สูง'}
+  ],
+  volume:[
+    {h:'ทรงสี่เหลี่ยม',e:'V = กว้าง × ยาว × สูง (ม.³)'},
+    {h:'ทรงกระบอก',e:'V = π × r² × สูง'},
+    {h:'คอนกรีต 1 ม.³',e:'ปูน ≈ 7.5 ถุง | ทราย ≈ 0.44 ม.³',d:'ส่วนผสม 1:2:4'},
+    {h:'น้ำหนักคอนกรีต',e:'W = 2,400–2,500 กก. ต่อ ม.³'}
+  ],
+  weight:[
+    {h:'กก. ↔ ปอนด์',e:'1 กก. = 2.2046 lb | 1 lb = 0.4536 กก.'},
+    {h:'ตัน ↔ กก.',e:'1 ตัน = 1,000 กก. = 2,204.6 ปอนด์'},
+    {h:'น้ำหนักเหล็กเส้น',e:'W = D² ÷ 162 (กก./ม.)',d:'D = เส้นผ่าศูนย์กลาง มม.'},
+    {h:'น้ำหนักทอง',e:'1 บาท = 15.244 กรัม'}
+  ],
+  pressure:[
+    {h:'MPa ↔ ksc ↔ PSI',e:'1 MPa = 10.197 ksc = 145.04 PSI'},
+    {h:'kPa ↔ บาร์',e:'1 บาร์ = 100 kPa = 0.987 atm'},
+    {h:'กำลังอัดคอนกรีต',e:"f'c = 240–320 ksc (24–32 MPa)",d:'มาตรฐานไทย'},
+    {h:'แรงดันน้ำ',e:'1 ม. น้ำ = 9.81 kPa = 0.1 บาร์'}
+  ],
+  force:[
+    {h:'kN ↔ kgf',e:'1 kN = 101.97 kgf | 1 kgf = 9.807 N'},
+    {h:'โมเมนต์ Simple Beam',e:'M = wL²/8 (kN·ม.)',d:'w=kN/ม., L=ช่วงคาน ม.'},
+    {h:'แรงเฉือน',e:'V = wL / 2 (kN)'},
+    {h:'ค่า E วัสดุ',e:"คอนกรีต: 4,700√f'c MPa | เหล็ก: 200,000 MPa"}
+  ],
+  steel:[
+    {h:'สูตรน้ำหนักเหล็ก',e:'W = D² ÷ 162 (กก./เมตร)',d:'D = เส้นผ่าศูนย์กลาง (มม.)'},
+    {h:'พื้นที่หน้าตัด',e:'As = π × D² / 4 (มม.²)'},
+    {h:'ระยะเผื่อ Hook',e:'6D สำหรับ DB | 4D สำหรับ RB'},
+    {h:'ตัวอย่าง DB20',e:'W = 20²/162 = 2.469 กก./ม.',d:'As = 314.2 มม.²'}
+  ]
+};
+
+var QREF={
+  length:[['1 เมตร','100 ซม.','39.37 นิ้ว','3.281 ฟุต','0.5 วา'],
+          ['1 นิ้ว','25.4 มม.','2.54 ซม.','0.0833 ฟุต','—'],
+          ['1 ฟุต','304.8 มม.','30.48 ซม.','12 นิ้ว','—'],
+          ['1 วา','2 เมตร','200 ซม.','6.562 ฟุต','—']],
+  area:[['1 ตร.ม.','0.25 ตร.วา','10.764 ตร.ฟุต','—','—'],
+        ['1 ตร.วา','4 ตร.ม.','43,056 ซม.²','—','—'],
+        ['1 งาน','100 ตร.วา','400 ตร.ม.','—','—'],
+        ['1 ไร่','4 งาน','400 ตร.วา','1,600 ตร.ม.','—']],
+  volume:[['1 ม.³','1,000 ลิตร','35.315 ฟุต³','264.2 แกลลอน','—'],
+          ['1 ฟุต³','28.32 ลิตร','0.0283 ม.³','7.481 แกลลอน','—']],
+  weight:[['1 กก.','1,000 กรัม','2.2046 ปอนด์','35.27 ออนซ์','—'],
+          ['1 ตัน','1,000 กก.','2,204.6 ปอนด์','—','—']],
+  pressure:[['1 MPa','1,000 kPa','10.197 ksc','145.04 PSI','—'],
+            ['1 ksc','98.07 kPa','0.0981 MPa','14.22 PSI','—']],
+  force:[['1 kN','1,000 N','101.97 kgf','224.8 lbf','—'],
+         ['1 tf','9,806.65 N','9.807 kN','1,000 kgf','—']],
+  steel:[['RB6','Ø6mm','0.222 กก./ม.','28.3 มม.²','—'],
+         ['RB9','Ø9mm','0.499 กก./ม.','63.6 มม.²','—'],
+         ['DB12','Ø12mm','0.888 กก./ม.','113.1 มม.²','—'],
+         ['DB20','Ø20mm','2.469 กก./ม.','314.2 มม.²','—'],
+         ['DB25','Ø25mm','3.854 กก./ม.','490.9 มม.²','—']]
+};
+
+function updateUnits(){
+  var t=document.getElementById('uType').value;
+  var fd=document.getElementById('uFrom'),td=document.getElementById('uTo');
+  var keys=Object.keys(U[t].u);
+  fd.innerHTML=''; td.innerHTML='';
+  keys.forEach(function(k){
+    var op='<option value="'+k+'">'+U[t].u[k].n+'</option>';
+    fd.innerHTML+=op; td.innerHTML+=op;
+  });
+  if(td.options.length>1) td.selectedIndex=1;
+  doCalc(); renderFml(t); renderQref(t);
+}
+
+function doCalc(){
+  var t=document.getElementById('uType').value;
+  var v=parseFloat(document.getElementById('inVal').value);
+  var fk=document.getElementById('uFrom').value;
+  var tk=document.getElementById('uTo').value;
+  var rv=document.getElementById('rval'),ru=document.getElementById('runit'),rf=document.getElementById('rfml');
+  if(isNaN(v)){rv.textContent='—';ru.textContent='กรุณากรอกค่าตัวเลข';rf.innerHTML='';return;}
+  var ud=U[t];
+  if(ud.steel){
+    var wpm=ud.u[fk].f(1),res=v*wpm;
+    rv.textContent=fmtN(res);
+    ru.textContent='กิโลกรัม ('+v+' เมตร)';
+    rf.innerHTML='<span class="fbadge">W=D²÷162×ยาว = '+wpm.toFixed(4)+' × '+v+' = '+fmtN(res)+' กก.</span>';
+  }else{
+    var base=ud.u[fk].f(v),factor=ud.u[tk].f(1),res=base/factor;
+    rv.textContent=fmtN(res); ru.textContent=ud.u[tk].n;
+    if(fk!==tk){var conv=ud.u[fk].f(1)/factor;rf.innerHTML='<span class="fbadge">1 '+ud.u[fk].n.split('(')[0].trim()+' = '+fmtN(conv)+' '+ud.u[tk].n.split('(')[0].trim()+'</span>';}
+    else rf.innerHTML='';
+  }
+}
+
+function fmtN(n){
+  if(!isFinite(n)) return 'Error';
+  if(n===0) return '0';
+  if(Math.abs(n)<0.0001||Math.abs(n)>=1e10) return n.toExponential(4);
+  return parseFloat(n.toPrecision(7)).toString();
+}
+
+function swapU(){var f=document.getElementById('uFrom'),t=document.getElementById('uTo'),tmp=f.value;f.value=t.value;t.value=tmp;doCalc();}
+
+function clearF(){
+  document.getElementById('inVal').value='';
+  document.getElementById('rval').textContent='—';
+  document.getElementById('runit').textContent='กรุณากรอกค่า';
+  document.getElementById('rfml').innerHTML='';
+}
+
+function setQ(v,t,f,to){
+  document.getElementById('uType').value=t; updateUnits();
+  setTimeout(function(){document.getElementById('inVal').value=v;document.getElementById('uFrom').value=f;document.getElementById('uTo').value=to;doCalc();showTab('conv');},60);
+}
+
+function renderFml(type){
+  var titles={length:'📏 สูตรเกี่ยวกับความยาว',area:'⬛ สูตรเกี่ยวกับพื้นที่',
+    volume:'📦 สูตรเกี่ยวกับปริมาตร',weight:'⚖️ สูตรเกี่ยวกับน้ำหนัก',
+    pressure:'💨 สูตรเกี่ยวกับแรงดัน',force:'💪 สูตรเกี่ยวกับแรง',steel:'🔩 สูตรเหล็กเส้น'};
+  document.getElementById('fmlTitle').textContent=titles[type]||'📐 สูตรที่เกี่ยวข้อง';
+  var data=FML[type]||[];
+  document.getElementById('fmlGrid').innerHTML=data.map(function(it){
+    return '<div class="fml-item"><div class="fh">'+it.h+'</div><div class="fe">'+it.e+'</div>'+(it.d?'<div class="fd">'+it.d+'</div>':'')+'</div>';
+  }).join('');
+}
+
+function renderQref(type){
+  var el=document.getElementById('qref'),d=QREF[type];
+  if(!d){el.innerHTML='<p style="color:var(--text2);font-size:.8rem">ไม่มีตารางอ้างอิง</p>';return;}
+  var h='<div class="table-responsive"><table class="table table-sm htbl"><tbody>';
+  d.forEach(function(r){h+='<tr>'+r.map(function(c,i){return '<td'+(i===0?' style="color:var(--accent);font-weight:700"':'')+'>'+c+'</td>';}).join('')+'</tr>';});
+  el.innerHTML=h+'</tbody></table></div>';
+}
+
+function getRecs(){try{return JSON.parse(localStorage.getItem('cstrRecs'))||[];}catch(e){return[];}}
+
+function saveRec(){
+  var t=document.getElementById('uType').value,v=parseFloat(document.getElementById('inVal').value);
+  var fk=document.getElementById('uFrom').value,tk=document.getElementById('uTo').value;
+  var res=document.getElementById('rval').textContent;
+  if(isNaN(v)||res==='—'){toast('⚠️ กรุณากรอกค่าก่อนบันทึก');return;}
+  var ud=U[t],recs=getRecs();
+  recs.unshift({id:Date.now(),dt:new Date().toLocaleString('th-TH'),type:ud.lbl,val:v,fromU:ud.u[fk].n,res:res,toU:ud.steel?'กก.':ud.u[tk].n});
+  localStorage.setItem('cstrRecs',JSON.stringify(recs));
+  renderHist(); toast('✅ บันทึกสำเร็จ!');
+}
+
+function renderHist(){
+  var recs=getRecs(),tb=document.getElementById('htbody'),sm=document.getElementById('hsum');
+  if(!recs.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text2)">ยังไม่มีข้อมูล</td></tr>';sm.textContent='';return;}
+  tb.innerHTML=recs.map(function(r,i){
+    return '<tr><td>'+(i+1)+'</td><td style="white-space:nowrap">'+r.dt+'</td><td>'+r.type+'</td>'
+      +'<td style="font-family:monospace">'+r.val+'</td><td>'+r.fromU+'</td>'
+      +'<td style="font-family:monospace;color:var(--accent2)">'+r.res+'</td><td>'+r.toU+'</td>'
+      +'<td><button onclick="delRec('+r.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:.1rem .3rem;font-size:.95rem">✕</button></td></tr>';
+  }).join('');
+  sm.textContent='ทั้งหมด '+recs.length+' รายการ';
+}
+
+function delRec(id){var recs=getRecs().filter(function(r){return r.id!==id;});localStorage.setItem('cstrRecs',JSON.stringify(recs));renderHist();toast('🗑️ ลบแล้ว');}
+
+function clrHist(){if(!confirm('ต้องการลบประวัติทั้งหมดหรือไม่?'))return;localStorage.removeItem('cstrRecs');renderHist();toast('🗑️ ล้างข้อมูลแล้ว');}
+
+function expCSV(){
+  var recs=getRecs();if(!recs.length){toast('⚠️ ไม่มีข้อมูล');return;}
+  var hdr=['#','วันที่/เวลา','ประเภท','ค่าต้นทาง','หน่วยต้น','ผลลัพธ์','หน่วยผล'];
+  var rows=recs.map(function(r,i){return[i+1,r.dt,r.type,r.val,r.fromU,r.res,r.toU];});
+  var csv='\uFEFF'+[hdr].concat(rows).map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  dlFile(csv,'construction-records.csv','text/csv;charset=utf-8;');toast('📄 Export CSV สำเร็จ!');
+}
+
+function expJSON(){
+  var recs=getRecs();if(!recs.length){toast('⚠️ ไม่มีข้อมูล');return;}
+  dlFile(JSON.stringify(recs,null,2),'construction-records.json','application/json');toast('📋 Export JSON สำเร็จ!');
+}
+
+function dlFile(content,name,type){
+  var blob=new Blob([content],{type:type}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+}
+
+var cExpr='';
+function cSan(e){return e.replace(/log10\(/g,'Math.log10(').replace(/log\(/g,'Math.log(').replace(/sin\(/g,'Math.sin(').replace(/cos\(/g,'Math.cos(').replace(/tan\(/g,'Math.tan(').replace(/sqrt\(/g,'Math.sqrt(').replace(/pow\(/g,'Math.pow(');}
+function cPrev(){try{var r=eval(cSan(cExpr));if(isFinite(r))document.getElementById('cres').textContent=fmtN(r);}catch(e){}}
+function cIn(ch){cExpr+=ch;document.getElementById('cexpr').textContent=cExpr;cPrev();}
+function cFn(fn){cExpr+=fn;document.getElementById('cexpr').textContent=cExpr;}
+function cClr(){cExpr='';document.getElementById('cexpr').textContent='';document.getElementById('cres').textContent='0';}
+function cDel(){cExpr=cExpr.slice(0,-1);document.getElementById('cexpr').textContent=cExpr;if(!cExpr){document.getElementById('cres').textContent='0';return;}cPrev();}
+function cEq(){
+  if(!cExpr)return;
+  try{
+    var r=eval(cSan(cExpr)),rs=fmtN(r);
+    var hi=document.getElementById('chist'),d=document.createElement('div');
+    d.className='fcard static';
+    d.innerHTML='<div style="font-family:monospace;font-size:.76rem;color:var(--text2)">'+cExpr+'</div><div style="font-family:monospace;color:var(--accent2);font-size:.92rem">= '+rs+'</div>';
+    if(hi.querySelector('p'))hi.innerHTML='';
+    hi.prepend(d);
+    cExpr=rs;document.getElementById('cres').textContent=rs;document.getElementById('cexpr').textContent='';
+  }catch(e){document.getElementById('cres').textContent='Error';cExpr='';document.getElementById('cexpr').textContent='';}
+}
+function copyCres(){var t=document.getElementById('cres').textContent;if(navigator.clipboard)navigator.clipboard.writeText(t);toast('📋 คัดลอก: '+t);}
+
+function calcStl(){
+  var d=parseFloat(document.getElementById('sDia').value);
+  var l=parseFloat(document.getElementById('sLen').value)||0;
+  var q=parseFloat(document.getElementById('sQty').value)||1;
+  var wpm=(d*d)/162,tot=wpm*l*q;
+  document.getElementById('sPerM').textContent=wpm.toFixed(4)+' กก./ม.';
+  document.getElementById('sTotal').textContent=fmtN(tot)+' กก.';
+  document.getElementById('sFml').textContent=d+'²÷162='+wpm.toFixed(4)+' × '+l+' ม. × '+q+' เส้น';
+}
+
+var TABS=['conv','form','calc','hist'];
+function showTab(n){
+  TABS.forEach(function(t){document.getElementById('tab-'+t).classList.remove('show');});
+  document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('act');});
+  document.getElementById('tab-'+n).classList.add('show');
+  document.querySelectorAll('.ntab')[TABS.indexOf(n)].classList.add('act');
+  if(n==='hist')renderHist();
+}
+
+var isDark=true;
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('themeBtn').textContent=isDark?'🌙 Dark':'☀️ Light';
+  localStorage.setItem('cstrTheme',isDark?'dark':'light');
+}
+(function(){
+  var s=localStorage.getItem('cstrTheme');
+  if(s==='light'){isDark=false;document.documentElement.setAttribute('data-theme','light');document.getElementById('themeBtn').textContent='☀️ Light';}
+})();
+
+function toast(msg){
+  document.getElementById('toastMsg').textContent=msg;
+  var t=document.getElementById('toast');t.style.display='block';
+  clearTimeout(t._tm);t._tm=setTimeout(function(){t.style.display='none';},2400);
+}
+
+document.addEventListener('keydown',function(e){
+  if(document.querySelector('.pane.show').id==='tab-calc'){
+    if('0123456789.+-*/%()'.indexOf(e.key)>=0)cIn(e.key);
+    else if(e.key==='Enter')cEq();
+    else if(e.key==='Backspace')cDel();
+    else if(e.key==='Escape')cClr();
+  }
+});
+
+updateUnits();
+calcStl();
+</script>
+</body>
+</html>

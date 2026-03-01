@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RC Design (SDM)</title>
+    
+    <!-- นำเข้า Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    
+    <!-- นำเข้า FontAwesome สำหรับไอคอน -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- นำเข้า React และ Babel สำหรับรัน JSX ในบราวเซอร์ -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @media print {
+            @page { size: A4; margin: 15mm; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; }
+            .no-print { display: none !important; }
+            .print-full { width: 100% !important; max-width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+            .dark { color: black !important; background: white !important; }
+            .dark .bg-slate-800 { background: #f8fafc !important; color: black !important; }
+            .dark .text-slate-200 { color: #334155 !important; }
+            .dark .border-slate-700 { border-color: #e2e8f0 !important; }
+            .print-calc-block { border: 1px solid #e2e8f0; background: #f8fafc; color: #000; break-inside: avoid; }
+            .print-svg-container { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 transition-colors duration-200">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const Calculator = ({size, className}) => <i className={`fa-solid fa-calculator ${className||''}`} style={{fontSize: size}}></i>;
+        const Layers = ({size, className}) => <i className={`fa-solid fa-layer-group ${className||''}`} style={{fontSize: size}}></i>;
+        const Box = ({size, className}) => <i className={`fa-solid fa-cube ${className||''}`} style={{fontSize: size}}></i>;
+        const Columns = ({size, className}) => <i className={`fa-solid fa-table-columns ${className||''}`} style={{fontSize: size}}></i>;
+        const PanelBottom = ({size, className}) => <i className={`fa-solid fa-building ${className||''}`} style={{fontSize: size}}></i>;
+        const AlertTriangle = ({size, className}) => <i className={`fa-solid fa-triangle-exclamation ${className||''}`} style={{fontSize: size}}></i>;
+        const CheckCircle2 = ({size, className}) => <i className={`fa-solid fa-circle-check ${className||''}`} style={{fontSize: size}}></i>;
+        const Moon = ({size, className}) => <i className={`fa-solid fa-moon ${className||''}`} style={{fontSize: size}}></i>;
+        const Sun = ({size, className}) => <i className={`fa-solid fa-sun ${className||''}`} style={{fontSize: size}}></i>;
+        const Printer = ({size, className}) => <i className={`fa-solid fa-print ${className||''}`} style={{fontSize: size}}></i>;
+        const ChevronDown = ({size, className}) => <i className={`fa-solid fa-chevron-down ${className||''}`} style={{fontSize: size}}></i>;
+        const ChevronUp = ({size, className}) => <i className={`fa-solid fa-chevron-up ${className||''}`} style={{fontSize: size}}></i>;
+        const FileText = ({size, className}) => <i className={`fa-solid fa-file-lines ${className||''}`} style={{fontSize: size}}></i>;
+
+        const sdmCalc = {
+            getBeta1: (fc) => Math.max(0.65, Math.min(0.85, 0.85 - 0.05 * ((fc - 280) / 70))),
+            getMaxRho: (fc, fy) => 0.85 * sdmCalc.getBeta1(fc) * (fc / fy) * (0.003 / (0.003 + 0.005)),
+            getMinRho: (fc, fy) => Math.max(14 / fy, (0.8 * Math.sqrt(fc)) / fy),
+            getRhoFromMoment: (Mu_kgm, b_cm, d_cm, fc, fy) => {
+                const Rn = Mu_kgm / (0.9 * b_cm * Math.pow(d_cm, 2));
+                const m = fy / (0.85 * fc);
+                const underRoot = 1 - ((2 * m * Rn) / fy);
+                return underRoot < 0 ? -1 : (1 / m) * (1 - Math.sqrt(underRoot));
+            },
+            getVc: (fc) => 0.53 * Math.sqrt(fc)
+        };
+
+        const REBARS = [
+            { name: 'RB6', size: 6, area: 0.283 }, { name: 'RB9', size: 9, area: 0.636 },
+            { name: 'DB12', size: 12, area: 1.131 }, { name: 'DB16', size: 16, area: 2.011 },
+            { name: 'DB20', size: 20, area: 3.142 }, { name: 'DB25', size: 25, area: 4.909 },
+        ];
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('beam');
+            const [isDarkMode, setIsDarkMode] = useState(false);
+
+            useEffect(() => {
+                if (isDarkMode) {
+                    document.body.classList.add('dark', 'bg-slate-900', 'text-slate-200');
+                    document.body.classList.remove('bg-slate-50', 'text-slate-800');
+                } else {
+                    document.body.classList.remove('dark', 'bg-slate-900', 'text-slate-200');
+                    document.body.classList.add('bg-slate-50', 'text-slate-800');
+                }
+            }, [isDarkMode]);
+
+            const [materials, setMaterials] = useState({ fc: 240, fyMain: 4000, fyTemp: 2400 });
+            const handleMaterialChange = (e) => setMaterials({ ...materials, [e.target.name]: parseFloat(e.target.value) || 0 });
+            const handlePrint = () => setTimeout(() => window.print(), 150);
+
+            return (
+                <div className="font-sans">
+                    <header className="bg-slate-900 dark:bg-black text-white p-4 shadow-md no-print">
+                        <div className="max-w-6xl mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Calculator size={32} className="text-blue-400" />
+                                <div><h1 className="text-2xl font-bold tracking-tight">RC Design (SDM)</h1><p className="text-sm text-slate-400">อ้างอิงมาตรฐาน วสท. 011008-21 (วิธีกำลัง)</p></div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition-colors flex items-center justify-center w-10 h-10" title="Toggle Light/Dark Mode">
+                                    {isDarkMode ? <Sun size={20} className="text-yellow-400"/> : <Moon size={20} className="text-blue-200"/>}
+                                </button>
+                                <button onClick={handlePrint} className="p-2 bg-blue-600 hover:bg-blue-500 rounded-full transition-colors text-white flex items-center justify-center w-10 h-10" title="Print to PDF (หรือกด Ctrl+P)">
+                                    <Printer size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto p-4 flex flex-col md:flex-row gap-6 mt-4">
+                        <aside className="w-full md:w-64 shrink-0 flex flex-col gap-2 no-print">
+                            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+                                <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">กำลังวัสดุ (Materials)</h2>
+                                <div className="space-y-3">
+                                    <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">fc' (ksc)</label><input type="number" name="fc" value={materials.fc} onChange={handleMaterialChange} className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-colors" /></div>
+                                    <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">fy เหล็กหลัก (ksc)</label><input type="number" name="fyMain" value={materials.fyMain} onChange={handleMaterialChange} className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-colors" /></div>
+                                    <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">fy เหล็กปลอก/กันร้าว (ksc)</label><input type="number" name="fyTemp" value={materials.fyTemp} onChange={handleMaterialChange} className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-colors" /></div>
+                                </div>
+                            </div>
+                            <nav className="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
+                                <NavButton active={activeTab === 'slab'} onClick={() => setActiveTab('slab')} icon={<Layers size={18}/>} label="แผ่นพื้น (Slab)" />
+                                <NavButton active={activeTab === 'beam'} onClick={() => setActiveTab('beam')} icon={<Box size={18}/>} label="คาน (Beam)" />
+                                <NavButton active={activeTab === 'column'} onClick={() => setActiveTab('column')} icon={<Columns size={18}/>} label="เสา (Column)" />
+                                <NavButton active={activeTab === 'footing'} onClick={() => setActiveTab('footing')} icon={<PanelBottom size={18}/>} label="ฐานราก (Footing)" />
+                            </nav>
+                        </aside>
+
+                        <section className="print-full flex-1 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 min-h-[600px] transition-colors">
+                            {activeTab === 'slab' && <SlabModule materials={materials} />}
+                            {activeTab === 'beam' && <BeamModule materials={materials} />}
+                            {activeTab === 'column' && <ColumnModule materials={materials} />}
+                            {activeTab === 'footing' && <FootingModule materials={materials} />}
+                        </section>
+                    </main>
+                </div>
+            );
+        }
+
+        function NavButton({ active, onClick, icon, label }) {
+            const activeClass = 'bg-blue-600 text-white shadow-md';
+            const inactiveClass = 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700';
+            return (
+                <button onClick={onClick} className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${active ? activeClass : inactiveClass}`}>
+                    {icon}{label}
+                </button>
+            );
+        }
+
+        function CalcToggleBtn({ show, onClick }) {
+            return (
+                <button onClick={onClick} className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-800 no-print">
+                    <FileText size={14} />{show ? 'ซ่อนวิธีทำ' : 'แสดงวิธีคำนวณ'}{show ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+            );
+        }
+
+        function DisclaimerNote() {
+            return (
+                <div className="mt-4 pt-3 border-t border-slate-600 text-[10px] text-slate-400 space-y-1 leading-relaxed">
+                    <p className="font-semibold text-slate-300">หมายเหตุ:</p>
+                    <ol className="list-decimal list-inside space-y-0.5">
+                        <li>ผู้ใช้ควรตรวจสอบความถูกต้องของข้อมูลก่อนใช้งานทุกครั้ง</li>
+                        <li>ความผิดพลาดที่เกิดขึ้นจากการนำโปรแกรมคำนวณนี้ทั้งทางตรงและทางอ้อม ผู้เขียนจะไม่ขอรับผิดชอบใดๆ ทั้งสิ้น โดยผู้เขียนถือว่าท่านได้พิจารณาโดยรอบคอบแล้วว่าโปรแกรมคำนวณมีความถูกต้องก่อนใช้งาน</li>
+                    </ol>
+                </div>
+            );
+        }
+
+        // --- ส่วนวาดหน้าตัด (SVG Components) ---
+        const SvgDefs = () => (
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L0,6 L9,3 z" fill="currentColor" />
+                </marker>
+                <marker id="arrow-start" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto" markerUnits="strokeWidth">
+                    <path d="M9,0 L9,6 L0,3 z" fill="currentColor" />
+                </marker>
+            </defs>
+        );
+
+        function BeamSectionSVG({ b, h, numBars, mainBarName, stirrupName, spacing }) {
+            const maxDim = Math.max(b, h);
+            const scale = 200 / maxDim; // Fit inside 200x200 area
+            const w = b * scale;
+            const H = h * scale;
+            const cx = 150, cy = 150;
+            const x = cx - w/2, y = cy - H/2;
+            const cov = 3.5 * scale; // assume ~3.5cm cover visually
+            
+            // Rebar dots
+            const barSpacing = (w - 2*cov) / (numBars > 1 ? numBars - 1 : 1);
+            const dots = Array.from({length: numBars}).map((_, i) => (
+                <circle key={i} cx={x + cov + i*barSpacing} cy={y + H - cov} r={4} className="fill-blue-600 dark:fill-blue-400" />
+            ));
+
+            return (
+                <div className="flex flex-col items-center print-svg-container my-4">
+                    <svg viewBox="0 0 300 300" className="w-full max-w-[250px] h-auto text-slate-600 dark:text-slate-400">
+                        <SvgDefs />
+                        {/* Concrete */}
+                        <rect x={x} y={y} width={w} height={H} className="fill-slate-200 dark:fill-slate-800 stroke-slate-500 dark:stroke-slate-400" strokeWidth="2" />
+                        {/* Stirrup */}
+                        <rect x={x+cov-4} y={y+cov-4} width={w-2*cov+8} height={H-2*cov+8} fill="none" className="stroke-emerald-500 dark:stroke-emerald-400" strokeWidth="2" rx="3" />
+                        {/* Hanger Bars */}
+                        <circle cx={x+cov} cy={y+cov} r={3} className="fill-slate-400" />
+                        <circle cx={x+w-cov} cy={y+cov} r={3} className="fill-slate-400" />
+                        {/* Main Bars */}
+                        {dots}
+                        {/* Dimensions */}
+                        <line x1={x} y1={y-15} x2={x+w} y2={y-15} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={cx} y={y-20} fontSize="12" fill="currentColor" textAnchor="middle">{b} cm</text>
+                        
+                        <line x1={x+w+15} y1={y} x2={x+w+15} y2={y+H} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={x+w+25} y={cy} fontSize="12" fill="currentColor" dominantBaseline="central">{h} cm</text>
+                    </svg>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
+                        <span className="text-blue-600 dark:text-blue-400 font-bold">{numBars}-{mainBarName}</span> <br/>
+                        <span className="text-emerald-600 dark:text-emerald-400">ปลอก {stirrupName} @ {spacing} cm</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function ColumnSectionSVG({ b, h, type, numBars, mainBarName }) {
+            const maxDim = Math.max(b, h);
+            const scale = 200 / maxDim;
+            const w = b * scale;
+            const H = h * scale;
+            const cx = 150, cy = 150;
+            const x = cx - w/2, y = cy - H/2;
+            const cov = 3.5 * scale;
+
+            let rebars = [];
+            if (type === 'spiral') {
+                const r = Math.min(w, H)/2;
+                const stirrupR = r - cov;
+                for (let i=0; i<numBars; i++) {
+                    const angle = (i * 2 * Math.PI) / numBars;
+                    rebars.push(<circle key={i} cx={cx + stirrupR * Math.cos(angle)} cy={cy + stirrupR * Math.sin(angle)} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                }
+            } else {
+                // Tied: Simplified visualization (corners + edges)
+                rebars.push(<circle key="tl" cx={x+cov} cy={y+cov} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                rebars.push(<circle key="tr" cx={x+w-cov} cy={y+cov} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                rebars.push(<circle key="bl" cx={x+cov} cy={y+H-cov} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                rebars.push(<circle key="br" cx={x+w-cov} cy={y+H-cov} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                if (numBars > 4) {
+                    rebars.push(<circle key="m1" cx={cx} cy={y+cov} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                    rebars.push(<circle key="m2" cx={cx} cy={y+H-cov} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                }
+                if (numBars > 6) {
+                    rebars.push(<circle key="m3" cx={x+cov} cy={cy} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                    rebars.push(<circle key="m4" cx={x+w-cov} cy={cy} r={4} className="fill-amber-600 dark:fill-amber-400" />);
+                }
+            }
+
+            return (
+                <div className="flex flex-col items-center print-svg-container my-4">
+                    <svg viewBox="0 0 300 300" className="w-full max-w-[250px] h-auto text-slate-600 dark:text-slate-400">
+                        <SvgDefs />
+                        {type === 'tied' ? (
+                            <>
+                                <rect x={x} y={y} width={w} height={H} className="fill-slate-200 dark:fill-slate-800 stroke-slate-500 dark:stroke-slate-400" strokeWidth="2" />
+                                <rect x={x+cov-4} y={y+cov-4} width={w-2*cov+8} height={H-2*cov+8} fill="none" className="stroke-slate-400 dark:stroke-slate-500" strokeWidth="1.5" rx="3" />
+                            </>
+                        ) : (
+                            <>
+                                <circle cx={cx} cy={cy} r={Math.min(w,H)/2} className="fill-slate-200 dark:fill-slate-800 stroke-slate-500 dark:stroke-slate-400" strokeWidth="2" />
+                                <circle cx={cx} cy={cy} r={Math.min(w,H)/2 - cov + 4} fill="none" className="stroke-slate-400 dark:stroke-slate-500" strokeWidth="1.5" />
+                            </>
+                        )}
+                        {rebars}
+                        {/* Dimensions */}
+                        <line x1={x} y1={y-15} x2={x+w} y2={y-15} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={cx} y={y-20} fontSize="12" fill="currentColor" textAnchor="middle">{b} cm</text>
+                        <line x1={x+w+15} y1={y} x2={x+w+15} y2={y+H} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={x+w+25} y={cy} fontSize="12" fill="currentColor" dominantBaseline="central">{h} cm</text>
+                    </svg>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
+                        <span className="text-amber-600 dark:text-amber-400 font-bold">{numBars} เส้น - {mainBarName}</span> <br/>
+                        <span>{type === 'tied' ? 'เสาปลอกเดี่ยว' : 'เสาปลอกเกลียว'}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function FootingSectionSVG({ B, h, colSize, mainBarName, spacing }) {
+            const scale = 200 / B; 
+            const w = B * scale;
+            const h_foot = h/100 * scale; 
+            const col_w = (colSize/100) * scale;
+            const cx = 150;
+            const y_base = 250;
+            
+            return (
+                <div className="flex flex-col items-center print-svg-container my-4">
+                    <svg viewBox="0 0 300 300" className="w-full max-w-[250px] h-auto text-slate-600 dark:text-slate-400">
+                        <SvgDefs />
+                        {/* Footing Pad */}
+                        <rect x={cx - w/2} y={y_base - h_foot} width={w} height={h_foot} className="fill-slate-200 dark:fill-slate-800 stroke-slate-500 dark:stroke-slate-400" strokeWidth="2" />
+                        {/* Column Stub */}
+                        <rect x={cx - col_w/2} y={y_base - h_foot - 60} width={col_w} height={60} className="fill-slate-200 dark:fill-slate-800 stroke-slate-500 dark:stroke-slate-400" strokeWidth="2" borderBottom="none" />
+                        <line x1={cx - col_w/2} y1={y_base - h_foot} x2={cx + col_w/2} y2={y_base - h_foot} stroke="currentColor" strokeDasharray="4" strokeWidth="1"/>
+                        
+                        {/* Rebar grid (bottom) */}
+                        <line x1={cx - w/2 + 10} y1={y_base - 10} x2={cx + w/2 - 10} y2={y_base - 10} className="stroke-indigo-600 dark:stroke-indigo-400" strokeWidth="3" />
+                        {Array.from({length: 9}).map((_, i) => (
+                            <circle key={i} cx={(cx - w/2 + 10) + i*((w-20)/8)} cy={y_base - 15} r={2} className="fill-indigo-800 dark:fill-indigo-300" />
+                        ))}
+
+                        {/* Dimensions */}
+                        <line x1={cx - w/2} y1={y_base + 15} x2={cx + w/2} y2={y_base + 15} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={cx} y={y_base + 30} fontSize="12" fill="currentColor" textAnchor="middle">B = {B.toFixed(1)} m</text>
+                        <line x1={cx + w/2 + 15} y1={y_base - h_foot} x2={cx + w/2 + 15} y2={y_base} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={cx + w/2 + 25} y={y_base - h_foot/2} fontSize="12" fill="currentColor" dominantBaseline="central">h={h}cm</text>
+                    </svg>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">ตะแกรงล่าง 2 ทาง: {mainBarName} @ {spacing} cm</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function SlabSectionSVG({ h, mainBarName, tempBarName, spacingMain, spacingTemp }) {
+            const w = 240;
+            const h_scaled = h * 3; // exaggerate thickness slightly for visibility
+            const cx = 150, cy = 150;
+            const y = cy - h_scaled/2;
+            const x = cx - w/2;
+
+            return (
+                <div className="flex flex-col items-center print-svg-container my-4">
+                    <svg viewBox="0 0 300 300" className="w-full max-w-[250px] h-auto text-slate-600 dark:text-slate-400">
+                        <SvgDefs />
+                        {/* Slab Section */}
+                        <path d={`M ${x-20} ${y} L ${x+w+20} ${y} L ${x+w+20} ${y+h_scaled} L ${x-20} ${y+h_scaled} Z`} className="fill-slate-200 dark:fill-slate-800 stroke-slate-500 dark:stroke-slate-400" strokeWidth="2" />
+                        <path d={`M ${x-20} ${y} Q ${x-30} ${y+h_scaled/2} ${x-20} ${y+h_scaled}`} fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4"/>
+                        <path d={`M ${x+w+20} ${y} Q ${x+w+30} ${y+h_scaled/2} ${x+w+20} ${y+h_scaled}`} fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4"/>
+                        
+                        {/* Main Bar (dots) */}
+                        {Array.from({length: 10}).map((_, i) => (
+                            <circle key={i} cx={x + i*(w/9)} cy={y + h_scaled - 12} r={3} className="fill-blue-600 dark:fill-blue-400" />
+                        ))}
+                        {/* Temp Bar (line) */}
+                        <line x1={x-15} y1={y + h_scaled - 15} x2={x+w+15} y2={y + h_scaled - 15} className="stroke-emerald-500 dark:stroke-emerald-400" strokeWidth="2" />
+
+                        {/* Dimensions */}
+                        <line x1={x-40} y1={y} x2={x-40} y2={y+h_scaled} stroke="currentColor" strokeWidth="1" markerEnd="url(#arrow)" markerStart="url(#arrow-start)" />
+                        <text x={x-50} y={cy} fontSize="12" fill="currentColor" textAnchor="end" dominantBaseline="central">h={h}cm</text>
+                    </svg>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2 space-y-1">
+                        <div><span className="text-blue-600 dark:text-blue-400 font-bold">● เหล็กหลัก:</span> {mainBarName} @ {spacingMain} cm</div>
+                        <div><span className="text-emerald-600 dark:text-emerald-400 font-bold">— เหล็กกันร้าว:</span> {tempBarName} @ {spacingTemp} cm</div>
+                    </div>
+                </div>
+            );
+        }
+
+
+        // ==========================================
+        // Module 1: แผ่นพื้น (Slab) 
+        // ==========================================
+        function SlabModule({ materials, isDark }) {
+            const [showCalc, setShowCalc] = useState(false);
+            const [params, setParams] = useState({ type: 'one-way', S: 4.0, L: 5.0, LL: 200, SDL: 100, h: 15, cover: 2.5, rebarMainIdx: 2, rebarTempIdx: 1 });
+
+            const handleChange = (e) => setParams({ ...params, [e.target.name]: e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value });
+
+            const mainBar = REBARS[params.rebarMainIdx];
+            const tempBar = REBARS[params.rebarTempIdx];
+
+            const perimeter = 2 * (params.S + params.L); 
+            const min_h = Math.max(10, (perimeter * 100) / 180);
+            const isThicknessOK = params.h >= min_h;
+
+            const DL_slab = (params.h / 100) * 2400; 
+            const Wu = 1.4 * (DL_slab + params.SDL) + 1.7 * params.LL; 
+            const d = params.h - params.cover - (mainBar.size / 10 / 2); 
+
+            let Mu_short = 0, Mu_long = 0, isTwoWayValid = true;
+
+            if (params.type === 'one-way') {
+                Mu_short = (Wu * Math.pow(params.S, 2)) / 8; 
+            } else {
+                if (params.S / params.L < 0.5) isTwoWayValid = false; 
+                const r4 = Math.pow(params.L / params.S, 4);
+                Mu_short = (Wu * (r4 / (1 + r4)) * Math.pow(params.S, 2)) / 8;
+                Mu_long = (Wu * (1 / (1 + r4)) * Math.pow(params.L, 2)) / 8;
+            }
+
+            let rho_short = sdmCalc.getRhoFromMoment(Mu_short, 100, d, materials.fc, materials.fyMain);
+            let rho_long = params.type === 'two-way' ? sdmCalc.getRhoFromMoment(Mu_long, 100, d - (mainBar.size/10), materials.fc, materials.fyMain) : 0;
+            
+            const isSectionOK = rho_short !== -1 && (params.type === 'one-way' || rho_long !== -1);
+            const As_req_short = isSectionOK ? Math.max(rho_short, 0.0018) * 100 * d : 0;
+            const As_req_long = isSectionOK && params.type === 'two-way' ? Math.max(rho_long, 0.0018) * 100 * (d - (mainBar.size/10)) : 0;
+            
+            const spacing_short = isSectionOK ? Math.min(Math.floor((mainBar.area / As_req_short) * 100), params.h * 3, 45) : 0;
+            const spacing_long = isSectionOK && params.type === 'two-way' ? Math.min(Math.floor((mainBar.area / As_req_long) * 100), params.h * 3, 45) : 0;
+            const spacing_temp = Math.min(Math.floor((tempBar.area / (0.0018 * 100 * params.h)) * 100), params.h * 5, 45);
+
+            const inputClass = "w-full p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 transition-colors";
+
+            return (
+                <div className="animate-in fade-in duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-6 flex justify-between items-center">
+                        <span>ออกแบบแผ่นพื้น (Slab Design)</span><span className="text-sm font-normal text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">Wu = 1.4DL + 1.7LL</span>
+                    </h2>
+                    <div className="grid lg:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/50 p-2 rounded">ข้อมูลการออกแบบ (Inputs)</h3>
+                            <div className="mb-4"><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ประเภทแผ่นพื้น</label><select name="type" value={params.type} onChange={handleChange} className={inputClass}><option value="one-way">พื้นทางเดียว (One-way)</option><option value="two-way">พื้นสองทาง (Two-way)</option></select></div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ช่วงสั้น, S (m)</label><input type="number" name="S" value={params.S} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ช่วงยาว, L (m)</label><input type="number" name="L" value={params.L} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ความหนาพื้น, h (cm)</label><input type="number" name="h" value={params.h} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Live Load, LL (kg/m²)</label><input type="number" name="LL" value={params.LL} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Super DL (kg/m²)</label><input type="number" name="SDL" value={params.SDL} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ระยะหุ้ม, Cover (cm)</label><input type="number" name="cover" value={params.cover} onChange={handleChange} className={inputClass} /></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">เหล็กหลัก</label><select name="rebarMainIdx" value={params.rebarMainIdx} onChange={handleChange} className={inputClass}>{REBARS.map((r, i) => <option key={i} value={i}>{r.name}</option>)}</select></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">เหล็กกันร้าว</label><select name="rebarTempIdx" value={params.rebarTempIdx} onChange={handleChange} className={inputClass}>{REBARS.map((r, i) => <option key={i} value={i}>{r.name}</option>)}</select></div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700/50 p-2 rounded">
+                                <h3 className="font-semibold text-slate-700 dark:text-slate-300">ผลการคำนวณ (Results)</h3>
+                                <CalcToggleBtn show={showCalc} onClick={() => setShowCalc(!showCalc)} />
+                            </div>
+                            
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
+                                {!isThicknessOK && <div className="text-red-500 text-xs flex items-center gap-1"><AlertTriangle size={14}/> ความหนาน้อยกว่าเกณฑ์ (min = {min_h.toFixed(1)} cm)</div>}
+                                {!isSectionOK ? <div className="text-red-600 text-sm font-bold">หน้าตัดบางเกินไป รับโมเมนต์ไม่ได้</div> : (
+                                    <>
+                                        <SlabSectionSVG h={params.h} mainBarName={mainBar.name} tempBarName={tempBar.name} spacingMain={spacing_short} spacingTemp={spacing_temp} />
+                                        <div className="text-sm font-semibold mt-4 text-slate-700 dark:text-slate-300">สรุปการเสริมเหล็ก:</div>
+                                        <div className="text-sm text-blue-700 dark:text-blue-400">- ด้านสั้น: {mainBar.name} @ {spacing_short} cm (As={As_req_short.toFixed(2)})</div>
+                                        {params.type === 'two-way' && <div className="text-sm text-indigo-700 dark:text-indigo-400">- ด้านยาว: {mainBar.name} @ {spacing_long} cm (As={As_req_long.toFixed(2)})</div>}
+                                        <div className="text-sm text-emerald-700 dark:text-emerald-400">- กันร้าว: {tempBar.name} @ {spacing_temp} cm</div>
+                                    </>
+                                )}
+                            </div>
+                            {showCalc && (
+                                <div className="print-calc-block bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs md:text-sm space-y-2">
+                                    <div className="font-bold text-white border-b border-slate-600 pb-1 mb-2">--- รายการคำนวณ ---</div>
+                                    <div>Wu = 1.4({DL_slab.toFixed(1)}+{params.SDL}) + 1.7({params.LL}) = <span className="text-yellow-300">{Wu.toFixed(1)}</span> kg/m²</div>
+                                    <div>d = {params.h} - {params.cover} - {mainBar.size/10/2} = {d.toFixed(2)} cm</div>
+                                    <div>Mu (short) = {Mu_short.toFixed(1)} kg-m/m | As_req = {As_req_short.toFixed(2)} cm²</div>
+                                    <DisclaimerNote />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // Module 2: คาน (Singly Reinforced Beam)
+        // ==========================================
+        function BeamModule({ materials, isDark }) {
+            const [showCalc, setShowCalc] = useState(false);
+            const [params, setParams] = useState({ b: 20, h: 40, Mu: 5000, Vu: 4000, cover: 3.5, rebarMainIdx: 3, rebarStirrupIdx: 1 });
+
+            const handleChange = (e) => setParams({ ...params, [e.target.name]: parseFloat(e.target.value) || 0 });
+
+            const mainBar = REBARS[params.rebarMainIdx];
+            const stirrupBar = REBARS[params.rebarStirrupIdx];
+            const d = params.h - params.cover - (stirrupBar.size/10) - (mainBar.size/10/2); 
+            
+            let rho = sdmCalc.getRhoFromMoment(params.Mu, params.b, d, materials.fc, materials.fyMain);
+            const rhoMax = sdmCalc.getMaxRho(materials.fc, materials.fyMain);
+            const rhoMin = sdmCalc.getMinRho(materials.fc, materials.fyMain);
+            
+            let status = "OK";
+            if (rho === -1 || rho > rhoMax) status = "OVER"; 
+            
+            const As_req = status === "OK" ? Math.max(rho, rhoMin) * params.b * d : 0;
+            const num_main_bars = Math.max(2, Math.ceil(As_req / mainBar.area)); 
+
+            const phiV = 0.85;
+            const Vc = sdmCalc.getVc(materials.fc) * params.b * d; 
+            const phiVc = phiV * Vc;
+            const Vs_req = (params.Vu - phiVc) / phiV;
+            
+            let shearStatus = "OK"; let s_req = 0;
+            const Av = 2 * stirrupBar.area; 
+            
+            if (params.Vu > phiVc + phiV * 2.1 * Math.sqrt(materials.fc) * params.b * d) {
+                shearStatus = "OVER_SHEAR"; 
+            } else if (Vs_req > 0) {
+                s_req = Math.min((Av * materials.fyTemp * d) / Vs_req, d / 2, 60);
+            } else {
+                s_req = Math.min(d / 2, 60, (Av * materials.fyTemp) / (3.5 * params.b)); 
+            }
+
+            const inputClass = "w-full p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 transition-colors";
+
+            return (
+                <div className="animate-in fade-in duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-6">ออกแบบหน้าตัดคาน (Beam Section)</h2>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/50 p-2 rounded">ข้อมูลหน้าตัดและแรงประลัย</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ความกว้างคาน, b (cm)</label><input type="number" name="b" value={params.b} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ความลึกคาน, h (cm)</label><input type="number" name="h" value={params.h} onChange={handleChange} className={inputClass} /></div>
+                                <div className="col-span-2"><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">โมเมนต์ดัดประลัย, Mu (kg-m)</label><input type="number" name="Mu" value={params.Mu} onChange={handleChange} className={`${inputClass} bg-blue-50 dark:bg-blue-900/30`} /></div>
+                                <div className="col-span-2"><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">แรงเฉือนประลัย, Vu (kg)</label><input type="number" name="Vu" value={params.Vu} onChange={handleChange} className={`${inputClass} bg-emerald-50 dark:bg-emerald-900/30`} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">เลือกเหล็กยืนหลัก</label><select name="rebarMainIdx" value={params.rebarMainIdx} onChange={handleChange} className={inputClass}>{REBARS.map((r, i) => <option key={i} value={i}>{r.name}</option>)}</select></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">เลือกเหล็กปลอก</label><select name="rebarStirrupIdx" value={params.rebarStirrupIdx} onChange={handleChange} className={inputClass}>{REBARS.map((r, i) => <option key={i} value={i}>{r.name}</option>)}</select></div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700/50 p-2 rounded">
+                                <h3 className="font-semibold text-slate-700 dark:text-slate-300">ผลการออกแบบและหน้าตัด</h3>
+                                <CalcToggleBtn show={showCalc} onClick={() => setShowCalc(!showCalc)} />
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                                {status === "OVER" || shearStatus === "OVER_SHEAR" ? (
+                                    <div className="text-red-600 text-sm font-bold flex gap-2"><AlertTriangle size={18}/> หน้าตัดเล็กเกินไป รับแรงไม่ไหว</div>
+                                ) : (
+                                    <BeamSectionSVG b={params.b} h={params.h} numBars={num_main_bars} mainBarName={mainBar.name} stirrupName={stirrupBar.name} spacing={Math.floor(s_req)} />
+                                )}
+                            </div>
+                            {showCalc && (
+                                <div className="print-calc-block bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs md:text-sm space-y-2 mt-4">
+                                    <div className="font-bold text-white border-b border-slate-600 pb-1 mb-2">--- รายการคำนวณ ---</div>
+                                    <div>d = {d.toFixed(2)} cm</div>
+                                    <div>As_req = <span className="text-yellow-300">{As_req.toFixed(2)}</span> cm² ({num_main_bars} เส้น)</div>
+                                    <div>phi*Vc = <span className="text-yellow-300">{phiVc.toFixed(0)}</span> kg | Vs_req = {Vs_req > 0 ? Vs_req.toFixed(0) : 0} kg</div>
+                                    <div>s_req = <span className="text-yellow-300">{Math.floor(s_req)}</span> cm</div>
+                                    <DisclaimerNote />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // Module 3: เสา (Short Column)
+        // ==========================================
+        function ColumnModule({ materials, isDark }) {
+            const [showCalc, setShowCalc] = useState(false);
+            const [params, setParams] = useState({ b: 20, h: 20, Pu: 30000, type: 'tied', rebarMainIdx: 3, minSteelPercent: 1.0 });
+
+            const handleChange = (e) => setParams({ ...params, [e.target.name]: e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value });
+
+            const mainBar = REBARS[params.rebarMainIdx];
+            const Ag = params.b * params.h;
+            const phi = params.type === 'tied' ? 0.65 : 0.75; 
+            const alpha = params.type === 'tied' ? 0.80 : 0.85;
+            
+            const factor = phi * alpha;
+            const requiredCapacity = params.Pu / factor;
+            const Ast_req = (requiredCapacity - 0.85 * materials.fc * Ag) / (materials.fyMain - 0.85 * materials.fc);
+            const minAst = (params.minSteelPercent / 100) * Ag;
+            const maxAst = 0.08 * Ag; 
+
+            let finalAst = Ast_req; let status = "OK";
+            if (Ast_req < minAst) { finalAst = minAst; status = "MIN"; } 
+            else if (Ast_req > maxAst) { status = "OVER"; } 
+            else if (requiredCapacity > (0.85*materials.fc*Ag + materials.fyMain*maxAst)) { status = "CRUSHED"; }
+
+            let num_bars = Math.ceil(finalAst / mainBar.area);
+            num_bars = Math.max(params.type === 'spiral' ? 6 : 4, num_bars);
+            if (params.type === 'tied' && num_bars % 2 !== 0) num_bars += 1;
+
+            const inputClass = "w-full p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 transition-colors";
+
+            return (
+                <div className="animate-in fade-in duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-6">ออกแบบเสาสั้นรับแรงตามแกน (Short Column)</h2>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/50 p-2 rounded">หน้าตัดและน้ำหนักบรรทุก</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ความกว้าง, b (cm)</label><input type="number" name="b" value={params.b} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ความลึก, h (cm)</label><input type="number" name="h" value={params.h} onChange={handleChange} className={inputClass} /></div>
+                                <div className="col-span-2"><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">น้ำหนักบรรทุกตามแกนประลัย, Pu (kg)</label><input type="number" name="Pu" value={params.Pu} onChange={handleChange} className={`${inputClass} bg-amber-50 dark:bg-amber-900/30`} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ประเภทเสา</label><select name="type" value={params.type} onChange={handleChange} className={inputClass}><option value="tied">ปลอกเดี่ยว (Tied)</option><option value="spiral">ปลอกเกลียว (Spiral)</option></select></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">เลือกเหล็กยืน</label><select name="rebarMainIdx" value={params.rebarMainIdx} onChange={handleChange} className={inputClass}>{REBARS.map((r, i) => <option key={i} value={i}>{r.name}</option>)}</select></div>
+                                <div className="col-span-2 mt-2 border-t border-slate-200 dark:border-slate-700 pt-3"><label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">เปอร์เซ็นต์เหล็กเสริมขั้นต่ำ (%)</label><input type="number" step="0.1" name="minSteelPercent" value={params.minSteelPercent} onChange={handleChange} className={`${inputClass} border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20`} /></div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700/50 p-2 rounded">
+                                <h3 className="font-semibold text-slate-700 dark:text-slate-300">ผลการออกแบบและหน้าตัด</h3>
+                                <CalcToggleBtn show={showCalc} onClick={() => setShowCalc(!showCalc)} />
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                                {status === "CRUSHED" || status === "OVER" ? <div className="text-red-600 text-sm font-bold flex gap-2"><AlertTriangle size={18}/> หน้าตัดเล็กเกินไป รับแรงอัดไม่ไหว</div> : 
+                                (
+                                    <>
+                                        {status === "MIN" && <div className="text-xs text-emerald-500 mb-2 font-semibold">* ใช้เหล็กขั้นต่ำ {params.minSteelPercent}%</div>}
+                                        <ColumnSectionSVG b={params.b} h={params.h} type={params.type} numBars={num_bars} mainBarName={mainBar.name} />
+                                    </>
+                                )}
+                            </div>
+                            {showCalc && (
+                                <div className="print-calc-block bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs md:text-sm space-y-2 mt-4">
+                                    <div className="font-bold text-white border-b border-slate-600 pb-1 mb-2">--- รายการคำนวณ ---</div>
+                                    <div>Pu_req = Pu / (phi*alpha) = <span className="text-yellow-300">{requiredCapacity.toFixed(0)}</span> kg</div>
+                                    <div>Ast_req = <span className="text-yellow-300">{Ast_req.toFixed(2)}</span> cm²</div>
+                                    <div>Design Ast = <span className="text-yellow-300">{finalAst.toFixed(2)}</span> cm²</div>
+                                    <DisclaimerNote />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // Module 4: ฐานรากแผ่ (Spread Footing)
+        // ==========================================
+        function FootingModule({ materials, isDark }) {
+            const [showCalc, setShowCalc] = useState(false);
+            const [params, setParams] = useState({ Pdl: 15000, Pll: 10000, qa: 10000, h: 30, colSize: 20, rebarMainIdx: 2 });
+
+            const handleChange = (e) => setParams({ ...params, [e.target.name]: parseFloat(e.target.value) || 0 });
+
+            const mainBar = REBARS[params.rebarMainIdx];
+            const P_service = params.Pdl + params.Pll;
+            const Area_req = P_service / params.qa;
+            const B = Math.max(Math.ceil(Math.sqrt(Area_req) * 10) / 10, 1.0); 
+            const actualArea = B * B;
+
+            const Pu = 1.4 * params.Pdl + 1.7 * params.Pll;
+            const qu = Pu / actualArea; 
+            const d = params.h - 7.5; const d_m = d / 100; const c_m = params.colSize / 100; 
+
+            const bo = 4 * (c_m + d_m); 
+            const Vu_punching = Pu - (qu * Math.pow(c_m + d_m, 2)); 
+            const phiVc_punching = 0.85 * 1.06 * Math.sqrt(materials.fc) * (bo * 100) * d; 
+
+            const x_beam = (B / 2) - (c_m / 2) - d_m; 
+            const Vu_beam = x_beam > 0 ? qu * B * x_beam : 0; 
+            const phiVc_beam = 0.85 * 0.53 * Math.sqrt(materials.fc) * (B * 100) * d; 
+
+            const x_moment = (B / 2) - (c_m / 2); 
+            const Mu = qu * B * Math.pow(x_moment, 2) / 2; 
+            const Mu_per_m = Mu / B; 
+
+            let rho = sdmCalc.getRhoFromMoment(Mu_per_m, 100, d, materials.fc, materials.fyMain);
+            const As_req_per_m = Math.max(rho, 0.0018) * 100 * d;
+            const spacing = Math.min(Math.floor((mainBar.area / As_req_per_m) * 100), params.h * 3, 45);
+
+            const isPunchingOK = Vu_punching <= phiVc_punching;
+            const isBeamOK = Vu_beam <= phiVc_beam;
+
+            const inputClass = "w-full p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 transition-colors";
+
+            return (
+                <div className="animate-in fade-in duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-6 flex justify-between items-center">
+                        <span>ออกแบบฐานรากแผ่ (Spread Footing)</span><span className="text-sm font-normal text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">Pu = 1.4DL + 1.7LL</span>
+                    </h2>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/50 p-2 rounded">ข้อมูลน้ำหนักและดิน</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Dead Load (kg)</label><input type="number" name="Pdl" value={params.Pdl} onChange={handleChange} className={inputClass} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Live Load (kg)</label><input type="number" name="Pll" value={params.Pll} onChange={handleChange} className={inputClass} /></div>
+                                <div className="col-span-2"><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">กำลังรับน้ำหนักดินปลอดภัย, qa (kg/m²)</label><input type="number" name="qa" value={params.qa} onChange={handleChange} className={`${inputClass} bg-amber-50 dark:bg-amber-900/30`} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ความหนาฐานราก, h (cm)</label><input type="number" name="h" value={params.h} onChange={handleChange} className={`${inputClass} bg-blue-50 dark:bg-blue-900/30`} /></div>
+                                <div><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">ขนาดตอม่อ (cm)</label><input type="number" name="colSize" value={params.colSize} onChange={handleChange} className={inputClass} /></div>
+                                <div className="col-span-2"><label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">เลือกขนาดเหล็กตะแกรง</label><select name="rebarMainIdx" value={params.rebarMainIdx} onChange={handleChange} className={inputClass}>{REBARS.map((r, i) => <option key={i} value={i}>{r.name}</option>)}</select></div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700/50 p-2 rounded">
+                                <h3 className="font-semibold text-slate-700 dark:text-slate-300">ผลการออกแบบและหน้าตัด</h3>
+                                <CalcToggleBtn show={showCalc} onClick={() => setShowCalc(!showCalc)} />
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                                {(!isPunchingOK || !isBeamOK || rho === -1) ? (
+                                    <div className="text-red-600 font-bold flex gap-2"><AlertTriangle size={18}/> ความหนาไม่พอรับแรงเฉือน/โมเมนต์</div>
+                                ) : (
+                                    <FootingSectionSVG B={B} h={params.h} colSize={params.colSize} mainBarName={mainBar.name} spacing={spacing} />
+                                )}
+                            </div>
+                            {showCalc && (
+                                <div className="print-calc-block bg-slate-800 text-slate-200 p-4 rounded-lg font-mono text-xs md:text-sm space-y-2 mt-4">
+                                    <div className="font-bold text-white border-b border-slate-600 pb-1 mb-2">--- รายการคำนวณ ---</div>
+                                    <div>Area_req = {Area_req.toFixed(2)} m² | Use B = <span className="text-yellow-300">{B.toFixed(1)}</span> m</div>
+                                    <div>qu = <span className="text-yellow-300">{qu.toFixed(0)}</span> kg/m²</div>
+                                    <div>Vu_punch = {Vu_punching.toFixed(0)} kg | phi*Vc_punch = {phiVc_punching.toFixed(0)} kg</div>
+                                    <div>Vu_beam = {Vu_beam.toFixed(0)} kg | phi*Vc_beam = {phiVc_beam.toFixed(0)} kg</div>
+                                    <div>As_req_per_m = <span className="text-yellow-300">{As_req_per_m.toFixed(2)}</span> cm²/m</div>
+                                    <DisclaimerNote />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

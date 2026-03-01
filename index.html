@@ -34,6 +34,20 @@
       color: #718096;
     }
 
+    .section-label {
+      width: 100%;
+      max-width: 960px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #a0aec0;
+      margin-bottom: 16px;
+      margin-top: 36px;
+    }
+
+    .section-label:first-of-type { margin-top: 0; }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -74,6 +88,9 @@
     .icon-blue   { background: #ebf4ff; }
     .icon-green  { background: #e6fffa; }
     .icon-orange { background: #fffaf0; }
+    .icon-purple { background: #faf5ff; }
+    .icon-red    { background: #fff5f5; }
+    .icon-teal   { background: #e6fffa; }
 
     .card h2 {
       font-size: 1.1rem;
@@ -108,6 +125,9 @@
     .btn-blue   { background: #3b82f6; color: #fff; }
     .btn-green  { background: #10b981; color: #fff; }
     .btn-orange { background: #f97316; color: #fff; }
+    .btn-purple { background: #8b5cf6; color: #fff; }
+    .btn-red    { background: #ef4444; color: #fff; }
+    .btn-teal   { background: #14b8a6; color: #fff; }
 
     footer {
       margin-top: 64px;
@@ -123,6 +143,8 @@
     <p>เลือกเครื่องมือที่ต้องการใช้งาน</p>
   </header>
 
+  <!-- กลุ่ม Dashboard -->
+  <div class="section-label">📊 Dashboard & Tracking</div>
   <div class="grid">
 
     <a class="card" href="ARH114_Dashboard.html">
@@ -144,6 +166,33 @@
       <h2>Working Days Calculator</h2>
       <p>คำนวณจำนวนวันทำงาน หักวันหยุดและวันฝนตก เพื่อวางแผนงานก่อสร้างได้แม่นยำ</p>
       <span class="btn btn-orange">เปิดใช้งาน →</span>
+    </a>
+
+  </div>
+
+  <!-- กลุ่ม Design Tools -->
+  <div class="section-label">🔧 Design & Engineering Tools</div>
+  <div class="grid">
+
+    <a class="card" href="UnitConverter.html">
+      <div class="icon icon-purple">🔄</div>
+      <h2>Unit Converter</h2>
+      <p>แปลงหน่วยวัดต่าง ๆ ที่ใช้ในงานวิศวกรรมและก่อสร้าง ทั้งหน่วยความยาว น้ำหนัก และแรง</p>
+      <span class="btn btn-purple">เปิดใช้งาน →</span>
+    </a>
+
+    <a class="card" href="RDDesign_SDM.html">
+      <div class="icon icon-red">🏛️</div>
+      <h2>RD Design (SDM)</h2>
+      <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
+      <span class="btn btn-red">เปิดใช้งาน →</span>
+    </a>
+
+    <a class="card" href="SteelSectionDesign.html">
+      <div class="icon icon-teal">⚙️</div>
+      <h2>Steel Section Design</h2>
+      <p>ออกแบบและตรวจสอบหน้าตัดเหล็กรูปพรรณ สำหรับงานโครงสร้างเหล็ก</p>
+      <span class="btn btn-teal">เปิดใช้งาน →</span>
     </a>
 
   </div>
