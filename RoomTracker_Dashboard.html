@@ -57,7 +57,7 @@
   .progress-label { width: 190px; flex-shrink: 0; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .progress-bar-bg { flex: 1; height: 9px; background: #e8edf4; border-radius: 5px; overflow: hidden; }
   .progress-bar-fill { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
-  .progress-pct { width: 42px; text-align: right; font-weight: 600; color: #1a3a5c; font-size: 11px; }
+  .progress-pct { width: 62px; text-align: right; font-weight: 600; color: #1a3a5c; font-size: 11px; }
 
   /* FLOOR TABLE */
   .floor-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -208,14 +208,7 @@
       </button>
       <div class="gs-status" id="gs-status">ยังไม่ได้เชื่อมต่อ</div>
     </div>
-    <!-- xlsx Upload -->
-    <div>
-      <label class="upload-btn" title="เลือกไฟล์ RoomTracker.xlsx เพื่ออัปเดตข้อมูล">
-        <span>📂</span> โหลดจาก .xlsx
-        <input type="file" id="xlsx-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
-      </label>
-      <div class="upload-status" id="upload-status">ใช้ข้อมูลเริ่มต้น</div>
-    </div>
+
     <div class="updated-info" id="updated-info">อัปเดตล่าสุด: 1 มีนาคม 2569<br>Building A: 187 ห้อง | Building B: 181 ห้อง</div>
   </div>
 </div>
@@ -288,9 +281,9 @@
       <div class="kpi-sub" id="kpi-b-sub">181 ห้อง ชั้น 2–8</div>
     </div>
     <div class="kpi-card teal">
-      <div class="kpi-label">รายการงาน</div>
-      <div class="kpi-value" style="color:#0891b2;" id="kpi-tasks">33</div>
-      <div class="kpi-sub">งาน + QC1, QC2, EndProduct</div>
+      <div class="kpi-label">ห้องที่ QC1 ผ่าน</div>
+      <div class="kpi-value" style="color:#0891b2;" id="kpi-tasks">0</div>
+      <div class="kpi-sub">ห้องที่ QC1 = 100%</div>
     </div>
   </div>
 
@@ -511,6 +504,7 @@ const DEFAULT_ROOMS = [
 //  GLOBAL STATE
 // ======================================================
 let allRooms = DEFAULT_ROOMS;
+let totalRoomsForCount = 368; // used for count display in work items
 let workItemData = DEFAULT_WORK_ITEMS;
 let floorData = DEFAULT_FLOOR;
 let roomTypeData = DEFAULT_TYPE;
@@ -619,7 +613,9 @@ function processWorkbook(wb, filename) {
   document.getElementById('kpi-overall').textContent = Math.round(avgAll*10)/10 + '%';
   document.getElementById('kpi-a').textContent = Math.round(avgA*10)/10 + '%';
   document.getElementById('kpi-b').textContent = Math.round(avgB*10)/10 + '%';
-  document.getElementById('kpi-tasks').textContent = TASK_COLS.length;
+  totalRoomsForCount = parsed.length;
+  const qc1Count = parsed.filter(r => (r.tasks['QC1'] || 0) >= 1).length;
+  document.getElementById('kpi-tasks').textContent = qc1Count;
   document.getElementById('kpi-a-sub').textContent = cntA + ' ห้อง';
   document.getElementById('kpi-b-sub').textContent = cntB + ' ห้อง';
   document.getElementById('total-count').textContent = totalRooms;
@@ -628,7 +624,7 @@ function processWorkbook(wb, filename) {
   const now = new Date();
   const thDate = now.toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
   document.getElementById('updated-info').innerHTML = `อัปเดตจาก: ${filename}<br>${thDate} &nbsp;|&nbsp; ${totalRooms} ห้อง`;
-  document.getElementById('upload-status').textContent = '✅ โหลดสำเร็จ';
+
   document.getElementById('banner-text').textContent = `✅ โหลดข้อมูลจาก "${filename}" สำเร็จ — ${totalRooms} ห้อง, ${TASK_COLS.length} รายการงาน`;
   document.getElementById('data-banner').classList.add('show');
 
@@ -673,13 +669,14 @@ function renderWorkItems() {
   c.innerHTML = '';
   workItemData.forEach(item => {
     const color = getBarColor(item.pct);
+    const roomCount = Math.round(item.pct / 100 * totalRoomsForCount);
     c.innerHTML += `
       <div class="progress-item">
         <div class="progress-label" title="${item.name}">${item.name}</div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" style="width:${Math.max(item.pct,0.3)}%;background:${color};"></div>
         </div>
-        <div class="progress-pct">${item.pct}%</div>
+        <div class="progress-pct">${roomCount} ห้อง</div>
       </div>`;
   });
 }
@@ -1126,7 +1123,9 @@ function processAppsScriptData(data) {
   document.getElementById('kpi-overall').textContent = Math.round(avgAll*10)/10 + '%';
   document.getElementById('kpi-a').textContent = Math.round(avgA*10)/10 + '%';
   document.getElementById('kpi-b').textContent = Math.round(avgB*10)/10 + '%';
-  document.getElementById('kpi-tasks').textContent = TASK_COLS.length;
+  totalRoomsForCount = parsed.length;
+  const qc1Count = parsed.filter(r => (r.tasks['QC1'] || 0) >= 1).length;
+  document.getElementById('kpi-tasks').textContent = qc1Count;
   document.getElementById('kpi-a-sub').textContent = cntA + ' ห้อง';
   document.getElementById('kpi-b-sub').textContent = cntB + ' ห้อง';
   document.getElementById('total-count').textContent = total;

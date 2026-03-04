@@ -69,9 +69,15 @@
       color: inherit;
     }
 
-    .card:hover {
+    .card:not(.disabled):hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .card.disabled {
+      opacity: 0.6;
+      cursor: default;
+      pointer-events: none;
     }
 
     .icon {
@@ -128,6 +134,7 @@
     .btn-purple { background: #8b5cf6; color: #fff; }
     .btn-red    { background: #ef4444; color: #fff; }
     .btn-teal   { background: #14b8a6; color: #fff; }
+    .btn-soon   { background: #e2e8f0; color: #94a3b8; cursor: default; }
 
     footer {
       margin-top: 64px;
@@ -181,12 +188,12 @@
       <span class="btn btn-purple">เปิดใช้งาน →</span>
     </a>
 
-    <a class="card" href="RDDesign_SDM.html">
+    <div class="card disabled">
       <div class="icon icon-red">🏛️</div>
       <h2>RD Design (SDM)</h2>
       <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
-      <span class="btn btn-red">เปิดใช้งาน →</span>
-    </a>
+      <span class="btn btn-soon">🕐 เร็วๆ นี้</span>
+    </div>
 
     <a class="card" href="SteelSectionDesign.html">
       <div class="icon icon-teal">⚙️</div>
