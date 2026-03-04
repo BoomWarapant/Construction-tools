@@ -95,6 +95,38 @@
   canvas { max-height: 260px; }
   .chart-wrap canvas { max-height: 260px; }
 
+  /* ===== GOOGLE SHEETS CONNECT ===== */
+  .gs-btn { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.5); color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; white-space: nowrap; }
+  .gs-btn:hover { background: rgba(255,255,255,0.3); border-color: white; }
+  .gs-btn.connected { background: rgba(34,197,94,0.35); border-color: #86efac; }
+  .gs-status { font-size: 11px; opacity: 0.8; margin-top: 3px; text-align: center; }
+  .gs-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; display: inline-block; }
+  .gs-dot.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+
+  /* MODAL OVERLAY */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: white; border-radius: 16px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal-title { font-size: 18px; font-weight: 700; color: #1a3a5c; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+  .step-list { list-style: none; counter-reset: step; margin-bottom: 20px; }
+  .step-list li { counter-increment: step; display: flex; gap: 12px; margin-bottom: 12px; font-size: 13px; color: #444; line-height: 1.5; }
+  .step-list li::before { content: counter(step); background: #2563a8; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-list code { background: #f0f4fb; padding: 1px 6px; border-radius: 4px; font-size: 12px; color: #2563a8; font-weight: 600; }
+  .url-input-wrap { display: flex; gap: 8px; margin-bottom: 10px; }
+  .url-input { flex: 1; padding: 10px 14px; border: 1.5px solid #dde3f0; border-radius: 8px; font-size: 13px; outline: none; }
+  .url-input:focus { border-color: #2563a8; box-shadow: 0 0 0 3px rgba(37,99,168,0.1); }
+  .btn-connect { background: #2563a8; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn-connect:hover { background: #1d4ed8; }
+  .btn-cancel { background: #f0f4fb; color: #666; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; width: 100%; }
+  .btn-cancel:hover { background: #e0e8f4; }
+  .connect-msg { font-size: 12px; min-height: 18px; margin-top: 4px; }
+  .connect-msg.err { color: #dc2626; }
+  .connect-msg.ok { color: #16a34a; }
+  .auto-refresh-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e8edf4; font-size: 12px; color: #666; }
+  .auto-refresh-row select { padding: 4px 8px; border: 1px solid #dde3f0; border-radius: 6px; font-size: 12px; }
+  .modal-divider { border: none; border-top: 1px solid #e8edf4; margin: 16px 0; }
+
   /* ===== ROOM FILTER SECTION ===== */
   .filter-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 20px; }
   .filter-section .card-title { margin-bottom: 14px; }
@@ -168,14 +200,60 @@
     <div class="subtitle">ติดตามความคืบหน้างานก่อสร้างและตกแต่งภายใน — Building A &amp; B</div>
   </div>
   <div class="header-right">
+    <!-- Google Sheets Connect Button -->
+    <div>
+      <button class="gs-btn" id="gs-btn" onclick="openGsModal()" title="เชื่อมต่อ Google Sheets โดยตรง">
+        <span class="gs-dot" id="gs-dot"></span>
+        🔗 Google Sheets
+      </button>
+      <div class="gs-status" id="gs-status">ยังไม่ได้เชื่อมต่อ</div>
+    </div>
+    <!-- xlsx Upload -->
     <div>
       <label class="upload-btn" title="เลือกไฟล์ RoomTracker.xlsx เพื่ออัปเดตข้อมูล">
-        <span>📂</span> โหลดข้อมูลจาก .xlsx
+        <span>📂</span> โหลดจาก .xlsx
         <input type="file" id="xlsx-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
       </label>
       <div class="upload-status" id="upload-status">ใช้ข้อมูลเริ่มต้น</div>
     </div>
     <div class="updated-info" id="updated-info">อัปเดตล่าสุด: 1 มีนาคม 2569<br>Building A: 187 ห้อง | Building B: 181 ห้อง</div>
+  </div>
+</div>
+
+<!-- GOOGLE SHEETS MODAL -->
+<div class="modal-overlay" id="gs-modal">
+  <div class="modal-box">
+    <div class="modal-title">🔗 เชื่อมต่อ Google Sheets</div>
+    <div class="modal-sub">ทำครั้งเดียว จากนั้น Dashboard จะดึงข้อมูลล่าสุดจาก Google Sheets ได้เลย</div>
+
+    <ol class="step-list">
+      <li>เปิด Google Sheet ของคุณ → คลิกเมนู <code>Extensions</code> → <code>Apps Script</code></li>
+      <li>ลบโค้ดเดิมออกทั้งหมด แล้ววางโค้ดจากไฟล์ <code>google_apps_script.js</code> ลงไป</li>
+      <li>กด <code>Ctrl+S</code> เพื่อบันทึก → คลิกปุ่ม <code>Deploy</code> → <code>New deployment</code></li>
+      <li>เลือก Type: <code>Web app</code> → Who has access: <code>Anyone</code> → คลิก <code>Deploy</code></li>
+      <li>คัดลอก URL ที่ได้ (ขึ้นต้นด้วย <code>https://script.google.com/macros/s/...</code>) แล้ววางด้านล่าง</li>
+    </ol>
+
+    <div class="url-input-wrap">
+      <input class="url-input" type="text" id="gs-url-input" placeholder="https://script.google.com/macros/s/XXXXX/exec">
+      <button class="btn-connect" onclick="connectGoogleSheets()">เชื่อมต่อ</button>
+    </div>
+    <div class="connect-msg" id="connect-msg"></div>
+
+    <div class="auto-refresh-row">
+      <span>🔄 Auto-refresh ทุก</span>
+      <select id="refresh-interval" onchange="setAutoRefresh()">
+        <option value="0">ปิด</option>
+        <option value="5">5 นาที</option>
+        <option value="10" selected>10 นาที</option>
+        <option value="30">30 นาที</option>
+        <option value="60">1 ชั่วโมง</option>
+      </select>
+      <span id="next-refresh-label" style="color:#aaa;"></span>
+    </div>
+
+    <hr class="modal-divider">
+    <button class="btn-cancel" onclick="closeGsModal()">ปิด</button>
   </div>
 </div>
 
@@ -876,6 +954,241 @@ updatePipelineChart();
 renderTopRooms(allRooms);
 document.getElementById('total-count').textContent = allRooms.length;
 applyFilters();
+
+// ======================================================
+//  GOOGLE SHEETS INTEGRATION (Apps Script JSONP)
+// ======================================================
+let gsScriptUrl = '';
+let autoRefreshTimer = null;
+let autoRefreshMinutes = 10;
+
+function openGsModal() {
+  const saved = localStorage.getItem('gs_script_url') || '';
+  document.getElementById('gs-url-input').value = saved;
+  document.getElementById('connect-msg').textContent = '';
+  document.getElementById('gs-modal').classList.add('show');
+}
+function closeGsModal() {
+  document.getElementById('gs-modal').classList.remove('show');
+}
+// Close modal on overlay click
+document.getElementById('gs-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeGsModal();
+});
+
+function connectGoogleSheets() {
+  const url = document.getElementById('gs-url-input').value.trim();
+  if (!url) { showConnectMsg('กรุณาวาง URL ของ Apps Script', 'err'); return; }
+  if (!url.includes('script.google.com')) { showConnectMsg('URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://script.google.com/macros/s/...', 'err'); return; }
+  showConnectMsg('⏳ กำลังเชื่อมต่อ...', '');
+  gsScriptUrl = url;
+  fetchFromGoogleSheets(function(ok, msg) {
+    if (ok) {
+      localStorage.setItem('gs_script_url', url);
+      showConnectMsg('✅ เชื่อมต่อสำเร็จ! Dashboard อัปเดตแล้ว', 'ok');
+      setGsConnected(true);
+      setAutoRefresh();
+      setTimeout(closeGsModal, 1500);
+    } else {
+      showConnectMsg('❌ ' + msg, 'err');
+    }
+  });
+}
+
+function fetchFromGoogleSheets(callback) {
+  const cbName = 'gs_cb_' + Date.now();
+  let done = false;
+  const timeout = setTimeout(function() {
+    if (!done) { done = true; cleanup(); if(callback) callback(false, 'หมดเวลา กรุณาตรวจสอบ URL และ Deploy ใหม่'); }
+  }, 15000);
+
+  function cleanup() {
+    clearTimeout(timeout);
+    delete window[cbName];
+    const el = document.getElementById(cbName);
+    if (el) el.remove();
+  }
+
+  window[cbName] = function(data) {
+    if (done) return;
+    done = true;
+    cleanup();
+    try {
+      processAppsScriptData(data);
+      if (callback) callback(true, 'ok');
+    } catch(e) {
+      if (callback) callback(false, 'แปลงข้อมูลไม่ได้: ' + e.message);
+    }
+  };
+
+  const script = document.createElement('script');
+  script.id = cbName;
+  script.src = gsScriptUrl + (gsScriptUrl.includes('?') ? '&' : '?') + 'callback=' + cbName + '&t=' + Date.now();
+  script.onerror = function() {
+    if (!done) { done = true; cleanup(); if(callback) callback(false, 'โหลดไม่ได้ กรุณาตรวจสอบ URL'); }
+  };
+  document.body.appendChild(script);
+}
+
+function processAppsScriptData(data) {
+  if (!data || !data.tracker) throw new Error('ไม่พบข้อมูล Tracker ใน Google Sheet');
+
+  const trackerRows = data.tracker;   // [[header...], [row1...], ...]
+  const roomDataRows = data.roomData || [];
+
+  // Build Room_Type map from RoomData sheet
+  let roomTypeMap = {};
+  if (roomDataRows.length > 1) {
+    const rdHeader = roomDataRows[0].map(h => String(h).trim());
+    const roomNoIdx = rdHeader.indexOf('Room_No');
+    const typeIdx   = rdHeader.indexOf('Room_Type');
+    for (let i = 1; i < roomDataRows.length; i++) {
+      const r = roomDataRows[i];
+      if (roomNoIdx >= 0 && typeIdx >= 0 && r[roomNoIdx])
+        roomTypeMap[String(r[roomNoIdx])] = String(r[typeIdx] || '—');
+    }
+  }
+
+  // Parse Tracker sheet
+  const header = trackerRows[0].map(h => String(h).trim());
+  const roomNoIdx  = header.indexOf('Room_No');
+  const buildingIdx= header.indexOf('Building');
+  const floorIdx   = header.indexOf('Floor_No');
+  const avgIdx     = header.indexOf('Average');
+
+  const taskIdxMap = {};
+  TASK_COLS.forEach(col => {
+    // match exact or stripped
+    let idx = header.indexOf(col);
+    if (idx < 0) idx = header.findIndex(h => h === col.trim());
+    taskIdxMap[col] = idx;
+  });
+
+  const parsed = [];
+  for (let i = 1; i < trackerRows.length; i++) {
+    const row = trackerRows[i];
+    if (!row[roomNoIdx]) continue;
+    const tasks = {};
+    TASK_COLS.forEach(col => {
+      const idx = taskIdxMap[col];
+      const v = idx >= 0 ? row[idx] : null;
+      tasks[col] = (v === null || v === undefined || v === '') ? 0 : Number(v) || 0;
+    });
+    let avg;
+    if (avgIdx >= 0 && row[avgIdx] !== '' && row[avgIdx] !== null) {
+      avg = Number(row[avgIdx]) || 0;
+    } else {
+      avg = TASK_COLS.reduce((s,c) => s + tasks[c], 0) / TASK_COLS.length;
+    }
+    parsed.push({
+      room: String(row[roomNoIdx]),
+      bld:  String(row[buildingIdx] || ''),
+      fl:   Number(row[floorIdx] || 0),
+      type: roomTypeMap[String(row[roomNoIdx])] || '—',
+      pct:  Math.round(avg * 100 * 10) / 10,
+      tasks
+    });
+  }
+
+  allRooms = parsed;
+
+  // Recalculate everything (reuse processWorkbook logic)
+  const total = parsed.length;
+  workItemData = TASK_COLS.map(col => {
+    const sum = parsed.reduce((s,r) => s + (r.tasks[col] || 0), 0);
+    return { name: displayName(col), pct: total > 0 ? Math.round(sum/total*100*10)/10 : 0 };
+  });
+  floorData = {};
+  [2,3,4,5,6,7,8].forEach(fl => {
+    const ra = parsed.filter(r => r.fl===fl && r.bld==='A');
+    const rb = parsed.filter(r => r.fl===fl && r.bld==='B');
+    const avg = arr => arr.length ? Math.round(arr.reduce((s,r)=>s+r.pct,0)/arr.length*10)/10 : 0;
+    floorData[fl] = { A: avg(ra), B: avg(rb) };
+  });
+  const typeMap2 = {};
+  parsed.forEach(r => {
+    const t = r.type || '—';
+    if (!typeMap2[t]) typeMap2[t] = {count:0,total:0};
+    typeMap2[t].count++; typeMap2[t].total += r.pct;
+  });
+  roomTypeData = Object.entries(typeMap2).map(([t,v]) => ({
+    type:t, count:v.count, pct: Math.round(v.total/v.count*10)/10
+  })).sort((a,b)=>b.count-a.count);
+
+  // Update KPIs
+  const cntA = parsed.filter(r=>r.bld==='A').length;
+  const cntB = parsed.filter(r=>r.bld==='B').length;
+  const avgAll = parsed.reduce((s,r)=>s+r.pct,0)/total;
+  const avgA   = parsed.filter(r=>r.bld==='A').reduce((s,r)=>s+r.pct,0)/(cntA||1);
+  const avgB   = parsed.filter(r=>r.bld==='B').reduce((s,r)=>s+r.pct,0)/(cntB||1);
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-total-sub').textContent = `Building A: ${cntA} | Building B: ${cntB}`;
+  document.getElementById('kpi-overall').textContent = Math.round(avgAll*10)/10 + '%';
+  document.getElementById('kpi-a').textContent = Math.round(avgA*10)/10 + '%';
+  document.getElementById('kpi-b').textContent = Math.round(avgB*10)/10 + '%';
+  document.getElementById('kpi-tasks').textContent = TASK_COLS.length;
+  document.getElementById('kpi-a-sub').textContent = cntA + ' ห้อง';
+  document.getElementById('kpi-b-sub').textContent = cntB + ' ห้อง';
+  document.getElementById('total-count').textContent = total;
+
+  const now = new Date().toLocaleString('th-TH');
+  document.getElementById('updated-info').innerHTML = `🔗 Google Sheets (Live)<br>${now}`;
+  document.getElementById('banner-text').textContent = `✅ ดึงข้อมูลจาก Google Sheets สำเร็จ — ${total} ห้อง`;
+  document.getElementById('data-banner').classList.add('show');
+
+  renderWorkItems(); renderFloorTable();
+  updateBuildingChart(); updateRoomTypeChart();
+  updatePipelineChart(); renderTopRooms(allRooms);
+  applyFilters(); closeDetail();
+}
+
+function setGsConnected(on) {
+  document.getElementById('gs-dot').classList.toggle('on', on);
+  document.getElementById('gs-btn').classList.toggle('connected', on);
+  document.getElementById('gs-status').textContent = on ? '🟢 เชื่อมต่อแล้ว' : 'ยังไม่ได้เชื่อมต่อ';
+}
+
+function setAutoRefresh() {
+  clearInterval(autoRefreshTimer);
+  const sel = document.getElementById('refresh-interval');
+  autoRefreshMinutes = parseInt(sel ? sel.value : 10);
+  if (autoRefreshMinutes > 0 && gsScriptUrl) {
+    updateNextRefreshLabel();
+    autoRefreshTimer = setInterval(function() {
+      fetchFromGoogleSheets(function(ok) { if(ok) updateNextRefreshLabel(); });
+    }, autoRefreshMinutes * 60 * 1000);
+  } else {
+    document.getElementById('next-refresh-label').textContent = '';
+  }
+}
+
+function updateNextRefreshLabel() {
+  if (!autoRefreshMinutes) return;
+  const next = new Date(Date.now() + autoRefreshMinutes * 60000);
+  document.getElementById('next-refresh-label').textContent =
+    'refresh ถัดไป ' + next.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+}
+
+function showConnectMsg(msg, type) {
+  const el = document.getElementById('connect-msg');
+  el.textContent = msg;
+  el.className = 'connect-msg ' + (type || '');
+}
+
+// Auto-connect on page load if URL was saved before
+(function() {
+  const saved = localStorage.getItem('gs_script_url');
+  if (saved) {
+    gsScriptUrl = saved;
+    setGsConnected(false);
+    document.getElementById('gs-status').textContent = '⏳ กำลังโหลด...';
+    fetchFromGoogleSheets(function(ok, msg) {
+      setGsConnected(ok);
+      if (!ok) document.getElementById('gs-status').textContent = '⚠️ โหลดไม่ได้ คลิกเพื่อตรวจสอบ';
+      else setAutoRefresh();
+    });
+  }
+})();
 </script>
 </body>
 </html>
