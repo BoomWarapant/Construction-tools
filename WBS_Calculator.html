@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WBS คำนวณวัสดุก่อสร้าง</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary:#1a56a0; --primary-dark:#0f3a70; --primary-light:#e8f0fb;
+  --accent:#f97316; --success:#16a34a; --warning:#d97706; --danger:#dc2626;
+  --bg:#f0f4f8; --card:#fff; --border:#d1d9e0; --text:#1e293b; --muted:#64748b;
+  --sidebar:280px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Sarabun',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── Header ── */
+header{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+  color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.3);flex-shrink:0;z-index:100;
+}
+header .logo{font-size:24px;}
+header .title h1{font-size:17px;font-weight:700;line-height:1.2;}
+header .title p{font-size:11px;opacity:.75;}
+header .spacer{flex:1;}
+.hdr-btn{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);
+  color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;
+  font-family:inherit;display:flex;align-items:center;gap:5px;transition:.2s;
+}
+.hdr-btn:hover{background:rgba(255,255,255,.28);}
+.hdr-btn.accent{background:var(--accent);border-color:var(--accent);}
+.hdr-btn.accent:hover{background:#ea6b10;}
+
+/* ── Layout ── */
+.layout{flex:1;display:flex;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);background:var(--card);
+  border-right:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-head{padding:14px 14px 10px;border-bottom:1px solid var(--border);}
+.sb-head h2{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.search-wrap{position:relative;margin-bottom:8px;}
+.search-wrap svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.45;}
+.search-input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:#f8fafc;}
+.search-input:focus{outline:none;border-color:var(--primary);}
+.sb-filter select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:#f8fafc;}
+.sb-actions{padding:7px 14px;display:flex;gap:6px;border-bottom:1px solid var(--border);}
+.btn-sm{flex:1;padding:5px 0;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;transition:.15s;}
+.btn-all{background:#dbeafe;color:#1d4ed8;} .btn-all:hover{background:#bfdbfe;}
+.btn-none{background:#fef2f2;color:#dc2626;} .btn-none:hover{background:#fecaca;}
+.tree-scroll{flex:1;overflow-y:auto;padding:4px 0;}
+
+/* Tree */
+.tree-cat{border-bottom:1px solid #f1f5f9;}
+.cat-hdr{
+  padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:7px;
+  user-select:none;transition:.12s;
+}
+.cat-hdr:hover{background:#f8fafc;}
+.cat-hdr input[type=checkbox]{width:14px;height:14px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;}
+.cat-icon{font-size:15px;}
+.cat-name{flex:1;font-weight:600;font-size:12px;line-height:1.3;}
+.cat-count{font-size:10px;background:#e2e8f0;color:var(--muted);padding:1px 6px;border-radius:10px;}
+.toggle-btn{font-size:9px;color:var(--muted);transition:.2s;flex-shrink:0;}
+.cat-hdr.open .toggle-btn{transform:rotate(90deg);}
+.task-list{padding:0 0 4px 28px;display:none;}
+.task-list.open{display:block;}
+.task-item{
+  padding:5px 10px 5px 8px;display:flex;align-items:center;gap:7px;
+  border-radius:5px;cursor:pointer;transition:.1s;margin:1px 6px 1px 0;
+}
+.task-item:hover{background:#f1f5f9;}
+.task-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;}
+.task-name{flex:1;font-size:12px;line-height:1.3;}
+.task-unit-badge{
+  font-size:10px;background:#e0f2fe;color:#0369a1;
+  padding:1px 6px;border-radius:10px;flex-shrink:0;
+}
+
+/* ── Main Content ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* Stat bar */
+.stat-bar{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:10px 18px;display:flex;gap:20px;flex-shrink:0;align-items:center;
+}
+.stat-item{display:flex;align-items:center;gap:8px;}
+.stat-icon{font-size:18px;}
+.stat-val{font-size:18px;font-weight:700;color:var(--primary);}
+.stat-lbl{font-size:11px;color:var(--muted);}
+.stat-sep{width:1px;height:32px;background:var(--border);}
+
+/* Panel split */
+.panels{flex:1;display:flex;overflow:hidden;gap:0;}
+
+/* Task qty panel */
+.panel-tasks{
+  width:340px;min-width:280px;background:var(--card);
+  border-right:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.panel-hdr{
+  padding:11px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.panel-hdr h3{font-size:13px;font-weight:700;color:var(--primary);flex:1;}
+.badge{font-size:10px;background:var(--primary);color:#fff;padding:2px 8px;border-radius:10px;}
+.tasks-scroll{flex:1;overflow-y:auto;padding:8px;}
+
+/* Selected task card */
+.task-card{
+  background:#f8fafc;border:1px solid var(--border);border-radius:8px;
+  margin-bottom:8px;overflow:hidden;transition:.2s;
+}
+.task-card-hdr{
+  padding:9px 12px;display:flex;align-items:flex-start;gap:8px;
+  background:var(--primary-light);border-bottom:1px solid #c7d8f0;
+}
+.task-card-cat{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.task-card-name{font-size:13px;font-weight:600;flex:1;}
+.task-card-body{padding:10px 12px;}
+.qty-row{display:flex;align-items:center;gap:8px;}
+.qty-row label{font-size:12px;color:var(--muted);white-space:nowrap;}
+.qty-input{
+  width:120px;padding:7px 10px;border:2px solid var(--border);border-radius:6px;
+  font-size:15px;font-weight:700;font-family:inherit;text-align:right;
+  transition:.2s;color:var(--primary);
+}
+.qty-input:focus{outline:none;border-color:var(--primary);background:#fafcff;}
+.qty-unit{font-size:13px;font-weight:600;color:var(--primary);white-space:nowrap;}
+.ref-note{font-size:11px;color:var(--muted);margin-top:5px;}
+.mat-preview{margin-top:8px;font-size:11px;color:var(--muted);}
+.mat-preview span{color:var(--text);font-weight:600;}
+
+.empty-tasks{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:200px;color:var(--muted);text-align:center;gap:8px;padding:20px;
+}
+.empty-tasks .big-icon{font-size:40px;opacity:.4;}
+
+/* ── Material panel ── */
+.panel-mat{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.mat-toolbar{
+  padding:11px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;
+}
+.mat-toolbar h3{font-size:13px;font-weight:700;color:var(--primary);flex:1;min-width:120px;}
+.mat-search{
+  padding:6px 10px 6px 28px;border:1px solid var(--border);border-radius:6px;
+  font-size:12px;font-family:inherit;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 8px center;
+  width:160px;
+}
+.mat-search:focus{outline:none;border-color:var(--primary);}
+.mat-filter-select{
+  padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+  font-size:12px;font-family:inherit;background:#f8fafc;
+}
+.tool-btn{
+  padding:6px 12px;border-radius:6px;border:1px solid var(--border);
+  background:#f8fafc;cursor:pointer;font-size:12px;font-family:inherit;
+  display:flex;align-items:center;gap:4px;transition:.15s;
+}
+.tool-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+.mat-scroll{flex:1;overflow:auto;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  padding:9px 12px;text-align:left;background:#f1f5f9;
+  border-bottom:2px solid var(--border);font-weight:700;font-size:11px;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.4px;
+  position:sticky;top:0;z-index:10;white-space:nowrap;
+}
+th.r,td.r{text-align:right;}
+td{padding:8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tr:hover td{background:#fafcff;}
+.cat-row td{
+  background:#f8fafc;font-weight:700;font-size:12px;
+  border-top:2px solid var(--border);padding:7px 12px;
+}
+.cat-row td:first-child{padding-left:12px;}
+.mat-badge{
+  display:inline-block;padding:2px 8px;border-radius:10px;
+  font-size:10px;font-weight:600;
+}
+.tasks-tiny{font-size:11px;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.total-row td{background:#eff6ff;font-weight:700;border-top:3px solid var(--primary);}
+.total-row td.r{color:var(--success);font-size:16px;}
+
+/* Empty state */
+.mat-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:300px;gap:10px;color:var(--muted);text-align:center;
+}
+.mat-empty .big-icon{font-size:52px;opacity:.35;}
+.mat-empty p{font-size:14px;line-height:1.8;}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+
+/* Print */
+@media print{
+  .sidebar,.stat-bar,.panel-tasks,.hdr-btn,.mat-toolbar{display:none!important;}
+  .layout{display:block;}
+  .panel-mat{width:100%;overflow:visible;}
+  .mat-scroll{overflow:visible;}
+  table{font-size:11px;}
+  body{height:auto;}
+}
+
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{width:220px;min-width:180px;}
+  .panel-tasks{width:260px;min-width:220px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="logo">🏗️</div>
+  <div class="title">
+    <h1>WBS คำนวณวัสดุก่อสร้าง</h1>
+    <p>เลือกงาน → ป้อนปริมาณ → ดูรายการวัสดุ</p>
+  </div>
+  <div class="spacer"></div>
+  <button class="hdr-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+  <button class="hdr-btn" onclick="window.print()">🖨️ พิมพ์</button>
+  <button class="hdr-btn accent" onclick="clearAll()">🗑️ ล้างข้อมูล</button>
+</header>
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout">
+
+  <!-- ── Sidebar: WBS Tree ── -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <h2>📋 รายการงาน WBS</h2>
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" type="text" id="search-input" placeholder="ค้นหาชื่องาน..." oninput="renderTree()">
+      </div>
+      <div class="sb-filter">
+        <select id="cat-filter" onchange="renderTree()">
+          <option value="">-- ทุกหมวดงาน --</option>
+        </select>
+      </div>
+    </div>
+    <div class="sb-actions">
+      <button class="btn-sm btn-all"  onclick="selectAll(true)">✔ เลือกทั้งหมด</button>
+      <button class="btn-sm btn-none" onclick="selectAll(false)">✖ ยกเลิกทั้งหมด</button>
+    </div>
+    <div class="tree-scroll" id="tree-container"></div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- Stat Bar -->
+    <div class="stat-bar">
+      <div class="stat-item">
+        <span class="stat-icon">🔧</span>
+        <div>
+          <div class="stat-val" id="stat-tasks">0</div>
+          <div class="stat-lbl">รายการงาน</div>
+        </div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <span class="stat-icon">📦</span>
+        <div>
+          <div class="stat-val" id="stat-mats">0</div>
+          <div class="stat-lbl">รายการวัสดุ</div>
+        </div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <span class="stat-icon">💰</span>
+        <div>
+          <div class="stat-val" id="stat-cost">–</div>
+          <div class="stat-lbl">ราคาประมาณรวม (บาท)</div>
+        </div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item" style="flex:1;">
+        <span class="stat-icon">ℹ️</span>
+        <span style="font-size:11px;color:var(--muted);">ปริมาณวัสดุจะปรับตามปริมาณงานที่ป้อน</span>
+      </div>
+    </div>
+
+    <div class="panels">
+
+      <!-- ── Panel: Selected tasks + qty input ── -->
+      <div class="panel-tasks">
+        <div class="panel-hdr">
+          <h3>📝 ป้อนปริมาณงาน</h3>
+          <span class="badge" id="selected-count">0 งาน</span>
+        </div>
+        <div class="tasks-scroll" id="task-qty-panel">
+          <div class="empty-tasks">
+            <div class="big-icon">☑️</div>
+            <p>ยังไม่ได้เลือกรายการงาน<br>กรุณาเลือกงานจากแผงซ้าย</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Panel: Material Takeoff ── -->
+      <div class="panel-mat">
+        <div class="mat-toolbar">
+          <h3>📦 รายการวัสดุที่ต้องสั่งซื้อ</h3>
+          <input class="mat-search" type="text" id="mat-search" placeholder="ค้นหาวัสดุ..." oninput="renderMaterials()">
+          <select class="mat-filter-select" id="mat-cat-filter" onchange="renderMaterials()">
+            <option value="">ทุกหมวดวัสดุ</option>
+          </select>
+          <button class="tool-btn" onclick="exportCSV()">⬇️ CSV</button>
+          <button class="tool-btn" onclick="window.print()">🖨️</button>
+        </div>
+        <div class="mat-scroll">
+          <div id="mat-container">
+            <div class="mat-empty">
+              <div class="big-icon">📭</div>
+              <p>เลือกงานและป้อนปริมาณ<br>เพื่อดูรายการวัสดุที่ต้องสั่งซื้อ</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   WBS DATA
+   materials: ปริมาณสำหรับ refQty หน่วยของงาน
+════════════════════════════════════════════════════════ */
+/*
+  อัตราอ้างอิงวัสดุก่อสร้าง (refQty = 1 ต่อหน่วยงาน)
+  ─────────────────────────────────────────────────────
+  การคำนวณ: ปริมาณวัสดุจริง = qty × (ปริมาณงานที่ป้อน / refQty)
+  ทุก task ใช้ refQty=1 → qty = อัตราต่อ 1 หน่วยงาน
+  ─────────────────────────────────────────────────────
+  แหล่งอ้างอิง: มาตรฐานก่อสร้างไทย (วสท., BOQ มาตรฐาน)
+  หมายเหตุ: ราคายังไม่รวม VAT และค่าแรง
+*/
+const DATA = { categories: [
+  {
+    id:"C01", name:"งานฐานรากและโครงสร้างใต้ดิน", icon:"⛏️",
+    tasks:[
+      /*
+        F001: ขุดดิน — อัตราค้ำยัน 0.5 ต้น/ม³ (งานทั่วไป ลึก <2ม.)
+      */
+      { id:"F001", name:"งานขุดดิน", unit:"ม³", refQty:1,
+        materials:[
+          {name:"ไม้ค้ำยันชั่วคราว",     cat:"ไม้",    qty:0.5,  unit:"ต้น", price:120},
+          {name:"เชือกกั้นพื้นที่",      cat:"อื่นๆ",  qty:1.0,  unit:"ม.",  price:8},
+        ]},
+      /*
+        F002: เสาเข็ม — 1 ต้น/ต้น, น้ำมัน ~5 ล./ต้น (เสาเข็ม 6ม.)
+      */
+      { id:"F002", name:"งานตอกเสาเข็ม", unit:"ต้น", refQty:1,
+        materials:[
+          {name:"เสาเข็มคอนกรีต 0.22×6ม.",  cat:"คอนกรีต",    qty:1,   unit:"ต้น",  price:1800},
+          {name:"น้ำมันดีเซล",              cat:"เชื้อเพลิง", qty:5,   unit:"ลิตร", price:32},
+        ]},
+      /*
+        F003: ฐานรากแผ่ ต่อ 1 ม³ คอนกรีต
+        คอนกรีต: 1.05 ม³ (เผื่อ 5%)
+        เหล็ก DB12: ~30 กก./ม³  |  DB16: ~45 กก./ม³
+        (Steel ratio ฐานราก ~75–100 kg/m³ สำหรับ Spread Footing)
+        ไม้แบบ: 3 แผ่น/ม³  |  ลวดผูก: 1.5 กก./ม³
+      */
+      { id:"F003", name:"งานฐานรากแผ่", unit:"ม³", refQty:1,
+        materials:[
+          {name:"คอนกรีตผสมเสร็จ f'c=210", cat:"คอนกรีต", qty:1.05, unit:"ม³",   price:2800},
+          {name:"เหล็กเส้นเสริม DB12",     cat:"เหล็ก",   qty:30,   unit:"กก.",  price:28},
+          {name:"เหล็กเส้นเสริม DB16",     cat:"เหล็ก",   qty:45,   unit:"กก.",  price:29},
+          {name:"ไม้แบบ",                  cat:"ไม้",     qty:3,    unit:"แผ่น", price:180},
+          {name:"ลวดผูกเหล็ก",             cat:"เหล็ก",   qty:1.5,  unit:"กก.",  price:45},
+        ]},
+    ]
+  },
+  {
+    id:"C02", name:"งานโครงสร้าง (คาน/เสา/พื้น)", icon:"🏛️",
+    tasks:[
+      /*
+        S001: เสาคอนกรีต ต่อ 1 ต้น — ขนาดอ้างอิง 0.25×0.25×3.0ม.
+        Volume = 0.25×0.25×3.0 = 0.1875 ม³ → เผื่อ 5% = 0.20 ม³
+        เหล็กหลัก DB20 (4 เส้น, 3.2ม.): 4×3.2×2.466 = 31.6 → 32 กก.
+        เหล็กปลอก RB9 ทุก 0.20ม. (16 ปลอก, เส้นรอบวง 1.05ม.): 16×1.05×0.499 = 8.4 → 9 กก.
+        ไม้แบบ: 3 แผ่น/ต้น | น้ำมันทาแบบ: 0.2 ล./ต้น
+      */
+      { id:"S001", name:"งานเสาคอนกรีต", unit:"ต้น", refQty:1,
+        materials:[
+          {name:"คอนกรีตผสมเสร็จ f'c=240", cat:"คอนกรีต", qty:0.20, unit:"ม³",   price:2950},
+          {name:"เหล็กเส้นเสริม DB20",     cat:"เหล็ก",   qty:32,   unit:"กก.",  price:30},
+          {name:"เหล็กปลอก RB9 @0.20ม.",  cat:"เหล็ก",   qty:9,    unit:"กก.",  price:25},
+          {name:"ไม้แบบ",                  cat:"ไม้",     qty:3,    unit:"แผ่น", price:180},
+          {name:"น้ำมันทาแบบ",             cat:"สี/ทาสี", qty:0.2,  unit:"ลิตร", price:120},
+        ]},
+      /*
+        S002: คานคอนกรีต ต่อ 1 ม. — ขนาดอ้างอิง 0.20×0.45ม.
+        Volume = 0.20×0.45 = 0.090 ม³/ม. → เผื่อ 5% = 0.095 ม³/ม.
+        เหล็กบน DB16 (2 เส้น): 2×1.578 = 3.16 กก./ม.
+        เหล็กล่าง DB20 (2 เส้น): 2×2.466 = 4.93 กก./ม.
+        ปลอก RB9 @0.15ม. (เส้นรอบวง 1.30ม.): (1/0.15)×1.30×0.499 = 4.33 กก./ม.
+        ไม้แบบ: 1.3 แผ่น/ม.
+      */
+      { id:"S002", name:"งานคานคอนกรีต", unit:"ม.", refQty:1,
+        materials:[
+          {name:"คอนกรีตผสมเสร็จ f'c=240", cat:"คอนกรีต", qty:0.095, unit:"ม³",   price:2950},
+          {name:"เหล็กเส้นเสริม DB16 (บน)", cat:"เหล็ก",  qty:3.2,   unit:"กก.",  price:29},
+          {name:"เหล็กเส้นเสริม DB20 (ล่าง)",cat:"เหล็ก", qty:4.9,   unit:"กก.",  price:30},
+          {name:"เหล็กปลอก RB9 @0.15ม.",   cat:"เหล็ก",  qty:4.3,   unit:"กก.",  price:25},
+          {name:"ไม้แบบ",                   cat:"ไม้",    qty:1.3,   unit:"แผ่น", price:180},
+        ]},
+      /*
+        S003: พื้น Slab ต่อ 1 ม² — หนา 0.12ม.
+        Volume = 0.12 ม³/ม² → เผื่อ 5% = 0.126 ม³/ม²
+        เหล็กตะแกรง RB6 @200×200: 2ทิศ × (1/0.2) × 1.0ม × 0.222 = 2.22 → 2.5 กก./ม² (เผื่อ)
+        เหล็ก DB12 เสริมริม/รอยต่อ: ~1.9 กก./ม²
+        ไม้แบบ: 1.1 แผ่น/ม²  |  ค้ำยัน: 0.5 ต้น/ม²
+      */
+      { id:"S003", name:"งานพื้นคอนกรีต (Slab)", unit:"ม²", refQty:1,
+        materials:[
+          {name:"คอนกรีตผสมเสร็จ f'c=210", cat:"คอนกรีต", qty:0.126, unit:"ม³",   price:2800},
+          {name:"เหล็กตะแกรง RB6 @200×200",cat:"เหล็ก",  qty:2.5,   unit:"กก.",  price:24},
+          {name:"เหล็กเส้นเสริม DB12",     cat:"เหล็ก",   qty:1.9,   unit:"กก.",  price:28},
+          {name:"ไม้แบบ",                  cat:"ไม้",     qty:1.1,   unit:"แผ่น", price:180},
+          {name:"เหล็กค้ำยันแบบ",          cat:"เหล็ก",   qty:0.5,   unit:"ต้น",  price:150},
+        ]},
+      /*
+        S004: เสาเอ็น ต่อ 1 ม. — ขนาดอ้างอิง 0.12×0.15ม. (ติดกับผนังก่ออิฐ)
+        ปูนคอนกรีตแห้งสำเร็จรูป (50kg, yield 0.021 ม³/ถุง):
+          V = 0.12×0.15×1.0 = 0.018 ม³ → เผื่อ 10% = 0.020 ม³ → 0.020/0.021 = 0.95 → 0.95 ถุง/ม.
+        เหล็กหลัก DB10 (4 เส้น, เผื่อต่อทาบ 5%): 4×1.05×0.617 = 2.59 → 2.6 กก./ม.
+        เหล็กปลอก RB6 @0.20ม. (เส้นรอบวง ~0.60ม.): (1/0.20)×0.60×0.222 = 0.67 → 0.7 กก./ม.
+        ลวดผูกเหล็ก: 0.04 กก./ม.
+      */
+      { id:"S004", name:"งานเสาเอ็นคอนกรีต", unit:"ม.", refQty:1,
+        materials:[
+          {name:"ปูนคอนกรีตแห้งสำเร็จรูป (50kg)", cat:"ปูนสำเร็จรูป", qty:0.95, unit:"ถุง",  price:190},
+          {name:"เหล็กเส้นหลัก DB10 (4 เส้น)",    cat:"เหล็ก",        qty:2.6,  unit:"กก.",  price:28},
+          {name:"เหล็กปลอก RB6 @0.20ม.",          cat:"เหล็ก",        qty:0.7,  unit:"กก.",  price:24},
+          {name:"ลวดผูกเหล็ก",                     cat:"เหล็ก",        qty:0.04, unit:"กก.",  price:45},
+        ]},
+      /*
+        S005: คานเอ็น ต่อ 1 ม. — ขนาดอ้างอิง 0.12×0.20ม. (ทับหลัง/คาดกลางผนัง)
+        ปูนคอนกรีตแห้งสำเร็จรูป (50kg, yield 0.021 ม³/ถุง):
+          V = 0.12×0.20×1.0 = 0.024 ม³ → เผื่อ 10% = 0.026 ม³ → 0.026/0.021 = 1.24 → 1.25 ถุง/ม.
+        เหล็กหลัก DB10 (4 เส้น, เผื่อต่อทาบ 5%): 4×1.05×0.617 = 2.59 → 2.6 กก./ม.
+        เหล็กปลอก RB6 @0.20ม. (เส้นรอบวง ~0.68ม.): (1/0.20)×0.68×0.222 = 0.76 → 0.8 กก./ม.
+        ลวดผูก: 0.05 กก./ม.
+      */
+      { id:"S005", name:"งานคานเอ็นคอนกรีต", unit:"ม.", refQty:1,
+        materials:[
+          {name:"ปูนคอนกรีตแห้งสำเร็จรูป (50kg)", cat:"ปูนสำเร็จรูป", qty:1.25, unit:"ถุง",  price:190},
+          {name:"เหล็กเส้นหลัก DB10 (4 เส้น)",    cat:"เหล็ก",        qty:2.6,  unit:"กก.",  price:28},
+          {name:"เหล็กปลอก RB6 @0.20ม.",          cat:"เหล็ก",        qty:0.8,  unit:"กก.",  price:24},
+          {name:"ลวดผูกเหล็ก",                     cat:"เหล็ก",        qty:0.05, unit:"กก.",  price:45},
+        ]},
+    ]
+  },
+  {
+    id:"C03", name:"งานก่ออิฐ/ผนัง", icon:"🧱",
+    tasks:[
+      /*
+        W001: ก่ออิฐมวลเบา ต่อ 1 ม²
+        บล็อก 7.5×20×60ซม.: 1 ม² ÷ (0.20×0.60) = 8.33 ก้อน
+        เผื่อ 5%: 8.33×1.05 = 8.75 ก้อน/ม²
+        ปูนก่อ (Thin-bed mortar สำเร็จรูป 20กก./ถุง): 1 ถุง ≈ 8–10 ม² → 0.12 ถุง/ม²
+        ─────────────────────────────────────────────────
+        หมายเหตุ: ปูนฉาบอิฐมวลเบา ให้แยกใช้งาน P001/P002
+      */
+      { id:"W001", name:"งานก่ออิฐมวลเบา", unit:"ม²", refQty:1,
+        materials:[
+          {name:"บล็อกมวลเบา 7.5×20×60",          cat:"บล็อก/อิฐ",   qty:8.75, unit:"ก้อน", price:18},
+          {name:"ปูนก่อมวลเบาสำเร็จรูป (Thin-bed)",cat:"ปูนสำเร็จรูป", qty:0.12, unit:"ถุง",  price:220},
+        ]},
+      /*
+        W002: ก่ออิฐแดง ต่อ 1 ม² — ผนัง ½ แนว (หนา 10ซม.)
+        อิฐมาตรฐาน มอก.77 ขนาด 6.5×10×20ซม. (H×W×L)
+        พื้นที่ต่อก้อน (รวมรอยปูน 1ซม.): (20+1)×(6.5+1) = 157.5 ซม² = 0.01575 ม²
+        ต่อ ม²: 1/0.01575 = 63.5 → เผื่อ 5% = 67 → ใช้ 65 ก้อน/ม²
+        ปูนก่อ 1:4 (50กก./ถุง): ~0.15 ถุง/ม²
+        ทรายหยาบ: ~0.02 คิว/ม²
+      */
+      { id:"W002", name:"งานก่ออิฐแดง (ผนังกันชื้น)", unit:"ม²", refQty:1,
+        materials:[
+          {name:"อิฐแดงมาตรฐาน (มอก.77)",  cat:"บล็อก/อิฐ",   qty:65,   unit:"ก้อน", price:4.5},
+          {name:"ปูนก่อมอร์ตาร์ 1:4",      cat:"ปูน/ซีเมนต์", qty:0.15, unit:"ถุง",  price:210},
+          {name:"ทรายหยาบ",               cat:"ทราย/หิน",    qty:0.02, unit:"คิว",  price:450},
+        ]},
+    ]
+  },
+  {
+    id:"C04", name:"งานฉาบปูน/ผิวพื้น", icon:"🪣",
+    tasks:[
+      /*
+        P001: ฉาบปูนภายใน ต่อ 1 ม² — ใช้ปูนฉาบสำเร็จรูป หนา 1.25–1.5ซม.
+        ─────────────────────────────────────────────────────────────────
+        อ้างอิง: Break Down งานฉาบ (ปูนเสือมอร์ตาร์ 50kg)
+          ทยฤฎี 2.4 ตร.ม./ถุง × หน้างาน factor 1.6 = 1.5 ตร.ม./ถุง
+          → 50 กก. ÷ 1.5 ตร.ม. = 33.3 กก./ม² ≈ 31.25 กก./ม²
+        จำนวนถุง (50kg): 31.25 ÷ 50 = 0.625 ถุง/ม²
+      */
+      { id:"P001", name:"งานฉาบปูนภายใน", unit:"ม²", refQty:1,
+        materials:[
+          {name:"ปูนฉาบสำเร็จรูป (50kg/ถุง)", cat:"ปูนสำเร็จรูป", qty:0.625, unit:"ถุง", price:200},
+        ]},
+      /*
+        P002: ฉาบปูนภายนอก ต่อ 1 ม² — ใช้ปูนฉาบสำเร็จรูป หนา 1.25–1.5ซม.
+        ─────────────────────────────────────────────────────────────────
+        งานฉาบภายนอก Loss เพิ่ม 40%:
+          31.25 × 1.40 = 43.75 กก./ม² → 43.75 ÷ 50 = 0.875 ถุง/ม²
+        ตาข่ายกรงไก่ 1/2": อ้างอิง Break Down = 0.56 ตร.ม./ม²
+          (แผงหน้า+แผงข้าง: 0.15×โครงสร้าง + 0.25×มุมวงกบ + 0.35×ท่องานระบบ
+           + 0.15×เอ็นริม + 0.30×เอ็นกลาง เฉลี่ยได้ 0.56 ตร.ม./ม²)
+        น้ำยากันซึม: 0.05 ลิตร/ม²
+      */
+      { id:"P002", name:"งานฉาบปูนภายนอก", unit:"ม²", refQty:1,
+        materials:[
+          {name:"ปูนฉาบสำเร็จรูป (50kg/ถุง)",         cat:"ปูนสำเร็จรูป", qty:0.875, unit:"ถุง",  price:200},
+          {name:"ตาข่ายกรงไก่ 1/2\" (ไฟเบอร์ กันร้าว)",cat:"อื่นๆ",        qty:0.56,  unit:"ตร.ม.", price:35},
+          {name:"น้ำยากันซึมผสมปูน",                   cat:"เคมีภัณฑ์",    qty:0.05,  unit:"ลิตร", price:80},
+        ]},
+      /*
+        P003: ปูกระเบื้องพื้น ต่อ 1 ม² — ขนาด 60×60ซม.
+        กระเบื้อง: เผื่อ 5% = 1.05 ตร.ม./ม²
+        กาวซีเมนต์ (25กก./ถุง): 1 ถุง = 4 ม² → 0.25 ถุง/ม²
+        ยาแนว (1กก./ถุง): รอยต่อ 3มม. สำหรับ 60×60 → ~0.3 กก./ม² → 0.06 ถุง/ม²
+      */
+      { id:"P003", name:"งานปูกระเบื้องพื้น", unit:"ม²", refQty:1,
+        materials:[
+          {name:"กระเบื้องพื้น 60×60",     cat:"กระเบื้อง",   qty:1.05, unit:"ตร.ม.", price:280},
+          {name:"กาวซีเมนต์ปูกระเบื้อง",   cat:"ปูน/ซีเมนต์", qty:0.25, unit:"ถุง",  price:230},
+          {name:"กาวยาแนว",                cat:"ปูน/ซีเมนต์", qty:0.06, unit:"ถุง",  price:160},
+        ]},
+      /*
+        P004: ปูกระเบื้องผนัง ต่อ 1 ม² — ขนาด 30×60ซม.
+        กระเบื้อง: เผื่อ 5% = 1.05 ตร.ม./ม²
+        กาวซีเมนต์: 0.25 ถุง/ม²
+        ยาแนว: รอยต่อ 2–3มม. มากกว่าพื้น → 0.08 ถุง/ม²
+      */
+      { id:"P004", name:"งานปูกระเบื้องผนัง", unit:"ม²", refQty:1,
+        materials:[
+          {name:"กระเบื้องผนัง 30×60",     cat:"กระเบื้อง",   qty:1.05, unit:"ตร.ม.", price:320},
+          {name:"กาวซีเมนต์ปูกระเบื้อง",   cat:"ปูน/ซีเมนต์", qty:0.25, unit:"ถุง",  price:230},
+          {name:"กาวยาแนว (สีขาว)",        cat:"ปูน/ซีเมนต์", qty:0.08, unit:"ถุง",  price:160},
+        ]},
+    ]
+  },
+  {
+    id:"C05", name:"งานหลังคา", icon:"🏠",
+    tasks:[
+      /*
+        R001: โครงหลังคาเหล็ก ต่อ 1 ม² พื้นที่หลังคา
+        เหล็ก C-Channel (โครงหลัก): ~4.0 กก./ม²
+        เหล็กฉาก L50×50 (โครงรอง): ~1.5 กก./ม²
+        สกรู: 6 ตัว/ม²
+        สีกันสนิม (18ล./ถัง, 1ล.=6ม² โลหะ 2 ชั้น): ~0.028 ถัง/ม²
+      */
+      { id:"R001", name:"งานโครงหลังคาเหล็ก", unit:"ม²", refQty:1,
+        materials:[
+          {name:"เหล็กรูปพรรณ C-Channel",  cat:"เหล็ก",    qty:4.0,   unit:"กก.", price:35},
+          {name:"เหล็กฉาก L-50×50",        cat:"เหล็ก",    qty:1.5,   unit:"กก.", price:33},
+          {name:"สกรูยึดแผ่นหลังคา",       cat:"อุปกรณ์",  qty:6,     unit:"ตัว", price:3.5},
+          {name:"สีกันสนิมโลหะ",           cat:"สี/ทาสี",  qty:0.028, unit:"ถัง", price:890},
+        ]},
+      /*
+        R002: มุงกระเบื้องหลังคา ต่อ 1 ม² — กระเบื้องลูกฟูกซีเมนต์ใยหิน 50×120ซม.
+        Effective cover ≈ 0.50×1.05ม. = 0.525 ม²/แผ่น (ทับซ้อน 15ซม.)
+        ต่อ ม²: 1/0.525 = 1.90 → เผื่อ 5% = 2.0 แผ่น/ม²
+        ครอบสัน: ขึ้นกับรูปทรงหลังคา ~0.35 ชิ้น/ม²
+        ตะปูกระเบื้อง: 4 ตัว/แผ่น × 2 = 8 ตัว/ม² → 0.024 กก./ม² (ตะปู 3กก./1000ตัว)
+        กันซึม: ~0.05 หลอด/ม²
+      */
+      { id:"R002", name:"งานมุงกระเบื้องหลังคา", unit:"ม²", refQty:1,
+        materials:[
+          {name:"กระเบื้องลูกฟูกซีเมนต์ 50×120",cat:"กระเบื้อง", qty:2.0,   unit:"แผ่น", price:65},
+          {name:"ครอบสันหลังคา",            cat:"กระเบื้อง", qty:0.35,  unit:"ชิ้น", price:85},
+          {name:"ตะปูกระเบื้อง",            cat:"อุปกรณ์",   qty:0.024, unit:"กก.",  price:90},
+          {name:"กันซึมตามรอยต่อ",          cat:"เคมีภัณฑ์", qty:0.05,  unit:"หลอด", price:120},
+        ]},
+    ]
+  },
+  {
+    id:"C06", name:"งานประตู หน้าต่าง", icon:"🚪",
+    tasks:[
+      /*
+        D001: ประตูไม้ ต่อ 1 บาน
+        ประตู 1 + วงกบ 1 ชุด + บานพับ 3 คู่ (บน/กลาง/ล่าง) + กุญแจ 1 ตัว
+      */
+      { id:"D001", name:"งานติดตั้งประตูไม้", unit:"บาน", refQty:1,
+        materials:[
+          {name:"ประตูไม้สัก 90×200",      cat:"ประตู/หน้าต่าง", qty:1,  unit:"บาน", price:8500},
+          {name:"วงกบไม้สัก",              cat:"ประตู/หน้าต่าง", qty:1,  unit:"ชุด", price:1200},
+          {name:"บานพับสแตนเลส 4\"",       cat:"อุปกรณ์",       qty:3,  unit:"คู่",  price:85},
+          {name:"กุญแจลูกบิด",             cat:"อุปกรณ์",       qty:1,  unit:"ตัว",  price:450},
+        ]},
+      /*
+        D002: หน้าต่างอะลูมิเนียม ต่อ 1 ชุด — ขนาด 120×120ซม.
+        กระจก 120×120ซม. = 1.44 ม² → เผื่อ 5% = 1.52 ม²
+        ยางซีล: เส้นรอบวง 2×(1.2+1.2) = 4.8ม. → 5.0 ม.
+        สกรูยึด: 4 ด้าน × 4 ตัว = 16 ตัว
+      */
+      { id:"D002", name:"งานติดตั้งหน้าต่างอะลูมิเนียม", unit:"ชุด", refQty:1,
+        materials:[
+          {name:"หน้าต่างอะลูมิเนียม 120×120",cat:"ประตู/หน้าต่าง", qty:1,    unit:"ชุด",   price:5500},
+          {name:"กระจกใสหนา 5มม.",            cat:"กระจก",          qty:1.52,  unit:"ตร.ม.", price:350},
+          {name:"ยางซีลกระจก",                cat:"เคมีภัณฑ์",      qty:5.0,   unit:"ม.",    price:45},
+          {name:"สกรูยึดกรอบ",                cat:"อุปกรณ์",        qty:16,    unit:"ตัว",   price:2.5},
+        ]},
+    ]
+  },
+  {
+    id:"C07", name:"งานระบบไฟฟ้า", icon:"⚡",
+    tasks:[
+      /*
+        E001: MDB/Sub-DB ต่อ 1 จุด (circuit)
+        สาย NYY: ~8 ม./จุด (วิ่งจาก MDB ถึง SDB)
+        ท่อ: 5 ม./จุด  |  ตู้ DB: 0.1 ตู้/จุด (1 ตู้ต่อ 10 จุด)
+      */
+      { id:"E001", name:"งานเดินสายไฟ Main Distribution", unit:"จุด", refQty:1,
+        materials:[
+          {name:"สาย NYY 4×16 mm²",        cat:"สายไฟ",         qty:8,   unit:"ม.",  price:280},
+          {name:"ท่อร้อยสาย PVC 1\"",       cat:"ท่อ/อุปกรณ์",  qty:5,   unit:"ม.",  price:35},
+          {name:"ตู้ DB พร้อม MCB 10 ช่อง", cat:"อุปกรณ์ไฟฟ้า", qty:0.1, unit:"ตู้", price:3200},
+        ]},
+      /*
+        E002: ไฟแสงสว่าง ต่อ 1 จุด (lighting point)
+        สาย THW 2.5mm²: 20 ม./จุด (ไป-กลับ 10ม.)
+        สวิทช์: 0.3 ตัว/จุด (1 สวิทช์ต่อ 3 จุด)
+        ดาวน์ไลท์: 1 ดวง/จุด  |  ท่อ: 10 ม./จุด
+      */
+      { id:"E002", name:"งานติดตั้งระบบแสงสว่าง", unit:"จุด", refQty:1,
+        materials:[
+          {name:"สาย THW 2.5 mm²",          cat:"สายไฟ",         qty:20,  unit:"ม.",  price:18},
+          {name:"สวิทช์ออก-เปิด 1ทาง",      cat:"อุปกรณ์ไฟฟ้า", qty:0.3, unit:"ตัว", price:120},
+          {name:"ดาวน์ไลท์ LED 12W",         cat:"อุปกรณ์ไฟฟ้า", qty:1,   unit:"ดวง", price:280},
+          {name:"ท่อร้อยสาย PVC 3/4\"",      cat:"ท่อ/อุปกรณ์",  qty:10,  unit:"ม.",  price:22},
+        ]},
+      /*
+        E003: ปลั๊ก/สวิทช์ ต่อ 1 จุด (power point)
+        สาย THW: 15 ม./จุด  |  ปลั๊ก: 1/จุด
+        ท่อ: 8 ม./จุด  |  กล่องพัก: 1/จุด
+      */
+      { id:"E003", name:"งานติดตั้งปลั๊กและสวิทช์", unit:"จุด", refQty:1,
+        materials:[
+          {name:"สาย THW 2.5 mm²",          cat:"สายไฟ",         qty:15, unit:"ม.",  price:18},
+          {name:"ปลั๊กเสียบ 3 ขา (มีกราวด์)",cat:"อุปกรณ์ไฟฟ้า", qty:1,  unit:"ตัว", price:150},
+          {name:"ท่อร้อยสาย PVC 3/4\"",      cat:"ท่อ/อุปกรณ์",  qty:8,  unit:"ม.",  price:22},
+          {name:"กล่องพักสาย Metal Box",      cat:"อุปกรณ์ไฟฟ้า", qty:1,  unit:"ชุด", price:45},
+        ]},
+    ]
+  },
+  {
+    id:"C08", name:"งานระบบประปา/สุขาภิบาล", icon:"🚿",
+    tasks:[
+      /*
+        PL001: ท่อน้ำดี ต่อ 1 จุด (outlet)
+        ท่อ PPR 1/2": 6 ม./จุด  |  3/4": 2 ม./จุด
+        ข้อต่อ: 4 ตัว/จุด  |  วาล์ว: 0.25 ตัว/จุด (1 วาล์วต่อ 4 จุด)
+      */
+      { id:"PL001", name:"งานเดินท่อน้ำดี", unit:"จุด", refQty:1,
+        materials:[
+          {name:"ท่อ PPR PN20 Ø1/2\"",      cat:"ท่อ/อุปกรณ์", qty:6,    unit:"ม.",  price:45},
+          {name:"ท่อ PPR PN20 Ø3/4\"",      cat:"ท่อ/อุปกรณ์", qty:2,    unit:"ม.",  price:65},
+          {name:"ข้อต่อ PPR ต่างๆ",          cat:"ท่อ/อุปกรณ์", qty:4,    unit:"ตัว", price:15},
+          {name:"วาล์วปิด-เปิด Ø1/2\"",     cat:"อุปกรณ์",     qty:0.25, unit:"ตัว", price:180},
+        ]},
+      /*
+        PL002: ท่อน้ำทิ้ง ต่อ 1 จุด (drain point)
+        ท่อ 4": 4 ม./จุด (แนวนอน)  |  2": 3 ม./จุด (ตั้ง)
+        ข้อต่อ: 3 ตัว/จุด  |  บ่อพัก: 0.2 บ่อ/จุด (1 บ่อต่อ 5 จุด)
+      */
+      { id:"PL002", name:"งานเดินท่อน้ำทิ้ง/ระบายน้ำ", unit:"จุด", refQty:1,
+        materials:[
+          {name:"ท่อ PVC ชั้น 8.5 Ø4\"",   cat:"ท่อ/อุปกรณ์", qty:4,   unit:"ม.",  price:95},
+          {name:"ท่อ PVC ชั้น 8.5 Ø2\"",   cat:"ท่อ/อุปกรณ์", qty:3,   unit:"ม.",  price:42},
+          {name:"ข้อโค้ง/ข้อต่อ PVC",       cat:"ท่อ/อุปกรณ์", qty:3,   unit:"ตัว", price:20},
+          {name:"บ่อพักขนาดเล็ก",           cat:"สุขภัณฑ์",    qty:0.2, unit:"บ่อ", price:1800},
+        ]},
+      /*
+        PL003: สุขภัณฑ์ห้องน้ำ ต่อ 1 ห้อง (ครบชุด)
+      */
+      { id:"PL003", name:"งานสุขภัณฑ์ห้องน้ำ", unit:"ห้อง", refQty:1,
+        materials:[
+          {name:"โถส้วมชักโครก",            cat:"สุขภัณฑ์",   qty:1, unit:"ชุด",  price:3500},
+          {name:"อ่างล้างหน้า",              cat:"สุขภัณฑ์",   qty:1, unit:"ชุด",  price:2800},
+          {name:"ฝักบัวอาบน้ำ",              cat:"สุขภัณฑ์",   qty:1, unit:"ชุด",  price:1200},
+          {name:"กระจกห้องน้ำ",              cat:"กระจก",      qty:1, unit:"บาน",  price:900},
+          {name:"ราวผ้าเช็ดตัวสแตนเลส",     cat:"อุปกรณ์",    qty:1, unit:"ชุด",  price:550},
+          {name:"กระดาษชำระ+ที่ใส่",         cat:"อุปกรณ์",    qty:1, unit:"ชุด",  price:280},
+        ]},
+    ]
+  },
+  {
+    id:"C09", name:"งานทาสี", icon:"🎨",
+    tasks:[
+      /*
+        PT001: ทาสีภายใน ต่อ 1 ม²
+        สีรองพื้น (ถัง 5ล.): 1ล. = 6–8 ม² (1 coat)
+          → 1/7 × 1.15(waste) = 0.16 ล./ม² → 0.032 ถัง (5ล.)/ม² → ~0.03 ถัง/ม²
+        สีน้ำ (ถัง 5ล.): 2 coats, 1ล. = 6–8 ม²/ชั้น
+          → (2/7) × 1.15 = 0.33 ล./ม² → 0.066 ถัง → ~0.07 ถัง/ม²
+        กระดาษทราย: 0.2 แผ่น/ม²  |  แปรง+ลูกกลิ้ง: 0.02 ชุด/ม² (1 ชุดต่อ 50 ม²)
+      */
+      { id:"PT001", name:"งานทาสีภายใน", unit:"ม²", refQty:1,
+        materials:[
+          {name:"สีรองพื้นปูนใหม่ (5ล./ถัง)",  cat:"สี/ทาสี", qty:0.03,  unit:"ถัง",  price:680},
+          {name:"สีน้ำภายใน 2ชั้น (5ล./ถัง)",  cat:"สี/ทาสี", qty:0.07,  unit:"ถัง",  price:1250},
+          {name:"กระดาษทรายขัดผิว",             cat:"อุปกรณ์", qty:0.20,  unit:"แผ่น", price:12},
+          {name:"แปรงทาสี+ลูกกลิ้ง",            cat:"อุปกรณ์", qty:0.02,  unit:"ชุด",  price:180},
+        ]},
+      /*
+        PT002: ทาสีภายนอก ต่อ 1 ม²
+        สีรองพื้นกันเชื้อรา: 0.04 ถัง/ม² (หนากว่าใน)
+        สีภายนอก Elastomeric: 0.08 ถัง/ม² (เผื่อผิวนอกดูดซึมมากกว่า)
+        เทปกาว: 0.1 ม้วน/ม² (กันขอบ/บัว)
+      */
+      { id:"PT002", name:"งานทาสีภายนอก", unit:"ม²", refQty:1,
+        materials:[
+          {name:"สีรองพื้นปูนใหม่กันเชื้อรา (5ล./ถัง)",cat:"สี/ทาสี", qty:0.04, unit:"ถัง",  price:780},
+          {name:"สีภายนอก Elastomeric (5ล./ถัง)",      cat:"สี/ทาสี", qty:0.08, unit:"ถัง",  price:1650},
+          {name:"เทปกาวกันรอย",                         cat:"อุปกรณ์", qty:0.10, unit:"ม้วน", price:35},
+        ]},
+    ]
+  },
+  {
+    id:"C10", name:"งานระบบปรับอากาศ", icon:"❄️",
+    tasks:[
+      /*
+        AC001: แอร์แขวน ต่อ 1 เครื่อง (12,000 BTU)
+        สายทองแดง: 5 ม./เครื่อง (IN+OUT unit)
+        สายไฟ: 5 ม./เครื่อง  |  แร็ค: 1 ชุด/เครื่อง
+      */
+      { id:"AC001", name:"งานติดตั้งแอร์แบบแขวน", unit:"เครื่อง", refQty:1,
+        materials:[
+          {name:"แอร์แบบแขวน 12,000 BTU",       cat:"อุปกรณ์ปรับอากาศ", qty:1,  unit:"เครื่อง", price:22000},
+          {name:"สายทองแดง 1/4\"×1/2\" (ฉนวน)", cat:"ท่อ/อุปกรณ์",       qty:5,  unit:"ม.",      price:250},
+          {name:"สายไฟ VVF 2×2.5 mm²",          cat:"สายไฟ",              qty:5,  unit:"ม.",      price:35},
+          {name:"แร็คพร้อมยึดผนัง",              cat:"อุปกรณ์ปรับอากาศ", qty:1,  unit:"ชุด",     price:350},
+        ]},
+      /*
+        AC002: ท่อน้ำทิ้งแอร์ ต่อ 1 เครื่อง
+        ท่อ PVC 1": 6 ม./เครื่อง  |  ข้อต่อ: 4 ตัว
+      */
+      { id:"AC002", name:"งานเดินท่อน้ำทิ้งแอร์", unit:"เครื่อง", refQty:1,
+        materials:[
+          {name:"ท่อ PVC Ø1\" สีขาว",   cat:"ท่อ/อุปกรณ์", qty:6, unit:"ม.",  price:28},
+          {name:"ข้อต่อ PVC ต่างๆ",      cat:"ท่อ/อุปกรณ์", qty:4, unit:"ตัว", price:12},
+        ]},
+    ]
+  },
+]};
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let selectedTasks = new Set();   // task IDs
+let taskQty       = {};          // taskId -> qty (number)
+let expandedCats  = new Set();
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+function init() {
+  // Populate cat filter
+  const sel = document.getElementById('cat-filter');
+  DATA.categories.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id; o.textContent = c.name;
+    sel.appendChild(o);
+  });
+  renderTree();
+  renderAll();
+}
+
+/* ═══════════════════════════════════════════════════════
+   TREE
+═══════════════════════════════════════════════════════ */
+function renderTree() {
+  const search  = document.getElementById('search-input').value.toLowerCase().trim();
+  const catFilt = document.getElementById('cat-filter').value;
+  const wrap    = document.getElementById('tree-container');
+  wrap.innerHTML = '';
+
+  DATA.categories.forEach(cat => {
+    if (catFilt && cat.id !== catFilt) return;
+    const tasks = cat.tasks.filter(t =>
+      !search || t.name.toLowerCase().includes(search) || cat.name.toLowerCase().includes(search)
+    );
+    if (tasks.length === 0) return;
+
+    const allSel  = tasks.every(t => selectedTasks.has(t.id));
+    const someSel = tasks.some(t => selectedTasks.has(t.id));
+    const isOpen  = expandedCats.has(cat.id) || !!search;
+
+    const div = document.createElement('div');
+    div.className = 'tree-cat';
+    div.innerHTML = `
+      <div class="cat-hdr ${isOpen?'open':''}" data-cid="${cat.id}">
+        <input type="checkbox" ${allSel?'checked':''} onclick="event.stopPropagation();toggleCat('${cat.id}',this.checked)">
+        <span class="cat-icon">${cat.icon}</span>
+        <span class="cat-name">${cat.name}</span>
+        <span class="cat-count">${tasks.length}</span>
+        <span class="toggle-btn">▶</span>
+      </div>
+      <div class="task-list ${isOpen?'open':''}" id="tl-${cat.id}">
+        ${tasks.map(t=>`
+          <div class="task-item" onclick="toggleTask('${t.id}')">
+            <input type="checkbox" ${selectedTasks.has(t.id)?'checked':''} onclick="event.stopPropagation();toggleTask('${t.id}')">
+            <span class="task-name">${t.name}</span>
+            <span class="task-unit-badge">${t.unit}</span>
+          </div>
+        `).join('')}
+      </div>`;
+    wrap.appendChild(div);
+
+    // indeterminate
+    const cb = div.querySelector('input[type=checkbox]');
+    if (someSel && !allSel) cb.indeterminate = true;
+
+    div.querySelector('.cat-hdr').addEventListener('click', e => {
+      if (e.target.tagName === 'INPUT') return;
+      toggleExpand(cat.id);
+    });
+  });
+}
+
+function toggleExpand(catId) {
+  if (expandedCats.has(catId)) expandedCats.delete(catId);
+  else expandedCats.add(catId);
+  renderTree();
+}
+
+function toggleCat(catId, checked) {
+  const cat = DATA.categories.find(c => c.id === catId);
+  cat.tasks.forEach(t => {
+    if (checked) { selectedTasks.add(t.id); if (!taskQty[t.id]) taskQty[t.id] = t.refQty; }
+    else         { selectedTasks.delete(t.id); }
+  });
+  renderTree(); renderAll();
+}
+
+function toggleTask(taskId) {
+  if (selectedTasks.has(taskId)) {
+    selectedTasks.delete(taskId);
+  } else {
+    selectedTasks.add(taskId);
+    const task = findTask(taskId);
+    if (task && !taskQty[taskId]) taskQty[taskId] = task.refQty;
+  }
+  renderTree(); renderAll();
+}
+
+function selectAll(checked) {
+  DATA.categories.forEach(c => c.tasks.forEach(t => {
+    if (checked) { selectedTasks.add(t.id); if (!taskQty[t.id]) taskQty[t.id] = t.refQty; }
+    else         selectedTasks.delete(t.id);
+  }));
+  renderTree(); renderAll();
+}
+
+function clearAll() {
+  selectedTasks.clear(); taskQty = {};
+  document.getElementById('search-input').value = '';
+  document.getElementById('cat-filter').value = '';
+  renderTree(); renderAll();
+}
+
+function findTask(id) {
+  for (const cat of DATA.categories)
+    for (const t of cat.tasks) if (t.id === id) return t;
+  return null;
+}
+function findCat(taskId) {
+  for (const cat of DATA.categories)
+    for (const t of cat.tasks) if (t.id === taskId) return cat;
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER ALL
+═══════════════════════════════════════════════════════ */
+function renderAll() {
+  renderTaskQtyPanel();
+  renderMaterials();
+  updateStats();
+}
+
+/* ── Task Qty Panel ── */
+function renderTaskQtyPanel() {
+  const panel = document.getElementById('task-qty-panel');
+  const badge = document.getElementById('selected-count');
+  const tasks = getSelectedTasks();
+
+  badge.textContent = tasks.length + ' งาน';
+
+  if (tasks.length === 0) {
+    panel.innerHTML = `<div class="empty-tasks"><div class="big-icon">☑️</div><p>ยังไม่ได้เลือกรายการงาน<br>กรุณาเลือกงานจากแผงซ้าย</p></div>`;
+    return;
+  }
+
+  panel.innerHTML = tasks.map(t => {
+    const qty   = taskQty[t.id] || t.refQty;
+    const scale = qty / t.refQty;
+    const matCount = t.materials.length;
+    const cat = findCat(t.id);
+    return `
+      <div class="task-card" id="card-${t.id}">
+        <div class="task-card-hdr">
+          <div style="flex:1;">
+            <div class="task-card-cat">${cat?.icon||''} ${cat?.name||''}</div>
+            <div class="task-card-name">${t.name}</div>
+          </div>
+          <div style="font-size:11px;background:var(--primary);color:#fff;padding:2px 8px;border-radius:10px;flex-shrink:0;">${t.id}</div>
+        </div>
+        <div class="task-card-body">
+          <div class="qty-row">
+            <label>ปริมาณงาน:</label>
+            <input class="qty-input" type="number" min="0" step="any"
+                   value="${qty}"
+                   oninput="setQty('${t.id}', this.value)"
+                   id="qty-${t.id}">
+            <span class="qty-unit">${t.unit}</span>
+          </div>
+          <div class="ref-note">📐 อัตราต่อ 1 ${t.unit} → คูณ <strong style="color:var(--primary)">${qty}</strong>
+            ${scale !== 1 ? `&nbsp;= ×${scale.toFixed(2)}` : ''}
+          </div>
+          <div class="mat-preview">วัสดุ <span>${matCount}</span> รายการ</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function setQty(taskId, val) {
+  const v = parseFloat(val);
+  taskQty[taskId] = isNaN(v) || v < 0 ? 0 : v;
+  // update ref note inline
+  const task = findTask(taskId);
+  if (task) {
+    const scale = (taskQty[taskId]) / task.refQty;
+    const refEl = document.querySelector(`#card-${taskId} .ref-note`);
+    if (refEl) refEl.innerHTML = `📐 อัตราต่อ 1 ${task.unit} → คูณ <strong style="color:var(--primary)">${taskQty[taskId]}</strong>
+      ${scale !== 1 ? `= ×${scale.toFixed(2)}` : ''}`;
+  }
+  renderMaterials();
+  updateStats();
+}
+
+/* ═══════════════════════════════════════════════════════
+   MATERIALS
+═══════════════════════════════════════════════════════ */
+function getSelectedTasks() {
+  const out = [];
+  DATA.categories.forEach(cat =>
+    cat.tasks.forEach(t => { if (selectedTasks.has(t.id)) out.push(t); })
+  );
+  return out;
+}
+
+function aggregateMaterials(tasks) {
+  const map = {};
+  tasks.forEach(t => {
+    const qty    = taskQty[t.id] ?? t.refQty;
+    const scale  = t.refQty > 0 ? qty / t.refQty : 1;
+    t.materials.forEach(m => {
+      const key = m.name + '|' + m.unit;
+      if (!map[key]) map[key] = { name:m.name, cat:m.cat, unit:m.unit, price:m.price, qty:0, tasks:[] };
+      map[key].qty   += m.qty * scale;
+      map[key].tasks.push(t.name);
+    });
+  });
+  return map;
+}
+
+const CAT_COLORS = {
+  'คอนกรีต':'#dbeafe','เหล็ก':'#fce7f3','ไม้':'#dcfce7','ปูน/ซีเมนต์':'#fef9c3',
+  'ทราย/หิน':'#e5e7eb','สายไฟ':'#fef3c7','ท่อ/อุปกรณ์':'#e0f2fe','สุขภัณฑ์':'#f0fdf4',
+  'กระเบื้อง':'#fae8ff','บล็อก/อิฐ':'#ffedd5','สี/ทาสี':'#ecfdf5','อุปกรณ์ไฟฟ้า':'#fffbeb',
+  'เคมีภัณฑ์':'#fdf4ff','กระจก':'#f0f9ff','ประตู/หน้าต่าง':'#fff7ed','เชื้อเพลิง':'#fef2f2',
+  'อุปกรณ์':'#f8fafc','อื่นๆ':'#f1f5f9','อุปกรณ์ปรับอากาศ':'#ecfeff',
+  'ปูนสำเร็จรูป':'#fff3cd',
+};
+
+function renderMaterials() {
+  const tasks    = getSelectedTasks();
+  const matMap   = aggregateMaterials(tasks);
+  const search   = document.getElementById('mat-search').value.toLowerCase().trim();
+  const catFilt  = document.getElementById('mat-cat-filter').value;
+  const container = document.getElementById('mat-container');
+
+  // populate cat filter
+  const allCats = [...new Set(Object.values(matMap).map(m=>m.cat))].sort();
+  const matSel  = document.getElementById('mat-cat-filter');
+  const curVal  = matSel.value;
+  matSel.innerHTML = '<option value="">ทุกหมวดวัสดุ</option>';
+  allCats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    if (c === curVal) o.selected = true;
+    matSel.appendChild(o);
+  });
+
+  if (tasks.length === 0) {
+    container.innerHTML = `<div class="mat-empty"><div class="big-icon">📭</div><p>เลือกงานและป้อนปริมาณ<br>เพื่อดูรายการวัสดุที่ต้องสั่งซื้อ</p></div>`;
+    return;
+  }
+
+  // group by cat
+  const grouped = {};
+  Object.values(matMap).forEach(m => {
+    if (catFilt && m.cat !== catFilt) return;
+    if (search && !m.name.toLowerCase().includes(search) && !m.cat.toLowerCase().includes(search)) return;
+    if (!grouped[m.cat]) grouped[m.cat] = [];
+    grouped[m.cat].push(m);
+  });
+
+  let grandTotal = 0;
+  let html = '<table><thead><tr>'
+    + '<th style="width:36px">#</th>'
+    + '<th>รายการวัสดุ</th>'
+    + '<th>หมวด</th>'
+    + '<th>งานที่ใช้</th>'
+    + '<th class="r">ปริมาณรวม</th>'
+    + '<th>หน่วย</th>'
+    + '<th class="r">ราคา/หน่วย</th>'
+    + '<th class="r">ราคารวม (บาท)</th>'
+    + '</tr></thead><tbody>';
+
+  let idx = 1;
+  for (const [catName, mats] of Object.entries(grouped)) {
+    const bg = CAT_COLORS[catName] || '#f8fafc';
+    const catTotal = mats.reduce((s,m) => s + m.qty * m.price, 0);
+    grandTotal += catTotal;
+
+    html += `<tr class="cat-row">
+      <td colspan="4" style="background:${bg};">▸ ${catName}</td>
+      <td class="r" style="background:${bg};"></td>
+      <td style="background:${bg};"></td>
+      <td style="background:${bg};"></td>
+      <td class="r" style="background:${bg};">${fmtNum(catTotal, 0)}</td>
+    </tr>`;
+
+    mats.forEach(m => {
+      const rowTotal = m.qty * m.price;
+      const tasksStr = [...new Set(m.tasks)].slice(0,2).join(', ')
+                     + (m.tasks.length > 2 ? `…+${m.tasks.length-2}` : '');
+      html += `<tr>
+        <td style="color:var(--muted);font-size:11px;">${idx++}</td>
+        <td><strong>${m.name}</strong></td>
+        <td><span class="mat-badge" style="background:${bg};color:#374151;">${m.cat}</span></td>
+        <td><span class="tasks-tiny" title="${[...new Set(m.tasks)].join(', ')}">${tasksStr}</span></td>
+        <td class="r"><strong>${fmtNum(m.qty, 2)}</strong></td>
+        <td style="color:var(--muted);">${m.unit}</td>
+        <td class="r">${fmtNum(m.price, 2)}</td>
+        <td class="r" style="color:var(--success);font-weight:700;">${fmtNum(rowTotal, 0)}</td>
+      </tr>`;
+    });
+  }
+
+  if (!idx || idx === 1) {
+    container.innerHTML = `<div class="mat-empty"><div class="big-icon">🔍</div><p>ไม่พบวัสดุที่ตรงกับการค้นหา</p></div>`;
+    return;
+  }
+
+  html += `<tr class="total-row">
+    <td colspan="7"><strong>💰 ราคาประมาณรวมทั้งหมด</strong></td>
+    <td class="r">${fmtNum(grandTotal, 0)}</td>
+  </tr>`;
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+/* ── Stats ── */
+function updateStats() {
+  const tasks   = getSelectedTasks();
+  const matMap  = aggregateMaterials(tasks);
+  const mats    = Object.values(matMap);
+  const total   = mats.reduce((s,m) => s + m.qty * m.price, 0);
+
+  document.getElementById('stat-tasks').textContent = tasks.length;
+  document.getElementById('stat-mats').textContent  = mats.length;
+  document.getElementById('stat-cost').textContent  = total > 0
+    ? fmtNum(total, 0)
+    : '–';
+}
+
+/* ── Helpers ── */
+function fmtNum(n, dp) {
+  return Number(n).toLocaleString('th-TH', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT CSV
+═══════════════════════════════════════════════════════ */
+function exportCSV() {
+  const tasks  = getSelectedTasks();
+  const matMap = aggregateMaterials(tasks);
+  const mats   = Object.values(matMap);
+
+  if (!mats.length) { alert('ยังไม่มีรายการวัสดุ — กรุณาเลือกงานและป้อนปริมาณก่อน'); return; }
+
+  const now    = new Date().toLocaleDateString('th-TH');
+  let csv = '\uFEFF'; // BOM
+  csv += `"WBS คำนวณวัสดุก่อสร้าง","วันที่: ${now}"\n\n`;
+  csv += '"#","รายการวัสดุ","หมวดวัสดุ","งานที่ใช้","ปริมาณรวม","หน่วย","ราคาต่อหน่วย","ราคารวม (บาท)"\n';
+
+  let idx = 1, grandTotal = 0;
+  mats.forEach(m => {
+    const total = m.qty * m.price;
+    grandTotal += total;
+    const tasks = [...new Set(m.tasks)].join(' / ');
+    csv += `"${idx++}","${m.name}","${m.cat}","${tasks}","${m.qty.toFixed(2)}","${m.unit}","${m.price}","${total.toFixed(0)}"\n`;
+  });
+  csv += `"","","","","","","ราคารวม","${grandTotal.toFixed(0)}"\n`;
+
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `WBS_Material_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════
+   START
+═══════════════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>

@@ -97,6 +97,7 @@
     .icon-purple { background: #faf5ff; }
     .icon-red    { background: #fff5f5; }
     .icon-teal   { background: #e6fffa; }
+    .icon-amber  { background: #fffbeb; }
 
     .card h2 {
       font-size: 1.1rem;
@@ -135,6 +136,18 @@
     .btn-red    { background: #ef4444; color: #fff; }
     .btn-teal   { background: #14b8a6; color: #fff; }
     .btn-soon   { background: #e2e8f0; color: #94a3b8; cursor: default; }
+    .btn-amber  { background: #f59e0b; color: #fff; }
+
+    .badge-soon {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #dc2626;
+    }
 
     footer {
       margin-top: 64px;
@@ -154,12 +167,13 @@
   <div class="section-label">📊 Dashboard & Tracking</div>
   <div class="grid">
 
-    <a class="card" href="ARH114_Dashboard.html">
+    <div class="card disabled">
       <div class="icon icon-blue">📊</div>
       <h2>ARH114 Dashboard</h2>
       <p>แดชบอร์ดสำหรับโครงการ ARH114 แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
-      <span class="btn btn-blue">เปิดใช้งาน →</span>
-    </a>
+      <span class="badge-soon">🚧 ยังไม่เปิดให้ใช้</span>
+      <span class="btn btn-soon" style="margin-top:12px;">ยังไม่พร้อมใช้งาน</span>
+    </div>
 
     <a class="card" href="RoomTracker_Dashboard.html">
       <div class="icon icon-green">🏠</div>
@@ -200,6 +214,19 @@
       <h2>Steel Section Design</h2>
       <p>ออกแบบและตรวจสอบหน้าตัดเหล็กรูปพรรณ สำหรับงานโครงสร้างเหล็ก</p>
       <span class="btn btn-teal">เปิดใช้งาน →</span>
+    </a>
+
+  </div>
+
+  <!-- กลุ่ม Procurement & Estimation -->
+  <div class="section-label">📦 Procurement & Material Estimation</div>
+  <div class="grid">
+
+    <a class="card" href="WBS_Calculator.html">
+      <div class="icon icon-amber">🧱</div>
+      <h2>WBS Material Calculator</h2>
+      <p>เลือกรายการงานจาก WBS ป้อนปริมาณงาน แล้วคำนวณวัสดุที่ต้องสั่งซื้อได้ทันที</p>
+      <span class="btn btn-amber">เปิดใช้งาน →</span>
     </a>
 
   </div>
