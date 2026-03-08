@@ -664,7 +664,10 @@ function dlFile(content,name,type){
 }
 
 var cExpr='';
-function cSan(e){return e.replace(/log10\(/g,'Math.log10(').replace(/log\(/g,'Math.log(').replace(/sin\(/g,'Math.sin(').replace(/cos\(/g,'Math.cos(').replace(/tan\(/g,'Math.tan(').replace(/sqrt\(/g,'Math.sqrt(').replace(/pow\(/g,'Math.pow(');}
+function sinDeg(x){return Math.sin(x*Math.PI/180);}
+function cosDeg(x){return Math.cos(x*Math.PI/180);}
+function tanDeg(x){return Math.tan(x*Math.PI/180);}
+function cSan(e){return e.replace(/log10\(/g,'Math.log10(').replace(/log\(/g,'Math.log(').replace(/sin\(/g,'sinDeg(').replace(/cos\(/g,'cosDeg(').replace(/tan\(/g,'tanDeg(').replace(/sqrt\(/g,'Math.sqrt(').replace(/pow\(/g,'Math.pow(');}
 function cPrev(){try{var r=eval(cSan(cExpr));if(isFinite(r))document.getElementById('cres').textContent=fmtN(r);}catch(e){}}
 function cIn(ch){cExpr+=ch;document.getElementById('cexpr').textContent=cExpr;cPrev();}
 function cFn(fn){cExpr+=fn;document.getElementById('cexpr').textContent=cExpr;}
