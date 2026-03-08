@@ -19,7 +19,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 48px;
+      margin-bottom: 36px;
     }
 
     header h1 {
@@ -34,28 +34,67 @@
       color: #718096;
     }
 
-    .section-label {
-      width: 100%;
-      max-width: 960px;
+    /* ── Page Navigation ── */
+    .page-nav {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .page-btn {
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: 2px solid #cbd5e0;
+      background: #ffffff;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .page-btn:hover {
+      border-color: #4a90e2;
+      color: #4a90e2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(74,144,226,0.18);
+    }
+
+    .page-btn.active {
+      background: #1a202c;
+      border-color: #1a202c;
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(26,32,44,0.25);
+    }
+
+    /* ── Pages ── */
+    .page { display: none; width: 100%; max-width: 960px; }
+    .page.active { display: block; }
+
+    .page-title {
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: #a0aec0;
-      margin-bottom: 16px;
-      margin-top: 36px;
+      margin-bottom: 20px;
     }
 
-    .section-label:first-of-type { margin-top: 0; }
-
+    /* ── Grid ── */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 24px;
       width: 100%;
-      max-width: 960px;
     }
 
+    /* ── Card ── */
     .card {
       background: #ffffff;
       border-radius: 16px;
@@ -69,15 +108,9 @@
       color: inherit;
     }
 
-    .card:not(.disabled):hover {
+    .card:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    }
-
-    .card.disabled {
-      opacity: 0.6;
-      cursor: default;
-      pointer-events: none;
     }
 
     .icon {
@@ -98,6 +131,7 @@
     .icon-red    { background: #fff5f5; }
     .icon-teal   { background: #e6fffa; }
     .icon-amber  { background: #fffbeb; }
+    .icon-indigo { background: #eef2ff; }
 
     .card h2 {
       font-size: 1.1rem;
@@ -135,24 +169,18 @@
     .btn-purple { background: #8b5cf6; color: #fff; }
     .btn-red    { background: #ef4444; color: #fff; }
     .btn-teal   { background: #14b8a6; color: #fff; }
-    .btn-soon   { background: #e2e8f0; color: #94a3b8; cursor: default; }
     .btn-amber  { background: #f59e0b; color: #fff; }
-
-    .badge-soon {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: #fee2e2;
-      color: #dc2626;
-    }
+    .btn-indigo { background: #6366f1; color: #fff; }
 
     footer {
       margin-top: 64px;
       font-size: 0.8rem;
       color: #a0aec0;
+    }
+
+    @media (max-width: 600px) {
+      .page-btn { padding: 10px 16px; font-size: 0.82rem; }
+      header h1 { font-size: 1.5rem; }
     }
   </style>
 </head>
@@ -163,75 +191,110 @@
     <p>เลือกเครื่องมือที่ต้องการใช้งาน</p>
   </header>
 
-  <!-- กลุ่ม Dashboard -->
-  <div class="section-label">📊 Dashboard & Tracking</div>
-  <div class="grid">
+  <!-- Page Navigation -->
+  <nav class="page-nav">
+    <button class="page-btn active" onclick="showPage('tracking')">📊 Construction Tracking</button>
+    <button class="page-btn" onclick="showPage('engineering')">🔧 Engineering Tools</button>
+    <button class="page-btn" onclick="showPage('estimation')">📦 Planing & Estimation</button>
+  </nav>
 
-    <div class="card disabled">
-      <div class="icon icon-blue">📊</div>
-      <h2>ARH114 Dashboard</h2>
-      <p>แดชบอร์ดสำหรับโครงการ ARH114 แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
-      <span class="badge-soon">🚧 ยังไม่เปิดให้ใช้</span>
-      <span class="btn btn-soon" style="margin-top:12px;">ยังไม่พร้อมใช้งาน</span>
+  <!-- ════════════════════════════════════════
+       Page 1 : Construction Tracking
+  ════════════════════════════════════════ -->
+  <div id="page-tracking" class="page active">
+    <div class="page-title">📊 Construction Tracking</div>
+    <div class="grid">
+
+      <a class="card" href="ARH114_Dashboard.html">
+        <div class="icon icon-blue">📊</div>
+        <h2>Arise hill Progress Tracker</h2>
+        <p>แดชบอร์ดสำหรับโครงการ Arise Hill แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
+        <span class="btn btn-blue">เปิดใช้งาน →</span>
+      </a>
+
+      <a class="card" href="RoomTracker_Dashboard.html">
+        <div class="icon icon-green">🏠</div>
+        <h2>Arise hill Room Tracker</h2>
+        <p>ติดตามสถานะห้องและงานในแต่ละพื้นที่ของโครงการอย่างเป็นระบบ</p>
+        <span class="btn btn-green">เปิดใช้งาน →</span>
+      </a>
+
     </div>
-
-    <a class="card" href="RoomTracker_Dashboard.html">
-      <div class="icon icon-green">🏠</div>
-      <h2>Room Tracker Dashboard</h2>
-      <p>ติดตามสถานะห้องและงานในแต่ละพื้นที่ของโครงการอย่างเป็นระบบ</p>
-      <span class="btn btn-green">เปิดใช้งาน →</span>
-    </a>
-
-    <a class="card" href="WorkingDays_Calculator.html">
-      <div class="icon icon-orange">📅</div>
-      <h2>Working Days Calculator</h2>
-      <p>คำนวณจำนวนวันทำงาน หักวันหยุดและวันฝนตก เพื่อวางแผนงานก่อสร้างได้แม่นยำ</p>
-      <span class="btn btn-orange">เปิดใช้งาน →</span>
-    </a>
-
   </div>
 
-  <!-- กลุ่ม Design Tools -->
-  <div class="section-label">🔧 Design & Engineering Tools</div>
-  <div class="grid">
+  <!-- ════════════════════════════════════════
+       Page 2 : Engineering Tools
+  ════════════════════════════════════════ -->
+  <div id="page-engineering" class="page">
+    <div class="page-title">🔧 Engineering Tools</div>
+    <div class="grid">
 
-    <a class="card" href="UnitConverter.html">
-      <div class="icon icon-purple">🔄</div>
-      <h2>Unit Converter</h2>
-      <p>แปลงหน่วยวัดต่าง ๆ ที่ใช้ในงานวิศวกรรมและก่อสร้าง ทั้งหน่วยความยาว น้ำหนัก และแรง</p>
-      <span class="btn btn-purple">เปิดใช้งาน →</span>
-    </a>
+      <a class="card" href="UnitConverter.html">
+        <div class="icon icon-purple">🔄</div>
+        <h2>Unit Converter</h2>
+        <p>แปลงหน่วยวัดต่าง ๆ ที่ใช้ในงานวิศวกรรมและก่อสร้าง ทั้งหน่วยความยาว น้ำหนัก และแรง</p>
+        <span class="btn btn-purple">เปิดใช้งาน →</span>
+      </a>
 
-    <div class="card disabled">
-      <div class="icon icon-red">🏛️</div>
-      <h2>RD Design (SDM)</h2>
-      <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
-      <span class="btn btn-soon">🕐 เร็วๆ นี้</span>
+      <a class="card" href="RDDesign_SDM.html">
+        <div class="icon icon-red">🏛️</div>
+        <h2>RD Design (SDM)</h2>
+        <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
+        <span class="btn btn-red">เปิดใช้งาน →</span>
+      </a>
+
+      <a class="card" href="SteelSectionDesign.html">
+        <div class="icon icon-teal">⚙️</div>
+        <h2>Steel Section Design</h2>
+        <p>ออกแบบและตรวจสอบหน้าตัดเหล็กรูปพรรณ สำหรับงานโครงสร้างเหล็ก</p>
+        <span class="btn btn-teal">เปิดใช้งาน →</span>
+      </a>
+
     </div>
-
-    <a class="card" href="SteelSectionDesign.html">
-      <div class="icon icon-teal">⚙️</div>
-      <h2>Steel Section Design</h2>
-      <p>ออกแบบและตรวจสอบหน้าตัดเหล็กรูปพรรณ สำหรับงานโครงสร้างเหล็ก</p>
-      <span class="btn btn-teal">เปิดใช้งาน →</span>
-    </a>
-
   </div>
 
-  <!-- กลุ่ม Procurement & Estimation -->
-  <div class="section-label">📦 Procurement & Material Estimation</div>
-  <div class="grid">
+  <!-- ════════════════════════════════════════
+       Page 3 : Planing & Estimation
+  ════════════════════════════════════════ -->
+  <div id="page-estimation" class="page">
+    <div class="page-title">📦 Planing & Estimation</div>
+    <div class="grid">
 
-    <a class="card" href="WBS_Calculator.html">
-      <div class="icon icon-amber">🧱</div>
-      <h2>WBS Material Calculator</h2>
-      <p>เลือกรายการงานจาก WBS ป้อนปริมาณงาน แล้วคำนวณวัสดุที่ต้องสั่งซื้อได้ทันที</p>
-      <span class="btn btn-amber">เปิดใช้งาน →</span>
-    </a>
+      <a class="card" href="WBS_Calculator.html">
+        <div class="icon icon-amber">🧱</div>
+        <h2>WBS Calculator</h2>
+        <p>เลือกรายการงานจาก WBS ป้อนปริมาณงาน แล้วคำนวณวัสดุที่ต้องสั่งซื้อได้ทันที</p>
+        <span class="btn btn-amber">เปิดใช้งาน →</span>
+      </a>
 
+      <a class="card" href="WorkingDays_Calculator.html">
+        <div class="icon icon-orange">📅</div>
+        <h2>Working Days Calculator</h2>
+        <p>คำนวณจำนวนวันทำงาน หักวันหยุดและวันฝนตก เพื่อวางแผนงานก่อสร้างได้แม่นยำ</p>
+        <span class="btn btn-orange">เปิดใช้งาน →</span>
+      </a>
+
+    </div>
   </div>
 
   <footer>สร้างด้วย Claude · Cowork Mode</footer>
+
+  <script>
+    function showPage(name) {
+      // ซ่อนทุก page
+      document.querySelectorAll('.page').forEach(function(p) {
+        p.classList.remove('active');
+      });
+      // ปิด active ทุก button
+      document.querySelectorAll('.page-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      // เปิด page ที่เลือก
+      document.getElementById('page-' + name).classList.add('active');
+      // เปิด active button ที่กด
+      event.currentTarget.classList.add('active');
+    }
+  </script>
 
 </body>
 </html>
