@@ -146,6 +146,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
               <option value="weight">⚖️ น้ำหนัก (Weight)</option>
               <option value="pressure">💨 แรงดัน (Pressure)</option>
               <option value="force">💪 แรง (Force)</option>
+              <option value="moment">🔁 โมเมนต์ (Moment)</option>
+              <option value="density">🧪 ความหนาแน่น (Density)</option>
               <option value="steel">🔩 เหล็กเส้น (Steel)</option>
             </select>
           </div>
@@ -460,6 +462,25 @@ var U={
     tf:{n:'ตันแรง (tf)',f:function(v){return v*9806.65}},
     lbf:{n:'ปอนด์แรง (lbf)',f:function(v){return v*4.44822}}
   }},
+  moment:{lbl:'โมเมนต์',u:{
+    nmm:{n:'นิวตัน·มิลลิเมตร (N·mm)',f:function(v){return v*0.001}},
+    ncm:{n:'นิวตัน·เซนติเมตร (N·cm)',f:function(v){return v*0.01}},
+    nm:{n:'นิวตัน·เมตร (N·m)',f:function(v){return v}},
+    knm:{n:'กิโลนิวตัน·เมตร (kN·m)',f:function(v){return v*1000}},
+    kncm:{n:'กิโลนิวตัน·เซนติเมตร (kN·cm)',f:function(v){return v*10}},
+    kgfm:{n:'กิโลกรัมแรง·เมตร (kgf·m)',f:function(v){return v*9.80665}},
+    tfm:{n:'ตันแรง·เมตร (tf·m)',f:function(v){return v*9806.65}},
+    lbfft:{n:'ปอนด์แรง·ฟุต (lbf·ft)',f:function(v){return v*1.35582}},
+    lbfin:{n:'ปอนด์แรง·นิ้ว (lbf·in)',f:function(v){return v*0.112985}}
+  }},
+  density:{lbl:'ความหนาแน่น',u:{
+    kgm3:{n:'กิโลกรัม/ม.³ (kg/m³)',f:function(v){return v}},
+    gcm3:{n:'กรัม/ซม.³ (g/cm³)',f:function(v){return v*1000}},
+    kgl:{n:'กิโลกรัม/ลิตร (kg/L)',f:function(v){return v*1000}},
+    tm3:{n:'ตัน/ม.³ (t/m³)',f:function(v){return v*1000}},
+    lbft3:{n:'ปอนด์/ฟุต³ (lb/ft³)',f:function(v){return v*16.0185}},
+    lbin3:{n:'ปอนด์/นิ้ว³ (lb/in³)',f:function(v){return v*27679.9}}
+  }},
   steel:{lbl:'เหล็กเส้น',steel:true,u:{
     rb6:{n:'RB6 (Ø6mm)',f:function(v){return v*0.222}},
     rb9:{n:'RB9 (Ø9mm)',f:function(v){return v*0.499}},
@@ -510,6 +531,18 @@ var FML={
     {h:'แรงเฉือน',e:'V = wL / 2 (kN)'},
     {h:'ค่า E วัสดุ',e:"คอนกรีต: 4,700√f'c MPa | เหล็ก: 200,000 MPa"}
   ],
+  moment:[
+    {h:'โมเมนต์ดัด Simple Beam',e:'M = wL²/8 (kN·m)',d:'w=โหลดกระจาย (kN/m), L=ช่วงคาน (m)'},
+    {h:'โมเมนต์จุดกลาง',e:'M = PL/4 (kN·m)',d:'P=แรงจุด (kN), L=ช่วงคาน (m)'},
+    {h:'หน่วยแปลงหลัก',e:'1 kN·m = 1,000 N·m = 100 kgf·m'},
+    {h:'kgf·m ↔ kN·m',e:'1 kgf·m = 9.807 N·m = 0.009807 kN·m'}
+  ],
+  density:[
+    {h:'ความหนาแน่นคอนกรีต',e:'ρ = 2,400 kg/m³ (ไม่เสริมเหล็ก)',d:'ρ = 2,500 kg/m³ (เสริมเหล็ก)'},
+    {h:'ความหนาแน่นเหล็ก',e:'ρ = 7,850 kg/m³ = 7.85 t/m³'},
+    {h:'ความหนาแน่นน้ำ',e:'ρ = 1,000 kg/m³ = 1 g/cm³'},
+    {h:'หน่วยแปลงหลัก',e:'1 g/cm³ = 1,000 kg/m³ = 1 t/m³'}
+  ],
   steel:[
     {h:'สูตรน้ำหนักเหล็ก',e:'W = D² ÷ 162 (กก./เมตร)',d:'D = เส้นผ่าศูนย์กลาง (มม.)'},
     {h:'พื้นที่หน้าตัด',e:'As = π × D² / 4 (มม.²)'},
@@ -535,6 +568,19 @@ var QREF={
             ['1 ksc','98.07 kPa','0.0981 MPa','14.22 PSI','—']],
   force:[['1 kN','1,000 N','101.97 kgf','224.8 lbf','—'],
          ['1 tf','9,806.65 N','9.807 kN','1,000 kgf','—']],
+  moment:[
+    ['1 kN·m','1,000 N·m','100,000 N·cm','101.97 kgf·m','0.102 tf·m'],
+    ['1 tf·m','9,806.65 N·m','9.807 kN·m','1,000 kgf·m','7,233.0 lbf·ft'],
+    ['1 kgf·m','9.807 N·m','0.009807 kN·m','7.233 lbf·ft','86.796 lbf·in'],
+    ['1 lbf·ft','1.356 N·m','0.001356 kN·m','0.1383 kgf·m','12 lbf·in']
+  ],
+  density:[
+    ['วัสดุ','ความหนาแน่น','g/cm³','t/m³','lb/ft³'],
+    ['น้ำ','1,000 kg/m³','1.000','1.000','62.43'],
+    ['คอนกรีต','2,400 kg/m³','2.400','2.400','149.8'],
+    ['เหล็ก','7,850 kg/m³','7.850','7.850','489.9'],
+    ['ดินทั่วไป','1,800 kg/m³','1.800','1.800','112.4']
+  ],
   steel:[['RB6','Ø6mm','0.222 กก./ม.','28.3 มม.²','—'],
          ['RB9','Ø9mm','0.499 กก./ม.','63.6 มม.²','—'],
          ['DB12','Ø12mm','0.888 กก./ม.','113.1 มม.²','—'],
@@ -600,7 +646,9 @@ function setQ(v,t,f,to){
 function renderFml(type){
   var titles={length:'📏 สูตรเกี่ยวกับความยาว',area:'⬛ สูตรเกี่ยวกับพื้นที่',
     volume:'📦 สูตรเกี่ยวกับปริมาตร',weight:'⚖️ สูตรเกี่ยวกับน้ำหนัก',
-    pressure:'💨 สูตรเกี่ยวกับแรงดัน',force:'💪 สูตรเกี่ยวกับแรง',steel:'🔩 สูตรเหล็กเส้น'};
+    pressure:'💨 สูตรเกี่ยวกับแรงดัน',force:'💪 สูตรเกี่ยวกับแรง',
+    moment:'🔁 สูตรเกี่ยวกับโมเมนต์',density:'🧪 สูตรเกี่ยวกับความหนาแน่น',
+    steel:'🔩 สูตรเหล็กเส้น'};
   document.getElementById('fmlTitle').textContent=titles[type]||'📐 สูตรที่เกี่ยวข้อง';
   var data=FML[type]||[];
   document.getElementById('fmlGrid').innerHTML=data.map(function(it){
