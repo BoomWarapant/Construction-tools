@@ -171,6 +171,16 @@
     .btn-teal   { background: #14b8a6; color: #fff; }
     .btn-amber  { background: #f59e0b; color: #fff; }
     .btn-indigo { background: #6366f1; color: #fff; }
+    .btn-gray   { background: #cbd5e0; color: #4a5568; cursor: not-allowed; }
+
+    .card.disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .card.disabled:hover {
+      transform: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    }
 
     footer {
       margin-top: 64px;
@@ -205,12 +215,19 @@
     <div class="page-title">📊 Construction Tracking</div>
     <div class="grid">
 
-      <a class="card" href="ARH114_Dashboard.html">
+      <a class="card" href="daily-report-dashboard.html">
+        <div class="icon icon-indigo">📝</div>
+        <h2>Daily Report Dashboard</h2>
+        <p>แดชบอร์ดสรุปรายงานประจำวันของโครงการ ติดตามความคืบหน้าและกิจกรรมหน้างานแบบรายวัน</p>
+        <span class="btn btn-indigo">เปิดใช้งาน →</span>
+      </a>
+
+      <div class="card disabled">
         <div class="icon icon-blue">📊</div>
         <h2>Arise hill Progress Tracker</h2>
         <p>แดชบอร์ดสำหรับโครงการ Arise Hill แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
-        <span class="btn btn-blue">เปิดใช้งาน →</span>
-      </a>
+        <span class="btn btn-gray">เร็ว ๆ นี้</span>
+      </div>
 
       <a class="card" href="RoomTracker_Dashboard.html">
         <div class="icon icon-green">🏠</div>
@@ -236,12 +253,12 @@
         <span class="btn btn-purple">เปิดใช้งาน →</span>
       </a>
 
-      <a class="card" href="RDDesign_SDM.html">
+      <div class="card disabled">
         <div class="icon icon-red">🏛️</div>
         <h2>RD Design (SDM)</h2>
         <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
-        <span class="btn btn-red">เปิดใช้งาน →</span>
-      </a>
+        <span class="btn btn-gray">เร็ว ๆ นี้</span>
+      </div>
 
       <a class="card" href="SteelSectionDesign.html">
         <div class="icon icon-teal">⚙️</div>
