@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#0a0f18">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☀️%3C/text%3E%3C/svg%3E">
+<title>พยากรณ์อากาศ — งานก่อสร้าง CRD</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0a0f18;
+  color: #c8d8e8;
+  min-height: 100vh;
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.container { max-width: 1280px; margin: 0 auto; }
+
+/* Header */
+.app-header {
+  background: linear-gradient(135deg, #111820 0%, #0f1820 100%);
+  border: 1px solid #1e2d3d;
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #c9a96e;
+  letter-spacing: 0.5px;
+}
+.app-sub { font-size: 12px; color: #556677; margin-top: 2px; }
+.last-updated { font-size: 11px; color: #556677; text-align: right; }
+.refresh-bar { display: flex; align-items: center; gap: 10px; }
+.refresh-btn {
+  background: #1a2535;
+  border: 1px solid #2a4060;
+  color: #c8d8e8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.refresh-btn:hover { background: #243245; border-color: #3a5070; color: #c9a96e; }
+.refresh-btn:active { transform: scale(0.96); }
+.refresh-btn.loading { opacity: 0.6; cursor: wait; }
+.refresh-btn.loading .refresh-icon { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.next-refresh { font-size: 10px; color: #445566; margin-top: 2px; }
+
+/* Map view */
+.map-section {
+  background: #111820;
+  border: 1px solid #1e2d3d;
+  border-radius: 12px;
+  padding: 18px 24px;
+  display: none;
+}
+.map-section.active { display: block; }
+.map-layers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.layer-btn {
+  background: #0f1820;
+  border: 1px solid #1e2d3d;
+  color: #8899aa;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.layer-btn:hover { background: #1a2535; color: #c8d8e8; }
+.layer-btn.active { background: #5b8dd9; color: #fff; border-color: #5b8dd9; }
+.map-frame-wrap {
+  position: relative;
+  width: 100%;
+  height: 65vh;
+  min-height: 480px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0a0f18;
+  border: 1px solid #1a2535;
+}
+.map-frame-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+.map-info {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #0f1820;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #556677;
+  line-height: 1.7;
+}
+.map-info b { color: #8899aa; }
+
+/* Location tabs */
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  background: #111820;
+  border: 1px solid #1e2d3d;
+  color: #8899aa;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.tab:hover { background: #1a2535; color: #c8d8e8; }
+.tab.active { background: #c9a96e; color: #000; border-color: #c9a96e; }
+
+/* View toggle */
+.view-toggle {
+  display: inline-flex;
+  background: #111820;
+  border: 1px solid #1e2d3d;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.view-btn {
+  background: transparent;
+  color: #8899aa;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.view-btn.active { background: #5b8dd9; color: #fff; }
+
+/* Current weather card */
+.current-card {
+  background: linear-gradient(135deg, #111820 0%, #1a2535 100%);
+  border: 1px solid #1e2d3d;
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+.cur-icon { font-size: 64px; line-height: 1; }
+.cur-info { flex: 1; }
+.cur-temp { font-size: 48px; font-weight: 800; color: #c9a96e; line-height: 1; }
+.cur-feels { font-size: 12px; color: #8899aa; margin-top: 4px; }
+.cur-cond { font-size: 14px; color: #c8d8e8; margin-top: 6px; }
+.cur-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; min-width: 220px; }
+.cur-meta-item { font-size: 12px; color: #8899aa; }
+.cur-meta-val { color: #c8d8e8; font-weight: 700; font-size: 14px; }
+
+/* Alert summary */
+.alert-summary {
+  background: #111820;
+  border: 1px solid #1e2d3d;
+  border-radius: 12px;
+  padding: 18px 24px;
+  margin-bottom: 16px;
+}
+.alert-title {
+  font-size: 11px;
+  color: #556677;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.alert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.alert-card {
+  background: #0f1820;
+  border-left: 3px solid;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.alert-card.concrete { border-color: #5b8dd9; }
+.alert-card.paint { border-color: #e0894a; }
+.alert-card.crane { border-color: #c9a96e; }
+.alert-card.heat { border-color: #e05a5a; }
+.alert-card-title { font-size: 12px; color: #8899aa; font-weight: 700; }
+.alert-card-num { font-size: 22px; font-weight: 800; margin-top: 4px; }
+.alert-card-num.bad { color: #e05a5a; }
+.alert-card-num.warn { color: #e0894a; }
+.alert-card-num.ok { color: #4caf50; }
+.alert-card-detail { font-size: 11px; color: #556677; margin-top: 4px; line-height: 1.5; }
+
+/* Forecast grid */
+.forecast-section {
+  background: #111820;
+  border: 1px solid #1e2d3d;
+  border-radius: 12px;
+  padding: 18px 24px;
+}
+.section-title {
+  font-size: 13px;
+  color: #c9a96e;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.fc-card {
+  background: #0f1820;
+  border: 1px solid #1a2535;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+.fc-card.bad { background: linear-gradient(135deg, #1a0e10 0%, #0f1820 60%); border-color: #3a2020; }
+.fc-card.warn { background: linear-gradient(135deg, #1a1410 0%, #0f1820 60%); border-color: #3a2820; }
+.fc-time { font-size: 12px; color: #8899aa; font-weight: 700; }
+.fc-date { font-size: 10px; color: #556677; margin-top: 2px; }
+.fc-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.fc-icon { font-size: 28px; line-height: 1; }
+.fc-temp { font-size: 22px; font-weight: 800; color: #c9a96e; }
+.fc-temp-range { font-size: 11px; color: #8899aa; }
+.fc-meta { font-size: 11px; color: #8899aa; line-height: 1.7; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1a2535; }
+.fc-meta-row { display: flex; justify-content: space-between; }
+.fc-meta-val { color: #c8d8e8; font-weight: 600; }
+.fc-meta-val.high { color: #e05a5a; }
+.fc-meta-val.med { color: #e0894a; }
+.fc-meta-val.low { color: #4caf50; }
+.fc-alerts {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  min-height: 18px;
+}
+.fc-alert {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.fc-alert.bad { background: rgba(224, 90, 90, 0.15); color: #e05a5a; border: 1px solid rgba(224, 90, 90, 0.3); }
+.fc-alert.warn { background: rgba(224, 137, 74, 0.15); color: #e0894a; border: 1px solid rgba(224, 137, 74, 0.3); }
+
+/* Loading & error */
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  color: #556677;
+  font-size: 14px;
+}
+.error { color: #e05a5a; }
+
+/* Threshold legend */
+.thresholds {
+  margin-top: 16px;
+  background: #0f1820;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 11px;
+  color: #556677;
+  line-height: 1.8;
+}
+.thresholds b { color: #8899aa; }
+
+@media (max-width: 720px) {
+  body { padding: 12px; font-size: 13px; }
+  .current-card { grid-template-columns: 1fr; gap: 12px; }
+  .cur-icon { font-size: 48px; }
+  .cur-temp { font-size: 38px; }
+  .forecast-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <div>
+      <div class="app-title">☀️ พยากรณ์อากาศ — งานก่อสร้าง CRD</div>
+      <div class="app-sub">ข้อมูลจาก Open-Meteo · เลือกพื้นที่และดูข้อจำกัดงาน</div>
+    </div>
+    <div class="refresh-bar">
+      <button class="refresh-btn" id="btn_refresh" title="รีเฟรชข้อมูล">
+        <span class="refresh-icon">🔄</span> รีเฟรช
+      </button>
+      <div>
+        <div class="last-updated" id="last_updated">กำลังโหลด...</div>
+        <div class="next-refresh" id="next_refresh"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOCATION TABS -->
+  <div class="tabs" id="location_tabs">
+    <button class="tab active" data-loc="chiangmai">📍 เชียงใหม่</button>
+    <button class="tab" data-loc="bangkok">📍 กรุงเทพ</button>
+    <button class="tab" data-loc="samui">📍 เกาะสมุย/พะงัน</button>
+    <button class="tab" data-loc="phuket">📍 ภูเก็ต</button>
+  </div>
+
+  <!-- VIEW TOGGLE -->
+  <div class="view-toggle" id="view_toggle">
+    <button class="view-btn active" data-view="hourly">รายชั่วโมง (48 ชม.)</button>
+    <button class="view-btn" data-view="daily">รายวัน (14 วัน)</button>
+    <button class="view-btn" data-view="map">🛰️ แผนที่</button>
+  </div>
+
+  <!-- CURRENT WEATHER -->
+  <div class="current-card" id="current_card">
+    <div class="cur-icon" id="cur_icon">⏳</div>
+    <div class="cur-info">
+      <div class="cur-temp" id="cur_temp">--°</div>
+      <div class="cur-feels" id="cur_feels">รู้สึกเหมือน --°C</div>
+      <div class="cur-cond" id="cur_cond">กำลังโหลดข้อมูล...</div>
+    </div>
+    <div class="cur-meta">
+      <div class="cur-meta-item">ความชื้น: <span class="cur-meta-val" id="cur_humid">--%</span></div>
+      <div class="cur-meta-item">ลม: <span class="cur-meta-val" id="cur_wind">-- km/h</span></div>
+      <div class="cur-meta-item">โอกาสฝน: <span class="cur-meta-val" id="cur_rain">--%</span></div>
+      <div class="cur-meta-item">ปริมาณฝน: <span class="cur-meta-val" id="cur_rainmm">-- mm</span></div>
+    </div>
+  </div>
+
+  <!-- ALERT SUMMARY (next 7 days) -->
+  <div class="alert-summary">
+    <div class="alert-title">🚧 สรุปข้อจำกัดงาน — 7 วันข้างหน้า</div>
+    <div class="alert-grid" id="alert_grid">
+      <div class="alert-card concrete">
+        <div class="alert-card-title">🚫 เทคอนกรีต</div>
+        <div class="alert-card-num" id="al_concrete_num">--</div>
+        <div class="alert-card-detail" id="al_concrete_detail">ฝน &gt; 60% หรือ &gt; 2 mm/hr</div>
+      </div>
+      <div class="alert-card paint">
+        <div class="alert-card-title">🚫 ทาสีภายนอก</div>
+        <div class="alert-card-num" id="al_paint_num">--</div>
+        <div class="alert-card-detail" id="al_paint_detail">ฝน &gt; 40% หรือ ความชื้น &gt; 85%</div>
+      </div>
+      <div class="alert-card crane">
+        <div class="alert-card-title">🚫 Crane / งานสูง</div>
+        <div class="alert-card-num" id="al_crane_num">--</div>
+        <div class="alert-card-detail" id="al_crane_detail">ลม &gt; 30 km/h</div>
+      </div>
+      <div class="alert-card heat">
+        <div class="alert-card-title">⚠️ Heat Stress</div>
+        <div class="alert-card-num" id="al_heat_num">--</div>
+        <div class="alert-card-detail" id="al_heat_detail">รู้สึกเหมือน &gt; 35°C</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP SECTION (hidden by default) -->
+  <div class="map-section" id="map_section">
+    <div class="section-title" id="map_title">🛰️ แผนที่ดาวเทียม &amp; เรดาร์</div>
+    <div class="map-layers" id="map_layers">
+      <button class="layer-btn active" data-layer="rain">🌧️ ฝน (forecast)</button>
+      <button class="layer-btn" data-layer="radar">📡 Radar (real-time)</button>
+      <button class="layer-btn" data-layer="clouds">☁️ เมฆ</button>
+      <button class="layer-btn" data-layer="wind">💨 ลม</button>
+      <button class="layer-btn" data-layer="satellite">🛰️ ดาวเทียม</button>
+      <button class="layer-btn" data-layer="temp">🌡️ อุณหภูมิ</button>
+    </div>
+    <div class="map-frame-wrap">
+      <iframe id="windy_frame" src="" allowfullscreen></iframe>
+    </div>
+    <div class="map-info">
+      <b>💡 วิธีอ่านแผนที่:</b>
+      🌧️ <b>ฝน</b> = พยากรณ์ปริมาณฝน 10 วัน (กดเล่น animation ได้) ·
+      📡 <b>Radar</b> = ฝนที่ตกจริงตอนนี้ จากเรดาร์อุตุฯ ·
+      ☁️ <b>เมฆ</b> = ความหนาเมฆพยากรณ์ ·
+      💨 <b>ลม</b> = ความเร็ว/ทิศทาง animation ·
+      🛰️ <b>ดาวเทียม</b> = ภาพดาวเทียมจริง<br>
+      ⏯️ กดปุ่มที่แถบล่างของแผนที่เพื่อเล่น/หยุด timeline · 📍 marker = location ที่เลือก · ที่มา: Windy.com (ECMWF + GFS models)
+    </div>
+  </div>
+
+  <!-- FORECAST -->
+  <div class="forecast-section" id="forecast_section">
+    <div class="section-title" id="forecast_title">พยากรณ์รายชั่วโมง — 48 ชั่วโมงข้างหน้า</div>
+    <div class="forecast-grid" id="forecast_grid">
+      <div class="loading">⏳ กำลังโหลดข้อมูลพยากรณ์...</div>
+    </div>
+
+    <div class="thresholds">
+      <b>เกณฑ์ตัดสินใจ:</b>
+      🚫 <b>เทคอนกรีต</b>: ฝน &gt; 60% หรือ ปริมาณ &gt; 2 mm/hr ·
+      🚫 <b>ทาสีภายนอก</b>: ฝน &gt; 40% หรือ ความชื้น &gt; 85% ·
+      🚫 <b>Crane/งานสูง</b>: ลม &gt; 30 km/h ·
+      ⚠️ <b>Heat Stress</b>: รู้สึกเหมือน &gt; 35°C
+    </div>
+  </div>
+</div>
+
+<script>
+// ───────────── CONFIG ─────────────
+const LOCATIONS = {
+  chiangmai: { name: 'เชียงใหม่',          lat: 18.7883, lon: 98.9853 },
+  bangkok:   { name: 'กรุงเทพ',            lat: 13.7563, lon: 100.5018 },
+  samui:     { name: 'เกาะสมุย/พะงัน (SALA)', lat: 9.6217, lon: 99.9954 },
+  phuket:    { name: 'ภูเก็ต',             lat: 7.8804,  lon: 98.3923 }
+};
+
+const THRESHOLDS = {
+  concrete: { rainProb: 60, rainMm: 2 },
+  paint:    { rainProb: 40, humidity: 85 },
+  crane:    { wind: 30 },
+  heat:     { apparentTemp: 35 }
+};
+
+const WMO_CODES = {
+  0:  { icon: '☀️', text: 'แดดจัด' },
+  1:  { icon: '🌤️', text: 'แดดส่วนใหญ่' },
+  2:  { icon: '⛅', text: 'มีเมฆบางส่วน' },
+  3:  { icon: '☁️', text: 'เมฆมาก' },
+  45: { icon: '🌫️', text: 'หมอก' },
+  48: { icon: '🌫️', text: 'หมอกเยือกแข็ง' },
+  51: { icon: '🌦️', text: 'ฝนปรอย' },
+  53: { icon: '🌦️', text: 'ฝนปรอยปานกลาง' },
+  55: { icon: '🌦️', text: 'ฝนปรอยหนัก' },
+  61: { icon: '🌧️', text: 'ฝนเล็กน้อย' },
+  63: { icon: '🌧️', text: 'ฝนปานกลาง' },
+  65: { icon: '🌧️', text: 'ฝนหนัก' },
+  66: { icon: '🌧️', text: 'ฝนเย็นจัด' },
+  67: { icon: '🌧️', text: 'ฝนเย็นจัดหนัก' },
+  71: { icon: '❄️', text: 'หิมะเล็กน้อย' },
+  80: { icon: '🌧️', text: 'ฝนซู่' },
+  81: { icon: '🌧️', text: 'ฝนซู่ปานกลาง' },
+  82: { icon: '⛈️', text: 'ฝนซู่หนัก' },
+  95: { icon: '⛈️', text: 'พายุฝนฟ้าคะนอง' },
+  96: { icon: '⛈️', text: 'พายุฝนพร้อมลูกเห็บ' },
+  99: { icon: '⛈️', text: 'พายุฝนรุนแรง' }
+};
+
+let currentLoc = 'chiangmai';
+let currentView = 'hourly';
+let currentMapLayer = 'rain';
+let weatherData = null;
+
+// Auto-refresh: Open-Meteo updates hourly, refresh every 30 min
+const AUTO_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
+const STALE_THRESHOLD_MS = 60 * 60 * 1000; // refresh on tab focus if data > 1 hour old
+let lastFetchTime = 0;
+let refreshTimer = null;
+let countdownTimer = null;
+
+// ───────────── HELPERS ─────────────
+function wmoInfo(code) { return WMO_CODES[code] || { icon: '🌡️', text: 'ไม่ระบุ' }; }
+
+function fmtDateThai(date, withTime=false) {
+  const d = new Date(date);
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const day = d.getDate();
+  const mon = months[d.getMonth()];
+  const yr = (d.getFullYear() + 543).toString().slice(-2);
+  if (withTime) {
+    const hr = d.getHours().toString().padStart(2,'0');
+    return `${day} ${mon}<br><span style="color:#c9a96e">${hr}:00</span>`;
+  }
+  return `${day} ${mon} ${yr}`;
+}
+
+function dayOfWeek(date) {
+  const days = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+  return days[new Date(date).getDay()];
+}
+
+// Threshold check: returns array of alert objects
+function checkAlerts(rainProb, rainMm, humidity, wind, apparentTemp) {
+  const alerts = [];
+  if (rainProb > THRESHOLDS.concrete.rainProb || rainMm > THRESHOLDS.concrete.rainMm) {
+    alerts.push({ type: 'bad', label: '🚫 เท คอนกรีต' });
+  }
+  if (rainProb > THRESHOLDS.paint.rainProb || humidity > THRESHOLDS.paint.humidity) {
+    alerts.push({ type: 'bad', label: '🚫 ทาสี' });
+  }
+  if (wind > THRESHOLDS.crane.wind) {
+    alerts.push({ type: 'bad', label: '🚫 Crane' });
+  }
+  if (apparentTemp > THRESHOLDS.heat.apparentTemp) {
+    alerts.push({ type: 'warn', label: '⚠️ Heat' });
+  }
+  return alerts;
+}
+
+function rainColor(prob) {
+  if (prob >= 60) return 'high';
+  if (prob >= 40) return 'med';
+  return 'low';
+}
+function windColor(w) {
+  if (w >= 30) return 'high';
+  if (w >= 20) return 'med';
+  return 'low';
+}
+function humidColor(h) {
+  if (h >= 85) return 'high';
+  if (h >= 70) return 'med';
+  return 'low';
+}
+function tempColor(t) {
+  if (t >= 35) return 'high';
+  if (t >= 30) return 'med';
+  return 'low';
+}
+
+// ───────────── API FETCH ─────────────
+async function fetchWeather(loc) {
+  const { lat, lon } = LOCATIONS[loc];
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
+    `&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max` +
+    `&timezone=Asia%2FBangkok&forecast_days=14`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API error: ' + res.status);
+  const data = await res.json();
+  // Derive daily max humidity from hourly (Open-Meteo daily doesn't expose humidity_max directly)
+  data.daily.relative_humidity_2m_max = computeDailyMaxFromHourly(
+    data.hourly.time, data.hourly.relative_humidity_2m, data.daily.time
+  );
+  return data;
+}
+
+function computeDailyMaxFromHourly(hourlyTimes, hourlyVals, dailyDates) {
+  return dailyDates.map(date => {
+    let max = 0;
+    for (let i = 0; i < hourlyTimes.length; i++) {
+      if (hourlyTimes[i].slice(0, 10) === date) {
+        if (hourlyVals[i] > max) max = hourlyVals[i];
+      }
+    }
+    return max;
+  });
+}
+
+// ───────────── RENDER ─────────────
+function renderCurrent(data) {
+  const c = data.current;
+  const wmo = wmoInfo(c.weather_code);
+  document.getElementById('cur_icon').textContent = wmo.icon;
+  document.getElementById('cur_temp').textContent = Math.round(c.temperature_2m) + '°C';
+  document.getElementById('cur_feels').textContent = `รู้สึกเหมือน ${Math.round(c.apparent_temperature)}°C · ${LOCATIONS[currentLoc].name}`;
+  document.getElementById('cur_cond').textContent = wmo.text;
+  document.getElementById('cur_humid').textContent = Math.round(c.relative_humidity_2m) + '%';
+  document.getElementById('cur_wind').textContent = Math.round(c.wind_speed_10m) + ' km/h';
+  document.getElementById('cur_rainmm').textContent = c.precipitation.toFixed(1) + ' mm';
+
+  // Use first hour rain probability as "current"
+  const firstProb = data.hourly.precipitation_probability[0] || 0;
+  document.getElementById('cur_rain').textContent = firstProb + '%';
+
+  document.getElementById('last_updated').textContent =
+    'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function renderAlertSummary(data) {
+  // Count alerts in next 7 days using daily data
+  const days = 7;
+  let cBad = 0, pBad = 0, crBad = 0, hWarn = 0;
+  const cBadDays = [], pBadDays = [], crBadDays = [], hWarnDays = [];
+
+  for (let i = 0; i < days && i < data.daily.time.length; i++) {
+    const rainProb = data.daily.precipitation_probability_max[i] || 0;
+    const rainSum  = data.daily.precipitation_sum[i] || 0;
+    const wind     = data.daily.wind_speed_10m_max[i] || 0;
+    const humidity = data.daily.relative_humidity_2m_max[i] || 0;
+    const apTemp   = data.daily.apparent_temperature_max[i] || 0;
+    const dateStr  = fmtDateThai(data.daily.time[i]).split(' ').slice(0,2).join(' ');
+
+    // Concrete: rain prob OR rain >2mm/day (using daily sum > ~10mm as rough equivalent of 2mm/hr peak)
+    if (rainProb > THRESHOLDS.concrete.rainProb || rainSum > 10) {
+      cBad++; cBadDays.push(dateStr);
+    }
+    if (rainProb > THRESHOLDS.paint.rainProb || humidity > THRESHOLDS.paint.humidity) {
+      pBad++; pBadDays.push(dateStr);
+    }
+    if (wind > THRESHOLDS.crane.wind) {
+      crBad++; crBadDays.push(dateStr);
+    }
+    if (apTemp > THRESHOLDS.heat.apparentTemp) {
+      hWarn++; hWarnDays.push(dateStr);
+    }
+  }
+
+  function setAlert(numId, detailId, count, days, defaultDetail) {
+    const el = document.getElementById(numId);
+    el.textContent = count + ' วัน';
+    el.className = 'alert-card-num ' + (count >= 4 ? 'bad' : count >= 2 ? 'warn' : 'ok');
+    document.getElementById(detailId).textContent = count > 0 ? days.join(', ') : '✓ ทำงานได้ทุกวัน';
+  }
+
+  setAlert('al_concrete_num', 'al_concrete_detail', cBad, cBadDays);
+  setAlert('al_paint_num', 'al_paint_detail', pBad, pBadDays);
+  setAlert('al_crane_num', 'al_crane_detail', crBad, crBadDays);
+  setAlert('al_heat_num', 'al_heat_detail', hWarn, hWarnDays);
+}
+
+function renderHourly(data) {
+  const grid = document.getElementById('forecast_grid');
+  document.getElementById('forecast_title').textContent = 'พยากรณ์รายชั่วโมง — 48 ชั่วโมงข้างหน้า';
+
+  const hours = 48;
+  let html = '';
+  for (let i = 0; i < hours && i < data.hourly.time.length; i++) {
+    const t = data.hourly.time[i];
+    const temp = Math.round(data.hourly.temperature_2m[i]);
+    const apTemp = Math.round(data.hourly.apparent_temperature[i]);
+    const rainProb = data.hourly.precipitation_probability[i] || 0;
+    const rainMm = data.hourly.precipitation[i] || 0;
+    const wind = Math.round(data.hourly.wind_speed_10m[i]);
+    const humid = Math.round(data.hourly.relative_humidity_2m[i]);
+    const wmo = wmoInfo(data.hourly.weather_code[i]);
+
+    const alerts = checkAlerts(rainProb, rainMm, humid, wind, apTemp);
+    const cardClass = alerts.some(a => a.type === 'bad') ? 'bad' : alerts.some(a => a.type === 'warn') ? 'warn' : '';
+
+    html += `
+      <div class="fc-card ${cardClass}">
+        <div class="fc-time">${fmtDateThai(t, true)}</div>
+        <div class="fc-row">
+          <div class="fc-icon">${wmo.icon}</div>
+          <div style="text-align:right">
+            <div class="fc-temp">${temp}°</div>
+            <div class="fc-temp-range">รู้สึก ${apTemp}°</div>
+          </div>
+        </div>
+        <div class="fc-meta">
+          <div class="fc-meta-row"><span>ฝน</span><span class="fc-meta-val ${rainColor(rainProb)}">${rainProb}% · ${rainMm.toFixed(1)}mm</span></div>
+          <div class="fc-meta-row"><span>ลม</span><span class="fc-meta-val ${windColor(wind)}">${wind} km/h</span></div>
+          <div class="fc-meta-row"><span>ความชื้น</span><span class="fc-meta-val ${humidColor(humid)}">${humid}%</span></div>
+        </div>
+        <div class="fc-alerts">
+          ${alerts.map(a => `<span class="fc-alert ${a.type}">${a.label}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+  grid.innerHTML = html;
+}
+
+function renderDaily(data) {
+  const grid = document.getElementById('forecast_grid');
+  document.getElementById('forecast_title').textContent = 'พยากรณ์รายวัน — 14 วันข้างหน้า';
+
+  const days = 14;
+  let html = '';
+  for (let i = 0; i < days && i < data.daily.time.length; i++) {
+    const t = data.daily.time[i];
+    const tempMax = Math.round(data.daily.temperature_2m_max[i]);
+    const tempMin = Math.round(data.daily.temperature_2m_min[i]);
+    const apMax = Math.round(data.daily.apparent_temperature_max[i]);
+    const rainProb = data.daily.precipitation_probability_max[i] || 0;
+    const rainSum = data.daily.precipitation_sum[i] || 0;
+    const wind = Math.round(data.daily.wind_speed_10m_max[i]);
+    const humid = Math.round(data.daily.relative_humidity_2m_max[i]);
+    const wmo = wmoInfo(data.daily.weather_code[i]);
+
+    // For daily, use rainSum > 10mm equivalent for concrete bad day
+    const rainMmEffective = rainSum > 10 ? 3 : 0;
+    const alerts = checkAlerts(rainProb, rainMmEffective, humid, wind, apMax);
+    const cardClass = alerts.some(a => a.type === 'bad') ? 'bad' : alerts.some(a => a.type === 'warn') ? 'warn' : '';
+
+    html += `
+      <div class="fc-card ${cardClass}">
+        <div class="fc-time">${dayOfWeek(t)} ${fmtDateThai(t)}</div>
+        <div class="fc-row">
+          <div class="fc-icon">${wmo.icon}</div>
+          <div style="text-align:right">
+            <div class="fc-temp">${tempMax}°</div>
+            <div class="fc-temp-range">ต่ำสุด ${tempMin}° · รู้สึก ${apMax}°</div>
+          </div>
+        </div>
+        <div class="fc-meta">
+          <div class="fc-meta-row"><span>ฝน max</span><span class="fc-meta-val ${rainColor(rainProb)}">${rainProb}% · ${rainSum.toFixed(1)}mm</span></div>
+          <div class="fc-meta-row"><span>ลม max</span><span class="fc-meta-val ${windColor(wind)}">${wind} km/h</span></div>
+          <div class="fc-meta-row"><span>ความชื้น max</span><span class="fc-meta-val ${humidColor(humid)}">${humid}%</span></div>
+        </div>
+        <div class="fc-alerts">
+          ${alerts.map(a => `<span class="fc-alert ${a.type}">${a.label}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+  grid.innerHTML = html;
+}
+
+function renderMap() {
+  const { lat, lon, name } = LOCATIONS[currentLoc];
+  // Windy.com embed URL with selected overlay
+  const url = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}` +
+    `&zoom=8&level=surface&overlay=${currentMapLayer}&product=ecmwf&menu=&message=true&marker=true` +
+    `&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+  document.getElementById('windy_frame').src = url;
+  document.getElementById('map_title').textContent = `🛰️ แผนที่ — ${name}`;
+}
+
+function updateView() {
+  const showMap = currentView === 'map';
+  document.getElementById('map_section').classList.toggle('active', showMap);
+  document.getElementById('forecast_section').style.display = showMap ? 'none' : 'block';
+  if (showMap) {
+    renderMap();
+  } else if (weatherData) {
+    if (currentView === 'hourly') renderHourly(weatherData);
+    else renderDaily(weatherData);
+  }
+}
+
+function render() {
+  if (!weatherData) return;
+  renderCurrent(weatherData);
+  renderAlertSummary(weatherData);
+  updateView();
+}
+
+async function loadAndRender(silent=false) {
+  const btn = document.getElementById('btn_refresh');
+  if (!silent) {
+    document.getElementById('forecast_grid').innerHTML = '<div class="loading">⏳ กำลังโหลดข้อมูลพยากรณ์...</div>';
+  }
+  btn.classList.add('loading');
+  try {
+    weatherData = await fetchWeather(currentLoc);
+    lastFetchTime = Date.now();
+    render();
+    scheduleNextRefresh();
+  } catch (e) {
+    document.getElementById('forecast_grid').innerHTML =
+      `<div class="error">❌ โหลดข้อมูลไม่สำเร็จ: ${e.message}<br>กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและกดรีเฟรช</div>`;
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+function scheduleNextRefresh() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => loadAndRender(true), AUTO_REFRESH_MS);
+  startCountdown();
+}
+
+function startCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  const update = () => {
+    const elapsed = Date.now() - lastFetchTime;
+    const remaining = AUTO_REFRESH_MS - elapsed;
+    const el = document.getElementById('next_refresh');
+    if (!el) return;
+    if (remaining <= 0) { el.textContent = 'กำลังอัปเดต...'; return; }
+    const min = Math.floor(remaining / 60000);
+    const sec = Math.floor((remaining % 60000) / 1000);
+    el.textContent = `อัปเดตอัตโนมัติใน ${min}:${sec.toString().padStart(2, '0')}`;
+  };
+  update();
+  countdownTimer = setInterval(update, 1000);
+}
+
+// ───────────── EVENTS ─────────────
+document.getElementById('location_tabs').addEventListener('click', e => {
+  if (e.target.classList.contains('tab')) {
+    document.querySelectorAll('#location_tabs .tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentLoc = e.target.dataset.loc;
+    loadAndRender();
+  }
+});
+
+document.getElementById('view_toggle').addEventListener('click', e => {
+  if (e.target.classList.contains('view-btn')) {
+    document.querySelectorAll('#view_toggle .view-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentView = e.target.dataset.view;
+    updateView();
+  }
+});
+
+// Map layer switcher
+document.getElementById('map_layers').addEventListener('click', e => {
+  if (e.target.classList.contains('layer-btn')) {
+    document.querySelectorAll('#map_layers .layer-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentMapLayer = e.target.dataset.layer;
+    renderMap();
+  }
+});
+
+// Manual refresh button
+document.getElementById('btn_refresh').addEventListener('click', () => loadAndRender(true));
+
+// Auto-refresh on tab focus if data is stale (>1 hour old)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && lastFetchTime > 0) {
+    const age = Date.now() - lastFetchTime;
+    if (age > STALE_THRESHOLD_MS) {
+      loadAndRender(true);
+    }
+  }
+});
+
+// Initial load
+loadAndRender();
+</script>
+</body>
+</html>
