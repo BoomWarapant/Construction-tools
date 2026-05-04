@@ -178,7 +178,7 @@
 </div>
 
 <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/1bIkexjfMebRYuprbsgjZh8bJJ3nZbPRbl0pbG3-_DyQ/pub?output=csv";
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/1bIkexjfMebRYuprbsgjZh8bJJ3nZbPRbl0pbG3-_DyQ/gviz/tq?tqx=out:csv";
     let allData = [];
     let currentPage = 'all';
     let gProj, gStart, gEnd;
@@ -197,48 +197,50 @@
     
     const chartConfig = { responsive: true, displayModeBar: false };
 
-    async function fetchData() {
+    function fetchData() {
         const loadingEl = document.getElementById('loading');
         const errorEl = document.getElementById('error-container');
         if (loadingEl) loadingEl.style.display = 'flex';
         if (errorEl) errorEl.style.display = 'none';
 
-        try {
-            const response = await fetch(CSV_URL + '&t=' + Date.now());
-            if (!response.ok) throw new Error("Network error (Status: " + response.status + ")");
-            const csvText = await response.text();
+        // ใช้ gviz endpoint (ไม่มี redirect, รองรับ CORS จาก local file)
+        const url = CSV_URL + '&t=' + Date.now();
 
-            Papa.parse(csvText, {
-                header: true,
-                dynamicTyping: true,
-                complete: function(results) {
-                    const newData = results.data.filter(r => r.Date_Ref);
-                    if (newData.length === 0) {
-                        if (loadingEl) loadingEl.style.display = 'none';
-                        if (errorEl) {
-                            errorEl.style.display = 'block';
-                            document.getElementById('error-text').innerText = "ไม่พบข้อมูลใน Google Sheets (ตรวจสอบ Publish settings)";
-                        }
-                        return;
-                    }
-                    allData = newData;
-                    allData.forEach(r => { r.Manpower = r.Manpower || 0; r.QTY = r.QTY || 0; });
-                    initDashboard();
+        Papa.parse(url, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                const newData = results.data.filter(r => r.Date_Ref);
+                if (newData.length === 0) {
                     if (loadingEl) loadingEl.style.display = 'none';
-                    const syncEl = document.getElementById('last-sync');
-                    if (syncEl) syncEl.innerText = "Last Updated: " + new Date().toLocaleTimeString();
+                    if (errorEl) {
+                        errorEl.style.display = 'block';
+                        document.getElementById('error-text').innerHTML =
+                            'ไม่พบข้อมูล — กรุณาตรวจสอบว่า Google Sheet ได้ทำการ<br>' +
+                            '<strong>File → Share → Publish to web → Entire Document → CSV</strong><br>แล้วกด Publish';
+                    }
+                    return;
                 }
-            });
-        } catch (err) {
-            console.error(err);
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (errorEl) {
-                errorEl.style.display = 'block';
-                document.getElementById('error-text').innerText = err.message;
-            } else {
-                alert("Error: " + err.message);
+                allData = newData;
+                allData.forEach(r => { r.Manpower = r.Manpower || 0; r.QTY = r.QTY || 0; });
+                initDashboard();
+                if (loadingEl) loadingEl.style.display = 'none';
+                const syncEl = document.getElementById('last-sync');
+                if (syncEl) syncEl.innerText = 'Last Updated: ' + new Date().toLocaleTimeString();
+            },
+            error: function(err) {
+                console.error('PapaParse error:', err);
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (errorEl) {
+                    errorEl.style.display = 'block';
+                    document.getElementById('error-text').innerHTML =
+                        'ไม่สามารถดึงข้อมูลได้: ' + (err.message || err) + '<br><br>' +
+                        'กรุณาตรวจสอบว่า Google Sheet ได้ทำการ<br>' +
+                        '<strong>File → Share → Publish to web → CSV</strong>';
+                }
             }
-        }
+        });
     }
 
     function initDashboard() {
