@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เครื่องคิดเลข & สูตรงานก่อสร้าง</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+[data-theme="dark"]{
+  --bg:#050d1a; --bg2:#0a1628; --card:#0e1f38; --card2:#122644;
+  --border:#1e3a5f; --border2:#2a4f7c; --text:#ddeeff; --text2:#7fa8cc;
+  --accent:#2d8cff; --accent2:#5ba8ff; --acbg:rgba(45,140,255,.13); --acbdr:rgba(45,140,255,.35);
+  --green:#22d58a; --gbg:rgba(34,213,138,.12); --gbdr:rgba(34,213,138,.3);
+  --inp:#0a1628; --red:#ff5c6a; --copbg:rgba(45,140,255,.18); --numhov:#162f50;
+  --shadow:0 4px 24px rgba(0,80,200,.18);
+}
+[data-theme="light"]{
+  --bg:#eef4fb; --bg2:#dde9f7; --card:#ffffff; --card2:#f0f6ff;
+  --border:#b8d0eb; --border2:#90b8de; --text:#0d2340; --text2:#4a6f96;
+  --accent:#1a6fd4; --accent2:#2d8cff; --acbg:rgba(26,111,212,.09); --acbdr:rgba(26,111,212,.3);
+  --green:#0da870; --gbg:rgba(13,168,112,.1); --gbdr:rgba(13,168,112,.3);
+  --inp:#f4f9ff; --red:#d63848; --copbg:rgba(26,111,212,.12); --numhov:#e2edf9;
+  --shadow:0 4px 18px rgba(0,60,150,.1);
+}
+*{box-sizing:border-box;transition:background .22s,color .16s,border-color .16s}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh}
+.hdr{background:var(--bg2);border-bottom:2.5px solid var(--accent);padding:.8rem 1.2rem;
+  box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+.hdr-l{display:flex;align-items:center;gap:.75rem}
+.hdr h1{font-size:1.28rem;font-weight:800;color:var(--accent);margin:0}
+.hdr small{color:var(--text2);font-size:.74rem}
+.tbtn{background:var(--acbg);border:1px solid var(--acbdr);color:var(--accent);border-radius:20px;
+  padding:.3rem .85rem;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem;white-space:nowrap;flex-shrink:0}
+.tbtn:hover{background:var(--accent);color:#fff}
+.section-title{color:var(--accent);font-size:1.05rem;font-weight:800;margin:1.4rem 0 .8rem;padding-bottom:.4rem;border-bottom:1.5px solid var(--border)}
+.section-title:first-child{margin-top:.3rem}
+.cd{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:1.2rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.cd h5{color:var(--accent);font-size:.94rem;font-weight:800;margin-bottom:1rem}
+.form-label{color:var(--text2);font-size:.79rem;font-weight:700;margin-bottom:.23rem}
+.form-control,.form-select{background:var(--inp);border:1.5px solid var(--border);color:var(--text);border-radius:9px;font-size:.9rem}
+.form-control:focus,.form-select:focus{background:var(--inp);color:var(--text);border-color:var(--accent);box-shadow:0 0 0 3px var(--acbg)}
+.form-select option{background:var(--card)}
+.rbox{background:var(--acbg);border:1.5px solid var(--acbdr);border-radius:11px;padding:.9rem;text-align:center;margin-top:.75rem}
+.rval{font-family:'Courier New',monospace;font-size:1.95rem;font-weight:800;color:var(--accent2);word-break:break-all}
+.runit{color:var(--text2);font-size:.82rem;margin-top:.2rem}
+.fcard{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:.82rem;margin-bottom:.58rem;cursor:pointer;transition:.18s}
+.fcard:hover{border-color:var(--accent);background:var(--acbg)}
+.fcard.static{cursor:default}
+.fcard h6{color:var(--text);font-size:.86rem;margin-bottom:.2rem;font-weight:700}
+.feq{font-family:'Courier New',monospace;color:var(--green);font-size:.78rem}
+.fdesc{color:var(--text2);font-size:.74rem;margin-top:.15rem}
+/* CALC */
+.cdsp{background:var(--bg);border:1.5px solid var(--border);border-radius:11px;
+  padding:.82rem 1.05rem;text-align:right;margin-bottom:.7rem;min-height:76px}
+.cexpr{color:var(--text2);font-size:.8rem;font-family:'Courier New',monospace;min-height:1.2em;word-break:break-all}
+.cres{font-family:'Courier New',monospace;font-size:1.95rem;color:var(--text);font-weight:800;word-break:break-all}
+.cbtn{width:100%;padding:.66rem .1rem;border-radius:9px;font-size:.96rem;font-weight:700;border:none;cursor:pointer;transition:.12s}
+.cbtn:hover{transform:scale(1.06)}
+.cnum{background:var(--card2);color:var(--text);border:1.5px solid var(--border)}
+.cnum:hover{background:var(--numhov)}
+.cop{background:var(--copbg);color:var(--accent2);border:1.5px solid var(--acbdr)}
+.ceq{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none}
+.cclr{background:rgba(255,92,106,.14);color:var(--red);border:1.5px solid rgba(255,92,106,.28)}
+.cfn{background:var(--gbg);color:var(--green);border:1.5px solid var(--gbdr);font-size:.79rem}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+#toast{position:fixed;bottom:1.3rem;right:1.3rem;z-index:9999;display:none}
+#toastMsg{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  padding:.68rem 1.2rem;border-radius:10px;font-weight:700;box-shadow:var(--shadow)}
+@media(max-width:576px){.hdr h1{font-size:1rem}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <rect x="2" y="2" width="26" height="26" rx="5" fill="var(--accent)"/>
+      <rect x="6" y="6" width="18" height="6" rx="1.5" fill="var(--bg2)"/>
+      <rect x="6" y="14" width="4" height="4" rx="1" fill="var(--accent2)"/>
+      <rect x="11" y="14" width="4" height="4" rx="1" fill="var(--accent2)"/>
+      <rect x="16" y="14" width="4" height="4" rx="1" fill="var(--accent2)"/>
+      <rect x="21" y="14" width="3" height="10" rx="1" fill="#fff"/>
+      <rect x="6" y="20" width="4" height="4" rx="1" fill="var(--accent2)"/>
+      <rect x="11" y="20" width="4" height="4" rx="1" fill="var(--accent2)"/>
+      <rect x="16" y="20" width="4" height="4" rx="1" fill="var(--accent2)"/>
+    </svg>
+    <div>
+      <h1>เครื่องคิดเลข &amp; สูตรงานก่อสร้าง</h1>
+      <small>Engineering Calculator &amp; Common Formulas — Offline</small>
+    </div>
+  </div>
+  <button class="tbtn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+</div>
+
+<div class="container-fluid py-3" style="max-width:1100px">
+
+<!-- SECTION CALCULATOR -->
+<div class="section-title">🔢 เครื่องคิดเลข</div>
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+    <div class="cd">
+      <h5>🔢 เครื่องคิดเลขวิศวกรรม</h5>
+      <div class="cdsp">
+        <div class="cexpr" id="cexpr"></div>
+        <div class="cres" id="cres">0</div>
+      </div>
+      <div class="row g-2">
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('sin(')">sin</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('cos(')">cos</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('tan(')">tan</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('sqrt(')">√</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('log10(')">log</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('log(')">ln</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cIn('3.14159265358979')">π</button></div>
+        <div class="col-3"><button class="cbtn cfn" onclick="cFn('pow(')">xⁿ</button></div>
+        <div class="col-3"><button class="cbtn cclr" onclick="cClr()">AC</button></div>
+        <div class="col-3"><button class="cbtn cclr" onclick="cDel()">⌫</button></div>
+        <div class="col-3"><button class="cbtn cop" onclick="cIn('%')">%</button></div>
+        <div class="col-3"><button class="cbtn cop" onclick="cIn('/')">÷</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('7')">7</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('8')">8</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('9')">9</button></div>
+        <div class="col-3"><button class="cbtn cop" onclick="cIn('*')">×</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('4')">4</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('5')">5</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('6')">6</button></div>
+        <div class="col-3"><button class="cbtn cop" onclick="cIn('-')">−</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('1')">1</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('2')">2</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('3')">3</button></div>
+        <div class="col-3"><button class="cbtn cop" onclick="cIn('+')">+</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('(')">(</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('0')">0</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn('.')">.</button></div>
+        <div class="col-3"><button class="cbtn ceq" onclick="cEq()">=</button></div>
+        <div class="col-3"><button class="cbtn cnum" onclick="cIn(')')">)</button></div>
+        <div class="col-9"><button class="cbtn cfn" onclick="copyCres()">📋 คัดลอกผลลัพธ์</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+    <div class="cd" style="max-height:370px;overflow-y:auto">
+      <h5>📋 ประวัติการคำนวณ</h5>
+      <div id="chist"><p style="color:var(--text2);font-size:.85rem;text-align:center">ยังไม่มีประวัติ</p></div>
+    </div>
+    <div class="cd">
+      <h5>🔩 คำนวณน้ำหนักเหล็กด่วน</h5>
+      <div class="row g-2">
+        <div class="col-6">
+          <label class="form-label">ขนาดเหล็ก</label>
+          <select class="form-select" id="sDia" onchange="calcStl()">
+            <option value="6">RB6 (Ø6)</option>
+            <option value="9" selected>RB9 (Ø9)</option>
+            <option value="10">DB10</option>
+            <option value="12">DB12</option>
+            <option value="16">DB16</option>
+            <option value="20">DB20</option>
+            <option value="25">DB25</option>
+            <option value="28">DB28</option>
+            <option value="32">DB32</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label">ความยาว (เมตร)</label>
+          <input type="number" id="sLen" class="form-control" value="12" oninput="calcStl()" step="0.1">
+        </div>
+        <div class="col-6">
+          <label class="form-label">จำนวนเส้น</label>
+          <input type="number" id="sQty" class="form-control" value="1" oninput="calcStl()">
+        </div>
+        <div class="col-6">
+          <label class="form-label">น้ำหนัก/เมตร</label>
+          <div class="rbox" style="padding:.45rem;margin-top:0">
+            <div class="rval" style="font-size:.95rem" id="sPerM">—</div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="rbox" style="margin-top:0">
+            <div style="color:var(--text2);font-size:.73rem">น้ำหนักรวม</div>
+            <div class="rval" id="sTotal">—</div>
+            <div class="runit" id="sFml"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION FORMULAS -->
+<div class="section-title">📐 สูตรที่ใช้บ่อย</div>
+<div class="row g-3">
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="cd">
+      <h5>🧱 คอนกรีต</h5>
+      <div class="fcard static"><h6>ปริมาตรคอนกรีต</h6><div class="feq">V = กว้าง × ยาว × หนา (ม.³)</div></div>
+      <div class="fcard static"><h6>ส่วนผสม 1:2:4 ต่อ 1 ม.³</h6><div class="feq">ปูน ≈ 7.5 ถุง (50กก.) / ทราย ≈ 0.44 ม.³</div></div>
+      <div class="fcard static"><h6>ส่วนผสม 1:1.5:3 ต่อ 1 ม.³</h6><div class="feq">ปูน ≈ 9 ถุง / ทราย ≈ 0.34 ม.³</div></div>
+      <div class="fcard static"><h6>น้ำหนักคอนกรีต</h6><div class="feq">γ = 2,400 กก./ม.³ (ไม่มีเหล็ก)</div><div class="feq">γ = 2,500 กก./ม.³ (เสริมเหล็ก)</div></div>
+      <div class="fcard static"><h6>กำลังอัด f'c</h6><div class="feq">240 ksc = 24 MPa | 320 ksc = 32 MPa</div></div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="cd">
+      <h5>🔩 เหล็กเส้น</h5>
+      <div class="fcard static"><h6>น้ำหนักต่อเมตร</h6><div class="feq">W = D² ÷ 162 (กก./เมตร)</div><div class="fdesc">D = เส้นผ่าศูนย์กลาง (มม.)</div></div>
+      <div class="fcard static"><h6>ตารางน้ำหนัก</h6>
+        <div class="feq">RB6=0.222 | RB9=0.499 กก./ม.</div>
+        <div class="feq">DB12=0.888 | DB16=1.578 กก./ม.</div>
+        <div class="feq">DB20=2.469 | DB25=3.854 กก./ม.</div>
+        <div class="feq">DB28=4.833 | DB32=6.313 กก./ม.</div>
+      </div>
+      <div class="fcard static"><h6>พื้นที่หน้าตัด</h6><div class="feq">As = π × D² / 4 (มม.²)</div></div>
+      <div class="fcard static"><h6>ระยะเผื่อ Hook</h6><div class="feq">Hook = 6D (DB) / 4D (RB)</div></div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="cd">
+      <h5>🏗️ โครงสร้างคาน</h5>
+      <div class="fcard static"><h6>โมเมนต์ Simple Beam</h6><div class="feq">M = wL² / 8 (โหลดกระจาย)</div><div class="feq">M = PL / 4 (โหลดจุดกลาง)</div></div>
+      <div class="fcard static"><h6>แรงเฉือน</h6><div class="feq">V = wL / 2</div></div>
+      <div class="fcard static"><h6>การแอ่นตัวสูงสุด</h6><div class="feq">δ = 5wL⁴ / (384EI)</div><div class="fdesc">E คอนกรีต = 4,700√f'c MPa</div></div>
+      <div class="fcard static"><h6>ค่า E วัสดุ</h6><div class="feq">เหล็ก = 200,000 MPa | คอนกรีต ≈ 25,000 MPa</div></div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="cd">
+      <h5>📐 พื้นที่ / ปริมาตร</h5>
+      <div class="fcard static"><h6>สี่เหลี่ยม</h6><div class="feq">A = กว้าง × ยาว</div></div>
+      <div class="fcard static"><h6>วงกลม</h6><div class="feq">A = πr² = πD²/4 | C = πD</div></div>
+      <div class="fcard static"><h6>สามเหลี่ยม</h6><div class="feq">A = ½ × ฐาน × สูง</div></div>
+      <div class="fcard static"><h6>ทรงกระบอก</h6><div class="feq">V = πr² × สูง</div></div>
+      <div class="fcard static"><h6>กรวย / พีระมิด</h6><div class="feq">V = ⅓ × พื้นที่ฐาน × สูง</div></div>
+      <div class="fcard static"><h6>ทรงกลม</h6><div class="feq">V = (4/3)πr³ | A = 4πr²</div></div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="cd">
+      <h5>🧮 ประมาณการวัสดุ</h5>
+      <div class="fcard static"><h6>อิฐมอญ (ครึ่งแผ่น)</h6><div class="feq">≈ 40–50 ก้อน / ตร.ม.</div></div>
+      <div class="fcard static"><h6>กระเบื้อง (เผื่อแตก 10%)</h6><div class="feq">จำนวน = (พื้นที่ / ขนาด) × 1.10</div></div>
+      <div class="fcard static"><h6>สีทาบ้าน</h6><div class="feq">≈ 10–12 ตร.ม. ต่อลิตร / ชั้น</div></div>
+      <div class="fcard static"><h6>ปูนฉาบผนัง 1.5 ซม.</h6><div class="feq">≈ 20 กก. / ตร.ม.</div></div>
+      <div class="fcard static"><h6>เหล็กในคอนกรีต</h6><div class="feq">เสา/คาน ≈ 80–150 กก. / ม.³</div></div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="cd">
+      <h5>💡 หน่วยไทย &amp; แปลงบ่อย</h5>
+      <div class="fcard static"><h6>ที่ดินไทย</h6><div class="feq">1 ไร่ = 4 งาน = 400 ตร.วา = 1,600 ตร.ม.</div></div>
+      <div class="fcard static"><h6>MPa ↔ ksc ↔ PSI</h6><div class="feq">1 MPa = 10.197 ksc = 145.04 PSI</div></div>
+      <div class="fcard static"><h6>กำลัง HP ↔ kW</h6><div class="feq">1 HP = 745.7 W = 0.7457 kW</div></div>
+      <div class="fcard static"><h6>อุณหภูมิ</h6><div class="feq">°C = (°F − 32) × 5/9</div></div>
+      <div class="fcard static"><h6>น้ำหนักทอง</h6><div class="feq">1 บาท = 15.244 กรัม</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div id="toast"><div id="toastMsg"></div></div>
+
+<script>
+function fmtN(n){
+  if(!isFinite(n)) return 'Error';
+  if(n===0) return '0';
+  if(Math.abs(n)<0.0001||Math.abs(n)>=1e10) return n.toExponential(4);
+  return parseFloat(n.toPrecision(7)).toString();
+}
+
+var cExpr='';
+function sinDeg(x){return Math.sin(x*Math.PI/180);}
+function cosDeg(x){return Math.cos(x*Math.PI/180);}
+function tanDeg(x){return Math.tan(x*Math.PI/180);}
+function cSan(e){return e.replace(/log10\(/g,'Math.log10(').replace(/log\(/g,'Math.log(').replace(/sin\(/g,'sinDeg(').replace(/cos\(/g,'cosDeg(').replace(/tan\(/g,'tanDeg(').replace(/sqrt\(/g,'Math.sqrt(').replace(/pow\(/g,'Math.pow(');}
+function cPrev(){try{var r=eval(cSan(cExpr));if(isFinite(r))document.getElementById('cres').textContent=fmtN(r);}catch(e){}}
+function cIn(ch){cExpr+=ch;document.getElementById('cexpr').textContent=cExpr;cPrev();}
+function cFn(fn){cExpr+=fn;document.getElementById('cexpr').textContent=cExpr;}
+function cClr(){cExpr='';document.getElementById('cexpr').textContent='';document.getElementById('cres').textContent='0';}
+function cDel(){cExpr=cExpr.slice(0,-1);document.getElementById('cexpr').textContent=cExpr;if(!cExpr){document.getElementById('cres').textContent='0';return;}cPrev();}
+function cEq(){
+  if(!cExpr)return;
+  try{
+    var r=eval(cSan(cExpr)),rs=fmtN(r);
+    var hi=document.getElementById('chist'),d=document.createElement('div');
+    d.className='fcard static';
+    d.innerHTML='<div style="font-family:monospace;font-size:.76rem;color:var(--text2)">'+cExpr+'</div><div style="font-family:monospace;color:var(--accent2);font-size:.92rem">= '+rs+'</div>';
+    if(hi.querySelector('p'))hi.innerHTML='';
+    hi.prepend(d);
+    cExpr=rs;document.getElementById('cres').textContent=rs;document.getElementById('cexpr').textContent='';
+  }catch(e){document.getElementById('cres').textContent='Error';cExpr='';document.getElementById('cexpr').textContent='';}
+}
+function copyCres(){var t=document.getElementById('cres').textContent;if(navigator.clipboard)navigator.clipboard.writeText(t);toast('📋 คัดลอก: '+t);}
+
+function calcStl(){
+  var d=parseFloat(document.getElementById('sDia').value);
+  var l=parseFloat(document.getElementById('sLen').value)||0;
+  var q=parseFloat(document.getElementById('sQty').value)||1;
+  var wpm=(d*d)/162,tot=wpm*l*q;
+  document.getElementById('sPerM').textContent=wpm.toFixed(4)+' กก./ม.';
+  document.getElementById('sTotal').textContent=fmtN(tot)+' กก.';
+  document.getElementById('sFml').textContent=d+'²÷162='+wpm.toFixed(4)+' × '+l+' ม. × '+q+' เส้น';
+}
+
+var isDark=true;
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('themeBtn').textContent=isDark?'🌙 Dark':'☀️ Light';
+  localStorage.setItem('cstrTheme',isDark?'dark':'light');
+}
+(function(){
+  var s=localStorage.getItem('cstrTheme');
+  if(s==='light'){isDark=false;document.documentElement.setAttribute('data-theme','light');document.getElementById('themeBtn').textContent='☀️ Light';}
+})();
+
+function toast(msg){
+  document.getElementById('toastMsg').textContent=msg;
+  var t=document.getElementById('toast');t.style.display='block';
+  clearTimeout(t._tm);t._tm=setTimeout(function(){t.style.display='none';},2400);
+}
+
+document.addEventListener('keydown',function(e){
+  var tag=document.activeElement&&document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+  if('0123456789.+-*/%()'.indexOf(e.key)>=0)cIn(e.key);
+  else if(e.key==='Enter')cEq();
+  else if(e.key==='Backspace')cDel();
+  else if(e.key==='Escape')cClr();
+});
+
+calcStl();
+</script>
+</body>
+</html>
