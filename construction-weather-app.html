@@ -1,305 +1,421 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="theme-color" content="#0a0f18">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☀️%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#faf9f5">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⛅%3C/text%3E%3C/svg%3E">
 <title>พยากรณ์อากาศ — งานก่อสร้าง CRD</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
+/* ════════ THEME TOKENS (Anthropic-inspired) ════════ */
+:root[data-theme="light"] {
+  --bg: #faf9f5;
+  --bg-pattern: radial-gradient(circle at 12% 8%, rgba(217,119,87,0.05), transparent 42%),
+                radial-gradient(circle at 88% 4%, rgba(74,123,166,0.045), transparent 38%);
+  --surface: #ffffff;
+  --surface-2: #f4f2ec;
+  --surface-3: #efece4;
+  --border: #e6e2d8;
+  --border-strong: #d6d1c4;
+  --text: #1f1e1d;
+  --text-muted: #6b6760;
+  --text-faint: #9b9589;
+  --accent: #c15f3c;
+  --accent-soft: rgba(193,95,60,0.10);
+  --accent-line: rgba(193,95,60,0.25);
+  --bad: #b8472e;
+  --bad-soft: rgba(184,71,46,0.10);
+  --warn: #b9802b;
+  --warn-soft: rgba(185,128,43,0.12);
+  --ok: #4a8055;
+  --ok-soft: rgba(74,128,85,0.10);
+  --info: #3f72a4;
+  --shadow: 0 1px 2px rgba(31,30,29,0.04), 0 4px 16px rgba(31,30,29,0.04);
+  --shadow-lg: 0 2px 4px rgba(31,30,29,0.05), 0 12px 36px rgba(31,30,29,0.08);
+  --grid-line: rgba(31,30,29,0.06);
+}
+:root[data-theme="dark"] {
+  --bg: #1b1a18;
+  --bg-pattern: radial-gradient(circle at 12% 8%, rgba(224,138,102,0.06), transparent 42%),
+                radial-gradient(circle at 88% 4%, rgba(96,150,200,0.05), transparent 38%);
+  --surface: #262421;
+  --surface-2: #2f2d2a;
+  --surface-3: #38352f;
+  --border: #38352f;
+  --border-strong: #46423b;
+  --text: #ece9e1;
+  --text-muted: #a8a298;
+  --text-faint: #756f65;
+  --accent: #e08a66;
+  --accent-soft: rgba(224,138,102,0.13);
+  --accent-line: rgba(224,138,102,0.30);
+  --bad: #e0715a;
+  --bad-soft: rgba(224,113,90,0.14);
+  --warn: #e0a352;
+  --warn-soft: rgba(224,163,82,0.14);
+  --ok: #6fb37c;
+  --ok-soft: rgba(111,179,124,0.13);
+  --info: #6fa6d6;
+  --shadow: 0 1px 2px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.28);
+  --shadow-lg: 0 2px 4px rgba(0,0,0,0.3), 0 14px 40px rgba(0,0,0,0.4);
+  --grid-line: rgba(236,233,225,0.07);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
   font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0a0f18;
-  color: #c8d8e8;
+  background: var(--bg);
+  background-image: var(--bg-pattern);
+  background-attachment: fixed;
+  color: var(--text);
   min-height: 100vh;
-  padding: 20px;
+  padding: 24px 20px 60px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
+  transition: background-color .3s ease, color .3s ease;
 }
-.container { max-width: 1280px; margin: 0 auto; }
+.container { max-width: 1320px; margin: 0 auto; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
 
-/* Header */
+/* ════════ HEADER ════════ */
 .app-header {
-  background: linear-gradient(135deg, #111820 0%, #0f1820 100%);
-  border: 1px solid #1e2d3d;
-  border-radius: 12px;
-  padding: 20px 28px;
-  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 28px;
+  margin-bottom: 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
+  box-shadow: var(--shadow);
 }
-.app-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #c9a96e;
-  letter-spacing: 0.5px;
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #d4926d);
+  display: grid; place-items: center;
+  font-size: 24px;
+  box-shadow: 0 4px 14px var(--accent-soft);
+  flex-shrink: 0;
 }
-.app-sub { font-size: 12px; color: #556677; margin-top: 2px; }
-.last-updated { font-size: 11px; color: #556677; text-align: right; }
+.app-title { font-size: 21px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.app-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .refresh-bar { display: flex; align-items: center; gap: 10px; }
-.refresh-btn {
-  background: #1a2535;
-  border: 1px solid #2a4060;
-  color: #c8d8e8;
-  padding: 6px 12px;
-  border-radius: 6px;
+.btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: all .15s;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
-.refresh-btn:hover { background: #243245; border-color: #3a5070; color: #c9a96e; }
-.refresh-btn:active { transform: scale(0.96); }
+.btn:hover { border-color: var(--accent-line); color: var(--accent); }
+.btn:active { transform: scale(0.96); }
 .refresh-btn.loading { opacity: 0.6; cursor: wait; }
 .refresh-btn.loading .refresh-icon { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.next-refresh { font-size: 10px; color: #445566; margin-top: 2px; }
+.theme-toggle { padding: 8px 12px; font-size: 16px; line-height: 1; }
+.last-updated { font-size: 11px; color: var(--text-muted); text-align: right; }
+.next-refresh { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
 
-/* Map view */
-.map-section {
-  background: #111820;
-  border: 1px solid #1e2d3d;
-  border-radius: 12px;
-  padding: 18px 24px;
+/* ════════ TABS ════════ */
+.tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.tab {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 9px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all .15s;
+  font-family: inherit;
+  box-shadow: var(--shadow);
+}
+.tab:hover { color: var(--text); border-color: var(--border-strong); }
+.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 14px var(--accent-soft); }
+
+/* ════════ VIEW TOGGLE ════════ */
+.view-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 4px;
+  margin-bottom: 18px;
+  gap: 3px;
+  box-shadow: var(--shadow);
+}
+.view-btn {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all .15s;
+}
+.view-btn:hover { color: var(--text); }
+.view-btn.active { background: var(--accent-soft); color: var(--accent); }
+
+/* ════════ CURRENT CARD ════════ */
+.current-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px 30px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 28px;
+  align-items: center;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.current-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(120deg, var(--accent-soft), transparent 55%);
+  pointer-events: none;
+}
+.cur-icon { font-size: 68px; line-height: 1; position: relative; }
+.cur-info { position: relative; }
+.cur-temp { font-size: 52px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -1px; }
+.cur-feels { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; }
+.cur-cond { font-size: 15px; color: var(--accent); font-weight: 700; margin-top: 4px; }
+.cur-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; min-width: 240px; position: relative; }
+.cur-meta-item {
+  font-size: 11px; color: var(--text-muted);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 9px 12px;
+}
+.cur-meta-val { display: block; color: var(--text); font-weight: 800; font-size: 18px; margin-top: 2px; letter-spacing: -0.3px; }
+
+/* ════════ ALERT SUMMARY ════════ */
+.alert-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 26px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.alert-title, .section-title {
+  font-size: 11px; color: var(--text-faint);
+  letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700; margin-bottom: 14px;
+}
+.section-title { color: var(--accent); }
+.alert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.alert-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.alert-card.concrete { border-left-color: var(--info); }
+.alert-card.paint { border-left-color: var(--warn); }
+.alert-card.crane { border-left-color: var(--accent); }
+.alert-card.heat { border-left-color: var(--bad); }
+.alert-card-title { font-size: 12.5px; color: var(--text); font-weight: 700; }
+.alert-card-num { font-size: 24px; font-weight: 800; margin-top: 4px; letter-spacing: -0.5px; }
+.alert-card-num.bad { color: var(--bad); }
+.alert-card-num.warn { color: var(--warn); }
+.alert-card-num.ok { color: var(--ok); }
+.alert-card-detail { font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; }
+
+/* ════════ SECTION SHELL ════════ */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 26px;
+  box-shadow: var(--shadow);
   display: none;
 }
-.map-section.active { display: block; }
-.map-layers {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+.panel.active { display: block; }
+
+/* ════════ FORECAST GRID ════════ */
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 11px;
 }
+.fc-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 13px 14px;
+  transition: transform .15s, box-shadow .15s;
+}
+.fc-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.fc-card.bad { border-color: var(--bad); background: var(--bad-soft); }
+.fc-card.warn { border-color: var(--warn); background: var(--warn-soft); }
+.fc-time { font-size: 12px; color: var(--text); font-weight: 700; }
+.fc-date { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+.fc-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.fc-icon { font-size: 30px; line-height: 1; }
+.fc-temp { font-size: 23px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.fc-temp-range { font-size: 11px; color: var(--text-muted); }
+.fc-meta { font-size: 11px; color: var(--text-muted); line-height: 1.7; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
+.fc-meta-row { display: flex; justify-content: space-between; }
+.fc-meta-val { color: var(--text); font-weight: 700; }
+.fc-meta-val.high { color: var(--bad); }
+.fc-meta-val.med { color: var(--warn); }
+.fc-meta-val.low { color: var(--ok); }
+.fc-alerts { display: flex; gap: 4px; margin-top: 9px; flex-wrap: wrap; min-height: 18px; }
+.fc-alert { font-size: 10px; padding: 2px 7px; border-radius: 5px; font-weight: 600; }
+.fc-alert.bad { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad); }
+.fc-alert.warn { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+
+/* ════════ ANALYSIS PAGE ════════ */
+.analysis-narrative {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text);
+}
+.analysis-narrative b { color: var(--accent); }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.stat-value { font-size: 28px; font-weight: 800; color: var(--text); margin-top: 4px; letter-spacing: -0.8px; line-height: 1.1; }
+.stat-trend { font-size: 12px; font-weight: 700; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; }
+.stat-trend.up { color: var(--bad); }
+.stat-trend.down { color: var(--info); }
+.stat-trend.flat { color: var(--text-muted); }
+.stat-sub { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+
+.analysis-block-title {
+  font-size: 13px; font-weight: 800; color: var(--text);
+  margin: 22px 0 10px; display: flex; align-items: center; gap: 7px;
+}
+.timeline { display: flex; flex-direction: column; gap: 8px; }
+.tl-row {
+  display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 14px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px;
+}
+.tl-day { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.tl-day small { display: block; color: var(--text-faint); font-weight: 500; font-size: 10px; }
+.tl-bar-wrap { height: 22px; background: var(--surface-3); border-radius: 6px; overflow: hidden; position: relative; }
+.tl-bar { height: 100%; border-radius: 6px; transition: width .4s; }
+.tl-bar-label { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 10.5px; font-weight: 700; color: var(--text); }
+.tl-verdict { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.tl-verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.tl-verdict.warn { background: var(--warn-soft); color: var(--warn); }
+.tl-verdict.bad { background: var(--bad-soft); color: var(--bad); }
+
+/* data table */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.data-table th {
+  text-align: right; padding: 9px 10px; color: var(--text-faint);
+  font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-strong);
+}
+.data-table th:first-child, .data-table td:first-child { text-align: left; }
+.data-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.data-table tr:hover td { background: var(--surface-2); }
+.data-table .v-high { color: var(--bad); font-weight: 700; }
+.data-table .v-med { color: var(--warn); font-weight: 700; }
+.data-table .v-low { color: var(--ok); font-weight: 700; }
+
+/* ════════ CHART PAGE ════════ */
+.chart-wrap {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 18px 12px;
+  margin-bottom: 18px;
+}
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+.chart-name { font-size: 14px; font-weight: 800; color: var(--text); }
+.chart-note { font-size: 11px; color: var(--text-muted); }
+.chart-canvas-box { position: relative; height: 320px; }
+.chart-legend-inline { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: var(--text-muted); }
+.cli-item { display: inline-flex; align-items: center; gap: 6px; }
+.cli-dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+/* ════════ MAP ════════ */
+.map-layers { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .layer-btn {
-  background: #0f1820;
-  border: 1px solid #1e2d3d;
-  color: #8899aa;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: all .15s;
 }
-.layer-btn:hover { background: #1a2535; color: #c8d8e8; }
-.layer-btn.active { background: #5b8dd9; color: #fff; border-color: #5b8dd9; }
+.layer-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.layer-btn.active { background: var(--info); color: #fff; border-color: var(--info); }
 .map-frame-wrap {
-  position: relative;
-  width: 100%;
-  height: 65vh;
-  min-height: 480px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #0a0f18;
-  border: 1px solid #1a2535;
+  position: relative; width: 100%; height: 65vh; min-height: 460px;
+  border-radius: 10px; overflow: hidden; background: var(--surface-3); border: 1px solid var(--border);
 }
-.map-frame-wrap iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-}
+.map-frame-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
 .map-info {
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #0f1820;
-  border-radius: 6px;
-  font-size: 11px;
-  color: #556677;
-  line-height: 1.7;
+  margin-top: 12px; padding: 12px 16px; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 10px;
+  font-size: 11px; color: var(--text-muted); line-height: 1.75;
 }
-.map-info b { color: #8899aa; }
+.map-info b { color: var(--text); }
 
-/* Location tabs */
-.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.tab {
-  background: #111820;
-  border: 1px solid #1e2d3d;
-  color: #8899aa;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-.tab:hover { background: #1a2535; color: #c8d8e8; }
-.tab.active { background: #c9a96e; color: #000; border-color: #c9a96e; }
-
-/* View toggle */
-.view-toggle {
-  display: inline-flex;
-  background: #111820;
-  border: 1px solid #1e2d3d;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-.view-btn {
-  background: transparent;
-  color: #8899aa;
-  padding: 8px 16px;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-}
-.view-btn.active { background: #5b8dd9; color: #fff; }
-
-/* Current weather card */
-.current-card {
-  background: linear-gradient(135deg, #111820 0%, #1a2535 100%);
-  border: 1px solid #1e2d3d;
-  border-radius: 12px;
-  padding: 24px 28px;
-  margin-bottom: 16px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 24px;
-  align-items: center;
-}
-.cur-icon { font-size: 64px; line-height: 1; }
-.cur-info { flex: 1; }
-.cur-temp { font-size: 48px; font-weight: 800; color: #c9a96e; line-height: 1; }
-.cur-feels { font-size: 12px; color: #8899aa; margin-top: 4px; }
-.cur-cond { font-size: 14px; color: #c8d8e8; margin-top: 6px; }
-.cur-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; min-width: 220px; }
-.cur-meta-item { font-size: 12px; color: #8899aa; }
-.cur-meta-val { color: #c8d8e8; font-weight: 700; font-size: 14px; }
-
-/* Alert summary */
-.alert-summary {
-  background: #111820;
-  border: 1px solid #1e2d3d;
-  border-radius: 12px;
-  padding: 18px 24px;
-  margin-bottom: 16px;
-}
-.alert-title {
-  font-size: 11px;
-  color: #556677;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-.alert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-.alert-card {
-  background: #0f1820;
-  border-left: 3px solid;
-  border-radius: 6px;
-  padding: 12px 14px;
-}
-.alert-card.concrete { border-color: #5b8dd9; }
-.alert-card.paint { border-color: #e0894a; }
-.alert-card.crane { border-color: #c9a96e; }
-.alert-card.heat { border-color: #e05a5a; }
-.alert-card-title { font-size: 12px; color: #8899aa; font-weight: 700; }
-.alert-card-num { font-size: 22px; font-weight: 800; margin-top: 4px; }
-.alert-card-num.bad { color: #e05a5a; }
-.alert-card-num.warn { color: #e0894a; }
-.alert-card-num.ok { color: #4caf50; }
-.alert-card-detail { font-size: 11px; color: #556677; margin-top: 4px; line-height: 1.5; }
-
-/* Forecast grid */
-.forecast-section {
-  background: #111820;
-  border: 1px solid #1e2d3d;
-  border-radius: 12px;
-  padding: 18px 24px;
-}
-.section-title {
-  font-size: 13px;
-  color: #c9a96e;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.forecast-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
-}
-.fc-card {
-  background: #0f1820;
-  border: 1px solid #1a2535;
-  border-radius: 8px;
-  padding: 12px;
-  position: relative;
-}
-.fc-card.bad { background: linear-gradient(135deg, #1a0e10 0%, #0f1820 60%); border-color: #3a2020; }
-.fc-card.warn { background: linear-gradient(135deg, #1a1410 0%, #0f1820 60%); border-color: #3a2820; }
-.fc-time { font-size: 12px; color: #8899aa; font-weight: 700; }
-.fc-date { font-size: 10px; color: #556677; margin-top: 2px; }
-.fc-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.fc-icon { font-size: 28px; line-height: 1; }
-.fc-temp { font-size: 22px; font-weight: 800; color: #c9a96e; }
-.fc-temp-range { font-size: 11px; color: #8899aa; }
-.fc-meta { font-size: 11px; color: #8899aa; line-height: 1.7; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1a2535; }
-.fc-meta-row { display: flex; justify-content: space-between; }
-.fc-meta-val { color: #c8d8e8; font-weight: 600; }
-.fc-meta-val.high { color: #e05a5a; }
-.fc-meta-val.med { color: #e0894a; }
-.fc-meta-val.low { color: #4caf50; }
-.fc-alerts {
-  display: flex;
-  gap: 4px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-  min-height: 18px;
-}
-.fc-alert {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-weight: 600;
-}
-.fc-alert.bad { background: rgba(224, 90, 90, 0.15); color: #e05a5a; border: 1px solid rgba(224, 90, 90, 0.3); }
-.fc-alert.warn { background: rgba(224, 137, 74, 0.15); color: #e0894a; border: 1px solid rgba(224, 137, 74, 0.3); }
-
-/* Loading & error */
-.loading, .error {
-  text-align: center;
-  padding: 40px;
-  color: #556677;
-  font-size: 14px;
-}
-.error { color: #e05a5a; }
-
-/* Threshold legend */
+/* ════════ MISC ════════ */
+.loading, .error { text-align: center; padding: 44px; color: var(--text-muted); font-size: 14px; }
+.error { color: var(--bad); }
 .thresholds {
-  margin-top: 16px;
-  background: #0f1820;
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 11px;
-  color: #556677;
-  line-height: 1.8;
+  margin-top: 18px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px 16px; font-size: 11px; color: var(--text-muted); line-height: 1.9;
 }
-.thresholds b { color: #8899aa; }
+.thresholds b { color: var(--text); }
 
 @media (max-width: 720px) {
-  body { padding: 12px; font-size: 13px; }
-  .current-card { grid-template-columns: 1fr; gap: 12px; }
-  .cur-icon { font-size: 48px; }
-  .cur-temp { font-size: 38px; }
-  .forecast-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  body { padding: 14px 12px 40px; font-size: 13px; }
+  .current-card { grid-template-columns: 1fr; gap: 14px; padding: 20px; }
+  .cur-icon { font-size: 52px; }
+  .cur-temp { font-size: 42px; }
+  .forecast-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .tl-row { grid-template-columns: 76px 1fr; }
+  .tl-verdict { grid-column: 1 / -1; justify-self: start; }
+  .chart-canvas-box { height: 260px; }
 }
 </style>
 </head>
@@ -308,17 +424,23 @@ body {
 
   <!-- HEADER -->
   <div class="app-header">
-    <div>
-      <div class="app-title">☀️ พยากรณ์อากาศ — งานก่อสร้าง CRD</div>
-      <div class="app-sub">ข้อมูลจาก Open-Meteo · เลือกพื้นที่และดูข้อจำกัดงาน</div>
-    </div>
-    <div class="refresh-bar">
-      <button class="refresh-btn" id="btn_refresh" title="รีเฟรชข้อมูล">
-        <span class="refresh-icon">🔄</span> รีเฟรช
-      </button>
+    <div class="brand">
+      <div class="brand-mark">⛅</div>
       <div>
-        <div class="last-updated" id="last_updated">กำลังโหลด...</div>
-        <div class="next-refresh" id="next_refresh"></div>
+        <div class="app-title">พยากรณ์อากาศ — งานก่อสร้าง CRD</div>
+        <div class="app-sub">Construction Weather Intelligence · ข้อมูลจาก Open-Meteo</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn theme-toggle" id="btn_theme" title="สลับ Light / Dark mode"><span id="theme_icon">🌙</span></button>
+      <div class="refresh-bar">
+        <button class="btn refresh-btn" id="btn_refresh" title="รีเฟรชข้อมูล">
+          <span class="refresh-icon">🔄</span> รีเฟรช
+        </button>
+        <div>
+          <div class="last-updated" id="last_updated">กำลังโหลด...</div>
+          <div class="next-refresh" id="next_refresh"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -326,6 +448,7 @@ body {
   <!-- LOCATION TABS -->
   <div class="tabs" id="location_tabs">
     <button class="tab active" data-loc="chiangmai">📍 เชียงใหม่</button>
+    <button class="tab" data-loc="lamphun">📍 ลำพูน</button>
     <button class="tab" data-loc="bangkok">📍 กรุงเทพ</button>
     <button class="tab" data-loc="samui">📍 เกาะสมุย/พะงัน</button>
     <button class="tab" data-loc="phuket">📍 ภูเก็ต</button>
@@ -333,8 +456,10 @@ body {
 
   <!-- VIEW TOGGLE -->
   <div class="view-toggle" id="view_toggle">
-    <button class="view-btn active" data-view="hourly">รายชั่วโมง (48 ชม.)</button>
-    <button class="view-btn" data-view="daily">รายวัน (14 วัน)</button>
+    <button class="view-btn active" data-view="hourly">รายชั่วโมง</button>
+    <button class="view-btn" data-view="daily">รายวัน 14 วัน</button>
+    <button class="view-btn" data-view="analysis">📊 วิเคราะห์แนวโน้ม</button>
+    <button class="view-btn" data-view="rainchart">🌧️ กราฟปริมาณฝน</button>
     <button class="view-btn" data-view="map">🛰️ แผนที่</button>
   </div>
 
@@ -343,18 +468,18 @@ body {
     <div class="cur-icon" id="cur_icon">⏳</div>
     <div class="cur-info">
       <div class="cur-temp" id="cur_temp">--°</div>
-      <div class="cur-feels" id="cur_feels">รู้สึกเหมือน --°C</div>
       <div class="cur-cond" id="cur_cond">กำลังโหลดข้อมูล...</div>
+      <div class="cur-feels" id="cur_feels">รู้สึกเหมือน --°C</div>
     </div>
     <div class="cur-meta">
-      <div class="cur-meta-item">ความชื้น: <span class="cur-meta-val" id="cur_humid">--%</span></div>
-      <div class="cur-meta-item">ลม: <span class="cur-meta-val" id="cur_wind">-- km/h</span></div>
-      <div class="cur-meta-item">โอกาสฝน: <span class="cur-meta-val" id="cur_rain">--%</span></div>
-      <div class="cur-meta-item">ปริมาณฝน: <span class="cur-meta-val" id="cur_rainmm">-- mm</span></div>
+      <div class="cur-meta-item">ความชื้น<span class="cur-meta-val" id="cur_humid">--%</span></div>
+      <div class="cur-meta-item">ลม<span class="cur-meta-val" id="cur_wind">-- km/h</span></div>
+      <div class="cur-meta-item">โอกาสฝน<span class="cur-meta-val" id="cur_rain">--%</span></div>
+      <div class="cur-meta-item">ปริมาณฝน<span class="cur-meta-val" id="cur_rainmm">-- mm</span></div>
     </div>
   </div>
 
-  <!-- ALERT SUMMARY (next 7 days) -->
+  <!-- ALERT SUMMARY -->
   <div class="alert-summary">
     <div class="alert-title">🚧 สรุปข้อจำกัดงาน — 7 วันข้างหน้า</div>
     <div class="alert-grid" id="alert_grid">
@@ -381,8 +506,64 @@ body {
     </div>
   </div>
 
-  <!-- MAP SECTION (hidden by default) -->
-  <div class="map-section" id="map_section">
+  <!-- FORECAST (hourly / daily) -->
+  <div class="panel active" id="forecast_section">
+    <div class="section-title" id="forecast_title">พยากรณ์รายชั่วโมง — 48 ชั่วโมงข้างหน้า</div>
+    <div class="forecast-grid" id="forecast_grid">
+      <div class="loading">⏳ กำลังโหลดข้อมูลพยากรณ์...</div>
+    </div>
+    <div class="thresholds">
+      <b>เกณฑ์ตัดสินใจ:</b>
+      🚫 <b>เทคอนกรีต</b>: ฝน &gt; 60% หรือ ปริมาณ &gt; 2 mm/hr ·
+      🚫 <b>ทาสีภายนอก</b>: ฝน &gt; 40% หรือ ความชื้น &gt; 85% ·
+      🚫 <b>Crane/งานสูง</b>: ลม &gt; 30 km/h ·
+      ⚠️ <b>Heat Stress</b>: รู้สึกเหมือน &gt; 35°C
+    </div>
+  </div>
+
+  <!-- ANALYSIS PAGE -->
+  <div class="panel" id="analysis_section">
+    <div class="section-title">📊 วิเคราะห์แนวโน้ม &amp; คาดการณ์เชิงลึก</div>
+    <div class="analysis-narrative" id="analysis_narrative">กำลังประมวลผล...</div>
+    <div class="stat-grid" id="analysis_stats"></div>
+
+    <div class="analysis-block-title">🗓️ ไทม์ไลน์ความเหมาะสมในการทำงาน — 10 วันข้างหน้า</div>
+    <div class="timeline" id="analysis_timeline"></div>
+
+    <div class="analysis-block-title">📋 ตารางข้อมูลพยากรณ์ละเอียด — 14 วัน</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="analysis_table"></table>
+    </div>
+  </div>
+
+  <!-- RAIN CHART PAGE -->
+  <div class="panel" id="rainchart_section">
+    <div class="section-title">🌧️ กราฟแสดงปริมาณฝน &amp; โอกาสเกิดฝน</div>
+    <div class="chart-wrap">
+      <div class="chart-head">
+        <div class="chart-name">ปริมาณฝนรายวัน &amp; โอกาสฝนสูงสุด — 14 วัน</div>
+        <div class="chart-note">แท่ง = ปริมาณฝน (mm) · เส้น = โอกาสฝน (%)</div>
+      </div>
+      <div class="chart-canvas-box"><canvas id="chart_daily_rain"></canvas></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-head">
+        <div class="chart-name">ปริมาณฝนรายชั่วโมง — 48 ชั่วโมงข้างหน้า</div>
+        <div class="chart-note">แท่ง = ปริมาณฝน (mm) · เส้น = โอกาสฝน (%)</div>
+      </div>
+      <div class="chart-canvas-box"><canvas id="chart_hourly_rain"></canvas></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-head">
+        <div class="chart-name">ปริมาณฝนสะสม — 14 วัน</div>
+        <div class="chart-note">เส้นสะสม (mm) แสดงปริมาณน้ำฝนรวมที่คาดว่าจะตก</div>
+      </div>
+      <div class="chart-canvas-box"><canvas id="chart_cumrain"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MAP PAGE -->
+  <div class="panel" id="map_section">
     <div class="section-title" id="map_title">🛰️ แผนที่ดาวเทียม &amp; เรดาร์</div>
     <div class="map-layers" id="map_layers">
       <button class="layer-btn active" data-layer="rain">🌧️ ฝน (forecast)</button>
@@ -405,31 +586,16 @@ body {
       ⏯️ กดปุ่มที่แถบล่างของแผนที่เพื่อเล่น/หยุด timeline · 📍 marker = location ที่เลือก · ที่มา: Windy.com (ECMWF + GFS models)
     </div>
   </div>
-
-  <!-- FORECAST -->
-  <div class="forecast-section" id="forecast_section">
-    <div class="section-title" id="forecast_title">พยากรณ์รายชั่วโมง — 48 ชั่วโมงข้างหน้า</div>
-    <div class="forecast-grid" id="forecast_grid">
-      <div class="loading">⏳ กำลังโหลดข้อมูลพยากรณ์...</div>
-    </div>
-
-    <div class="thresholds">
-      <b>เกณฑ์ตัดสินใจ:</b>
-      🚫 <b>เทคอนกรีต</b>: ฝน &gt; 60% หรือ ปริมาณ &gt; 2 mm/hr ·
-      🚫 <b>ทาสีภายนอก</b>: ฝน &gt; 40% หรือ ความชื้น &gt; 85% ·
-      🚫 <b>Crane/งานสูง</b>: ลม &gt; 30 km/h ·
-      ⚠️ <b>Heat Stress</b>: รู้สึกเหมือน &gt; 35°C
-    </div>
-  </div>
 </div>
 
 <script>
 // ───────────── CONFIG ─────────────
 const LOCATIONS = {
-  chiangmai: { name: 'เชียงใหม่',          lat: 18.7883, lon: 98.9853 },
-  bangkok:   { name: 'กรุงเทพ',            lat: 13.7563, lon: 100.5018 },
-  samui:     { name: 'เกาะสมุย/พะงัน (SALA)', lat: 9.6217, lon: 99.9954 },
-  phuket:    { name: 'ภูเก็ต',             lat: 7.8804,  lon: 98.3923 }
+  chiangmai: { name: 'เชียงใหม่',            lat: 18.7883, lon: 98.9853 },
+  lamphun:   { name: 'ลำพูน',                lat: 18.5747, lon: 99.0087 },
+  bangkok:   { name: 'กรุงเทพ',              lat: 13.7563, lon: 100.5018 },
+  samui:     { name: 'เกาะสมุย/พะงัน (SALA)', lat: 9.6217,  lon: 99.9954 },
+  phuket:    { name: 'ภูเก็ต',               lat: 7.8804,  lon: 98.3923 }
 };
 
 const THRESHOLDS = {
@@ -467,16 +633,36 @@ let currentLoc = 'chiangmai';
 let currentView = 'hourly';
 let currentMapLayer = 'rain';
 let weatherData = null;
+let charts = {}; // Chart.js instances
 
-// Auto-refresh: Open-Meteo updates hourly, refresh every 30 min
-const AUTO_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
-const STALE_THRESHOLD_MS = 60 * 60 * 1000; // refresh on tab focus if data > 1 hour old
+const AUTO_REFRESH_MS = 30 * 60 * 1000;
+const STALE_THRESHOLD_MS = 60 * 60 * 1000;
 let lastFetchTime = 0;
 let refreshTimer = null;
 let countdownTimer = null;
 
+// ───────────── THEME ─────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('theme_icon').textContent = theme === 'dark' ? '☀️' : '🌙';
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#1b1a18' : '#faf9f5');
+  try { localStorage.setItem('cwx-theme', theme); } catch(e) {}
+}
+function initTheme() {
+  let saved;
+  try { saved = localStorage.getItem('cwx-theme'); } catch(e) {}
+  if (!saved) saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(saved);
+}
+document.getElementById('btn_theme').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  if (currentView === 'rainchart' && weatherData) renderRainCharts(weatherData);
+});
+
 // ───────────── HELPERS ─────────────
 function wmoInfo(code) { return WMO_CODES[code] || { icon: '🌡️', text: 'ไม่ระบุ' }; }
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
 function fmtDateThai(date, withTime=false) {
   const d = new Date(date);
@@ -486,54 +672,26 @@ function fmtDateThai(date, withTime=false) {
   const yr = (d.getFullYear() + 543).toString().slice(-2);
   if (withTime) {
     const hr = d.getHours().toString().padStart(2,'0');
-    return `${day} ${mon}<br><span style="color:#c9a96e">${hr}:00</span>`;
+    return `${day} ${mon}<br><span style="color:var(--accent)">${hr}:00</span>`;
   }
   return `${day} ${mon} ${yr}`;
 }
-
 function dayOfWeek(date) {
   const days = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
   return days[new Date(date).getDay()];
 }
 
-// Threshold check: returns array of alert objects
 function checkAlerts(rainProb, rainMm, humidity, wind, apparentTemp) {
   const alerts = [];
-  if (rainProb > THRESHOLDS.concrete.rainProb || rainMm > THRESHOLDS.concrete.rainMm) {
-    alerts.push({ type: 'bad', label: '🚫 เท คอนกรีต' });
-  }
-  if (rainProb > THRESHOLDS.paint.rainProb || humidity > THRESHOLDS.paint.humidity) {
-    alerts.push({ type: 'bad', label: '🚫 ทาสี' });
-  }
-  if (wind > THRESHOLDS.crane.wind) {
-    alerts.push({ type: 'bad', label: '🚫 Crane' });
-  }
-  if (apparentTemp > THRESHOLDS.heat.apparentTemp) {
-    alerts.push({ type: 'warn', label: '⚠️ Heat' });
-  }
+  if (rainProb > THRESHOLDS.concrete.rainProb || rainMm > THRESHOLDS.concrete.rainMm) alerts.push({ type: 'bad', label: '🚫 เท คอนกรีต' });
+  if (rainProb > THRESHOLDS.paint.rainProb || humidity > THRESHOLDS.paint.humidity) alerts.push({ type: 'bad', label: '🚫 ทาสี' });
+  if (wind > THRESHOLDS.crane.wind) alerts.push({ type: 'bad', label: '🚫 Crane' });
+  if (apparentTemp > THRESHOLDS.heat.apparentTemp) alerts.push({ type: 'warn', label: '⚠️ Heat' });
   return alerts;
 }
-
-function rainColor(prob) {
-  if (prob >= 60) return 'high';
-  if (prob >= 40) return 'med';
-  return 'low';
-}
-function windColor(w) {
-  if (w >= 30) return 'high';
-  if (w >= 20) return 'med';
-  return 'low';
-}
-function humidColor(h) {
-  if (h >= 85) return 'high';
-  if (h >= 70) return 'med';
-  return 'low';
-}
-function tempColor(t) {
-  if (t >= 35) return 'high';
-  if (t >= 30) return 'med';
-  return 'low';
-}
+function rainColor(p) { return p >= 60 ? 'high' : p >= 40 ? 'med' : 'low'; }
+function windColor(w) { return w >= 30 ? 'high' : w >= 20 ? 'med' : 'low'; }
+function humidColor(h) { return h >= 85 ? 'high' : h >= 70 ? 'med' : 'low'; }
 
 // ───────────── API FETCH ─────────────
 async function fetchWeather(loc) {
@@ -543,55 +701,44 @@ async function fetchWeather(loc) {
     `&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max` +
     `&timezone=Asia%2FBangkok&forecast_days=14`;
-
   const res = await fetch(url);
   if (!res.ok) throw new Error('API error: ' + res.status);
   const data = await res.json();
-  // Derive daily max humidity from hourly (Open-Meteo daily doesn't expose humidity_max directly)
   data.daily.relative_humidity_2m_max = computeDailyMaxFromHourly(
     data.hourly.time, data.hourly.relative_humidity_2m, data.daily.time
   );
   return data;
 }
-
 function computeDailyMaxFromHourly(hourlyTimes, hourlyVals, dailyDates) {
   return dailyDates.map(date => {
     let max = 0;
     for (let i = 0; i < hourlyTimes.length; i++) {
-      if (hourlyTimes[i].slice(0, 10) === date) {
-        if (hourlyVals[i] > max) max = hourlyVals[i];
-      }
+      if (hourlyTimes[i].slice(0, 10) === date && hourlyVals[i] > max) max = hourlyVals[i];
     }
     return max;
   });
 }
 
-// ───────────── RENDER ─────────────
+// ───────────── RENDER: CURRENT + ALERTS ─────────────
 function renderCurrent(data) {
   const c = data.current;
   const wmo = wmoInfo(c.weather_code);
   document.getElementById('cur_icon').textContent = wmo.icon;
   document.getElementById('cur_temp').textContent = Math.round(c.temperature_2m) + '°C';
-  document.getElementById('cur_feels').textContent = `รู้สึกเหมือน ${Math.round(c.apparent_temperature)}°C · ${LOCATIONS[currentLoc].name}`;
-  document.getElementById('cur_cond').textContent = wmo.text;
+  document.getElementById('cur_cond').textContent = wmo.text + ' · ' + LOCATIONS[currentLoc].name;
+  document.getElementById('cur_feels').textContent = `รู้สึกเหมือน ${Math.round(c.apparent_temperature)}°C`;
   document.getElementById('cur_humid').textContent = Math.round(c.relative_humidity_2m) + '%';
   document.getElementById('cur_wind').textContent = Math.round(c.wind_speed_10m) + ' km/h';
   document.getElementById('cur_rainmm').textContent = c.precipitation.toFixed(1) + ' mm';
-
-  // Use first hour rain probability as "current"
-  const firstProb = data.hourly.precipitation_probability[0] || 0;
-  document.getElementById('cur_rain').textContent = firstProb + '%';
-
+  document.getElementById('cur_rain').textContent = (data.hourly.precipitation_probability[0] || 0) + '%';
   document.getElementById('last_updated').textContent =
     'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function renderAlertSummary(data) {
-  // Count alerts in next 7 days using daily data
   const days = 7;
   let cBad = 0, pBad = 0, crBad = 0, hWarn = 0;
   const cBadDays = [], pBadDays = [], crBadDays = [], hWarnDays = [];
-
   for (let i = 0; i < days && i < data.daily.time.length; i++) {
     const rainProb = data.daily.precipitation_probability_max[i] || 0;
     const rainSum  = data.daily.precipitation_sum[i] || 0;
@@ -599,41 +746,28 @@ function renderAlertSummary(data) {
     const humidity = data.daily.relative_humidity_2m_max[i] || 0;
     const apTemp   = data.daily.apparent_temperature_max[i] || 0;
     const dateStr  = fmtDateThai(data.daily.time[i]).split(' ').slice(0,2).join(' ');
-
-    // Concrete: rain prob OR rain >2mm/day (using daily sum > ~10mm as rough equivalent of 2mm/hr peak)
-    if (rainProb > THRESHOLDS.concrete.rainProb || rainSum > 10) {
-      cBad++; cBadDays.push(dateStr);
-    }
-    if (rainProb > THRESHOLDS.paint.rainProb || humidity > THRESHOLDS.paint.humidity) {
-      pBad++; pBadDays.push(dateStr);
-    }
-    if (wind > THRESHOLDS.crane.wind) {
-      crBad++; crBadDays.push(dateStr);
-    }
-    if (apTemp > THRESHOLDS.heat.apparentTemp) {
-      hWarn++; hWarnDays.push(dateStr);
-    }
+    if (rainProb > THRESHOLDS.concrete.rainProb || rainSum > 10) { cBad++; cBadDays.push(dateStr); }
+    if (rainProb > THRESHOLDS.paint.rainProb || humidity > THRESHOLDS.paint.humidity) { pBad++; pBadDays.push(dateStr); }
+    if (wind > THRESHOLDS.crane.wind) { crBad++; crBadDays.push(dateStr); }
+    if (apTemp > THRESHOLDS.heat.apparentTemp) { hWarn++; hWarnDays.push(dateStr); }
   }
-
-  function setAlert(numId, detailId, count, days, defaultDetail) {
+  function setAlert(numId, detailId, count, ds) {
     const el = document.getElementById(numId);
     el.textContent = count + ' วัน';
     el.className = 'alert-card-num ' + (count >= 4 ? 'bad' : count >= 2 ? 'warn' : 'ok');
-    document.getElementById(detailId).textContent = count > 0 ? days.join(', ') : '✓ ทำงานได้ทุกวัน';
+    document.getElementById(detailId).textContent = count > 0 ? ds.join(', ') : '✓ ทำงานได้ทุกวัน';
   }
-
   setAlert('al_concrete_num', 'al_concrete_detail', cBad, cBadDays);
   setAlert('al_paint_num', 'al_paint_detail', pBad, pBadDays);
   setAlert('al_crane_num', 'al_crane_detail', crBad, crBadDays);
   setAlert('al_heat_num', 'al_heat_detail', hWarn, hWarnDays);
 }
 
+// ───────────── RENDER: HOURLY / DAILY ─────────────
 function renderHourly(data) {
   const grid = document.getElementById('forecast_grid');
   document.getElementById('forecast_title').textContent = 'พยากรณ์รายชั่วโมง — 48 ชั่วโมงข้างหน้า';
-
-  const hours = 48;
-  let html = '';
+  const hours = 48; let html = '';
   for (let i = 0; i < hours && i < data.hourly.time.length; i++) {
     const t = data.hourly.time[i];
     const temp = Math.round(data.hourly.temperature_2m[i]);
@@ -643,10 +777,8 @@ function renderHourly(data) {
     const wind = Math.round(data.hourly.wind_speed_10m[i]);
     const humid = Math.round(data.hourly.relative_humidity_2m[i]);
     const wmo = wmoInfo(data.hourly.weather_code[i]);
-
     const alerts = checkAlerts(rainProb, rainMm, humid, wind, apTemp);
     const cardClass = alerts.some(a => a.type === 'bad') ? 'bad' : alerts.some(a => a.type === 'warn') ? 'warn' : '';
-
     html += `
       <div class="fc-card ${cardClass}">
         <div class="fc-time">${fmtDateThai(t, true)}</div>
@@ -662,11 +794,8 @@ function renderHourly(data) {
           <div class="fc-meta-row"><span>ลม</span><span class="fc-meta-val ${windColor(wind)}">${wind} km/h</span></div>
           <div class="fc-meta-row"><span>ความชื้น</span><span class="fc-meta-val ${humidColor(humid)}">${humid}%</span></div>
         </div>
-        <div class="fc-alerts">
-          ${alerts.map(a => `<span class="fc-alert ${a.type}">${a.label}</span>`).join('')}
-        </div>
-      </div>
-    `;
+        <div class="fc-alerts">${alerts.map(a => `<span class="fc-alert ${a.type}">${a.label}</span>`).join('')}</div>
+      </div>`;
   }
   grid.innerHTML = html;
 }
@@ -674,9 +803,7 @@ function renderHourly(data) {
 function renderDaily(data) {
   const grid = document.getElementById('forecast_grid');
   document.getElementById('forecast_title').textContent = 'พยากรณ์รายวัน — 14 วันข้างหน้า';
-
-  const days = 14;
-  let html = '';
+  const days = 14; let html = '';
   for (let i = 0; i < days && i < data.daily.time.length; i++) {
     const t = data.daily.time[i];
     const tempMax = Math.round(data.daily.temperature_2m_max[i]);
@@ -687,12 +814,9 @@ function renderDaily(data) {
     const wind = Math.round(data.daily.wind_speed_10m_max[i]);
     const humid = Math.round(data.daily.relative_humidity_2m_max[i]);
     const wmo = wmoInfo(data.daily.weather_code[i]);
-
-    // For daily, use rainSum > 10mm equivalent for concrete bad day
     const rainMmEffective = rainSum > 10 ? 3 : 0;
     const alerts = checkAlerts(rainProb, rainMmEffective, humid, wind, apMax);
     const cardClass = alerts.some(a => a.type === 'bad') ? 'bad' : alerts.some(a => a.type === 'warn') ? 'warn' : '';
-
     html += `
       <div class="fc-card ${cardClass}">
         <div class="fc-time">${dayOfWeek(t)} ${fmtDateThai(t)}</div>
@@ -708,18 +832,235 @@ function renderDaily(data) {
           <div class="fc-meta-row"><span>ลม max</span><span class="fc-meta-val ${windColor(wind)}">${wind} km/h</span></div>
           <div class="fc-meta-row"><span>ความชื้น max</span><span class="fc-meta-val ${humidColor(humid)}">${humid}%</span></div>
         </div>
-        <div class="fc-alerts">
-          ${alerts.map(a => `<span class="fc-alert ${a.type}">${a.label}</span>`).join('')}
-        </div>
-      </div>
-    `;
+        <div class="fc-alerts">${alerts.map(a => `<span class="fc-alert ${a.type}">${a.label}</span>`).join('')}</div>
+      </div>`;
   }
   grid.innerHTML = html;
 }
 
+// ───────────── RENDER: ANALYSIS ─────────────
+function analyze(data) {
+  const d = data.daily, n = Math.min(14, d.time.length);
+  const tMax = d.temperature_2m_max.slice(0, n);
+  const tMin = d.temperature_2m_min.slice(0, n);
+  const apMax = d.apparent_temperature_max.slice(0, n);
+  const rProb = d.precipitation_probability_max.slice(0, n).map(x => x || 0);
+  const rSum = d.precipitation_sum.slice(0, n).map(x => x || 0);
+  const wind = d.wind_speed_10m_max.slice(0, n).map(x => x || 0);
+  const hum = d.relative_humidity_2m_max.slice(0, n).map(x => x || 0);
+
+  const avg = a => a.reduce((s,x)=>s+x,0) / a.length;
+  // temp trend: first 3 days vs days 5-7
+  const firstHalf = avg(tMax.slice(0,3));
+  const secondHalf = avg(tMax.slice(4,7));
+  const tempDelta = secondHalf - firstHalf;
+  const tempTrend = Math.abs(tempDelta) < 0.8 ? 'flat' : tempDelta > 0 ? 'up' : 'down';
+
+  // rain next 7
+  const rain7 = rSum.slice(0,7);
+  const totalRain7 = rain7.reduce((s,x)=>s+x,0);
+  const rainyDays7 = rain7.filter((x,i) => x > 1 || rProb[i] > 50).length;
+  // peak rain day
+  let peakIdx = 0; for (let i=1;i<n;i++) if (rSum[i] > rSum[peakIdx]) peakIdx = i;
+  // best work days in next 7 (no bad alerts)
+  const bestDays = [];
+  for (let i=0;i<7 && i<n;i++) {
+    const eff = rSum[i] > 10 ? 3 : 0;
+    const al = checkAlerts(rProb[i], eff, hum[i], wind[i], apMax[i]);
+    if (!al.some(a=>a.type==='bad')) bestDays.push({ i, label: dayOfWeek(d.time[i]) + ' ' + fmtDateThai(d.time[i]).split(' ').slice(0,2).join(' ') });
+  }
+  const heatDays = apMax.slice(0,7).filter(x => x > THRESHOLDS.heat.apparentTemp).length;
+
+  return { n, tMax, tMin, apMax, rProb, rSum, wind, hum, time: d.time, code: d.weather_code,
+    tempTrend, tempDelta, firstHalf, secondHalf, totalRain7, rainyDays7, peakIdx, bestDays, heatDays,
+    avgMax: avg(tMax.slice(0,7)), avgMin: avg(tMin.slice(0,7)), maxWind7: Math.max(...wind.slice(0,7)) };
+}
+
+function renderAnalysis(data) {
+  const a = analyze(data);
+  const loc = LOCATIONS[currentLoc].name;
+
+  // ── Narrative ──
+  const trendWord = a.tempTrend === 'up' ? `<b>มีแนวโน้มร้อนขึ้น</b> (+${a.tempDelta.toFixed(1)}°C)` :
+                    a.tempTrend === 'down' ? `<b>มีแนวโน้มเย็นลง</b> (${a.tempDelta.toFixed(1)}°C)` :
+                    `<b>ค่อนข้างคงที่</b>`;
+  const rainWord = a.totalRain7 < 5 ? 'ปริมาณฝนน้อยมาก เหมาะกับงานกลางแจ้ง' :
+                   a.totalRain7 < 30 ? 'มีฝนประปราย ควรเฝ้าระวังเป็นช่วง ๆ' :
+                   a.totalRain7 < 80 ? 'มีฝนค่อนข้างมาก ควรวางแผนงานคอนกรีตให้รัดกุม' :
+                   'ฝนตกหนักต่อเนื่อง กระทบงานกลางแจ้งอย่างมีนัยสำคัญ';
+  const peakLabel = fmtDateThai(a.time[a.peakIdx]).split(' ').slice(0,2).join(' ');
+  const bestText = a.bestDays.length
+    ? `วันที่เหมาะกับงานคอนกรีต/ทาสีมากที่สุดคือ <b>${a.bestDays.slice(0,3).map(x=>x.label).join(', ')}</b>`
+    : `<b>ไม่มีวันที่ปลอดข้อจำกัดเต็มวัน</b>ใน 7 วันข้างหน้า แนะนำให้ทำงานในช่วงเช้าก่อนฝน`;
+
+  document.getElementById('analysis_narrative').innerHTML =
+    `ภาพรวมพื้นที่ <b>${loc}</b> ในสัปดาห์หน้า อุณหภูมิสูงสุดเฉลี่ย <b>${a.avgMax.toFixed(0)}°C</b> ` +
+    `(ต่ำสุดเฉลี่ย ${a.avgMin.toFixed(0)}°C) และ${trendWord}ในช่วงครึ่งหลังของสัปดาห์ · ` +
+    `คาดการณ์ปริมาณฝนรวม 7 วัน <b>${a.totalRain7.toFixed(1)} mm</b> กระจายใน <b>${a.rainyDays7} วัน</b> — ${rainWord} ` +
+    `โดยฝนหนักที่สุดคาดว่าเป็นวันที่ <b>${peakLabel}</b> (${a.rSum[a.peakIdx].toFixed(1)} mm) · ` +
+    `${bestText}` +
+    (a.heatDays > 0 ? ` ⚠️ มี <b>${a.heatDays} วัน</b>ที่ดัชนีความร้อนเกิน 35°C ควรจัดเวลาพักและน้ำดื่มให้แรงงาน` : '');
+
+  // ── Stat cards ──
+  const trendIcon = a.tempTrend === 'up' ? '▲ ร้อนขึ้น' : a.tempTrend === 'down' ? '▼ เย็นลง' : '● คงที่';
+  document.getElementById('analysis_stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">อุณหภูมิสูงสุดเฉลี่ย (7 วัน)</div>
+      <div class="stat-value">${a.avgMax.toFixed(0)}°C</div>
+      <div class="stat-trend ${a.tempTrend}">${trendIcon} ${a.tempDelta>=0?'+':''}${a.tempDelta.toFixed(1)}°</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ปริมาณฝนรวม (7 วัน)</div>
+      <div class="stat-value">${a.totalRain7.toFixed(0)}<span style="font-size:16px"> mm</span></div>
+      <div class="stat-sub">ฝนตก ${a.rainyDays7} จาก 7 วัน</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">วันทำงานได้ (ปลอดข้อจำกัด)</div>
+      <div class="stat-value">${a.bestDays.length}<span style="font-size:16px"> / 7</span></div>
+      <div class="stat-sub">${a.bestDays.length>=5?'สภาพอากาศเอื้ออำนวย':'ต้องวางแผนรัดกุม'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ลมแรงสุด (7 วัน)</div>
+      <div class="stat-value">${a.maxWind7.toFixed(0)}<span style="font-size:16px"> km/h</span></div>
+      <div class="stat-sub">${a.maxWind7>30?'⚠️ กระทบงาน Crane':'ปลอดภัยต่องานสูง'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">วัน Heat Stress (7 วัน)</div>
+      <div class="stat-value">${a.heatDays}<span style="font-size:16px"> วัน</span></div>
+      <div class="stat-sub">รู้สึกเกิน 35°C</div>
+    </div>`;
+
+  // ── Timeline (10 days) ──
+  const tlDays = Math.min(10, a.n);
+  let maxRain = Math.max(1, ...a.rSum.slice(0, tlDays));
+  let tl = '';
+  for (let i = 0; i < tlDays; i++) {
+    const eff = a.rSum[i] > 10 ? 3 : 0;
+    const al = checkAlerts(a.rProb[i], eff, a.hum[i], a.wind[i], a.apMax[i]);
+    const isBad = al.some(x=>x.type==='bad');
+    const isWarn = al.some(x=>x.type==='warn');
+    const verdict = isBad ? 'bad' : isWarn ? 'warn' : 'ok';
+    const verdictText = isBad ? '🚫 งานกลางแจ้งเสี่ยง' : isWarn ? '⚠️ ระวังความร้อน' : '✓ ทำงานได้';
+    const pct = Math.round((a.rSum[i] / maxRain) * 100);
+    const barColor = a.rProb[i] >= 60 ? 'var(--bad)' : a.rProb[i] >= 40 ? 'var(--warn)' : 'var(--ok)';
+    tl += `
+      <div class="tl-row">
+        <div class="tl-day">${dayOfWeek(a.time[i])} ${fmtDateThai(a.time[i]).split(' ').slice(0,2).join(' ')}
+          <small>${wmoInfo(a.code[i]).text}</small></div>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar" style="width:${Math.max(pct,3)}%;background:${barColor}"></div>
+          <div class="tl-bar-label">${a.rSum[i].toFixed(1)} mm · ฝน ${a.rProb[i]}% · ${Math.round(a.tMax[i])}°</div>
+        </div>
+        <div class="tl-verdict ${verdict}">${verdictText}</div>
+      </div>`;
+  }
+  document.getElementById('analysis_timeline').innerHTML = tl;
+
+  // ── Data table (14 days) ──
+  let rows = `<thead><tr>
+    <th>วันที่</th><th>สภาพ</th><th>สูง/ต่ำ</th><th>รู้สึก</th>
+    <th>ฝน %</th><th>ฝน mm</th><th>ลม</th><th>ชื้น %</th></tr></thead><tbody>`;
+  for (let i = 0; i < a.n; i++) {
+    rows += `<tr>
+      <td>${dayOfWeek(a.time[i])} ${fmtDateThai(a.time[i]).split(' ').slice(0,2).join(' ')}</td>
+      <td>${wmoInfo(a.code[i]).icon} ${wmoInfo(a.code[i]).text}</td>
+      <td>${Math.round(a.tMax[i])}° / ${Math.round(a.tMin[i])}°</td>
+      <td class="${a.apMax[i]>35?'v-high':''}">${Math.round(a.apMax[i])}°</td>
+      <td class="${a.rProb[i]>=60?'v-high':a.rProb[i]>=40?'v-med':'v-low'}">${a.rProb[i]}%</td>
+      <td class="${a.rSum[i]>10?'v-high':a.rSum[i]>1?'v-med':''}">${a.rSum[i].toFixed(1)}</td>
+      <td class="${a.wind[i]>=30?'v-high':a.wind[i]>=20?'v-med':''}">${Math.round(a.wind[i])}</td>
+      <td class="${a.hum[i]>=85?'v-high':a.hum[i]>=70?'v-med':''}">${Math.round(a.hum[i])}%</td>
+    </tr>`;
+  }
+  rows += '</tbody>';
+  document.getElementById('analysis_table').innerHTML = rows;
+}
+
+// ───────────── RENDER: RAIN CHARTS ─────────────
+function destroyCharts() {
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+}
+function renderRainCharts(data) {
+  if (typeof Chart === 'undefined') return;
+  destroyCharts();
+  const text = cssVar('--text'), muted = cssVar('--text-muted'), grid = cssVar('--grid-line');
+  const accent = cssVar('--accent'), info = cssVar('--info'), bad = cssVar('--bad');
+  Chart.defaults.font.family = "'Sarabun', sans-serif";
+  Chart.defaults.color = muted;
+
+  const d = data.daily, n = Math.min(14, d.time.length);
+  const dLabels = d.time.slice(0,n).map(t => dayOfWeek(t) + ' ' + fmtDateThai(t).split(' ').slice(0,2).join(' '));
+  const dSum = d.precipitation_sum.slice(0,n).map(x=>x||0);
+  const dProb = d.precipitation_probability_max.slice(0,n).map(x=>x||0);
+
+  const dualScale = (probMax=100) => ({
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: true, labels: { boxWidth: 14, padding: 14, font:{size:12} } },
+      tooltip: { backgroundColor: cssVar('--surface'), titleColor: text, bodyColor: text,
+        borderColor: cssVar('--border'), borderWidth: 1, padding: 10 } },
+    scales: {
+      x: { grid: { color: grid }, ticks: { color: muted, maxRotation: 60, minRotation: 0, font:{size:10} } },
+      y: { position:'left', beginAtZero: true, grid: { color: grid }, title: { display:true, text:'ปริมาณฝน (mm)', color: muted },
+        ticks: { color: muted } },
+      y1: { position:'right', beginAtZero: true, max: probMax, grid: { drawOnChartArea:false },
+        title: { display:true, text:'โอกาสฝน (%)', color: muted }, ticks: { color: muted } }
+    }
+  });
+
+  charts.daily = new Chart(document.getElementById('chart_daily_rain'), {
+    data: {
+      labels: dLabels,
+      datasets: [
+        { type:'bar', label:'ปริมาณฝน (mm)', data: dSum, backgroundColor: info, borderRadius: 5, yAxisID:'y', order: 2 },
+        { type:'line', label:'โอกาสฝน (%)', data: dProb, borderColor: accent, backgroundColor: accent,
+          tension: 0.35, pointRadius: 3, pointHoverRadius: 5, borderWidth: 2.5, yAxisID:'y1', order: 1 }
+      ]
+    },
+    options: dualScale()
+  });
+
+  // hourly 48h
+  const h = data.hourly, hn = Math.min(48, h.time.length);
+  const hLabels = h.time.slice(0,hn).map((t,i) => { const dt=new Date(t); return (i%3===0)? dt.getHours()+':00' : ''; });
+  const hSum = h.precipitation.slice(0,hn).map(x=>x||0);
+  const hProb = h.precipitation_probability.slice(0,hn).map(x=>x||0);
+  charts.hourly = new Chart(document.getElementById('chart_hourly_rain'), {
+    data: {
+      labels: hLabels,
+      datasets: [
+        { type:'bar', label:'ปริมาณฝน (mm)', data: hSum, backgroundColor: info, borderRadius: 3, yAxisID:'y', order: 2 },
+        { type:'line', label:'โอกาสฝน (%)', data: hProb, borderColor: accent, backgroundColor: accent,
+          tension: 0.3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2, yAxisID:'y1', order: 1 }
+      ]
+    },
+    options: dualScale()
+  });
+
+  // cumulative
+  let acc = 0; const cum = dSum.map(x => (acc += x));
+  charts.cum = new Chart(document.getElementById('chart_cumrain'), {
+    data: {
+      labels: dLabels,
+      datasets: [{ type:'line', label:'ฝนสะสม (mm)', data: cum, borderColor: bad, backgroundColor: cssVar('--bad-soft'),
+        fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2.5 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:true, labels:{boxWidth:14, padding:14} },
+        tooltip: { backgroundColor: cssVar('--surface'), titleColor: text, bodyColor: text, borderColor: cssVar('--border'), borderWidth:1, padding:10 } },
+      scales: {
+        x: { grid: { color: grid }, ticks: { color: muted, maxRotation:60, font:{size:10} } },
+        y: { beginAtZero:true, grid: { color: grid }, title:{display:true,text:'ฝนสะสม (mm)',color:muted}, ticks:{color:muted} }
+      }
+    }
+  });
+}
+
+// ───────────── MAP ─────────────
 function renderMap() {
   const { lat, lon, name } = LOCATIONS[currentLoc];
-  // Windy.com embed URL with selected overlay
   const url = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}` +
     `&zoom=8&level=surface&overlay=${currentMapLayer}&product=ecmwf&menu=&message=true&marker=true` +
     `&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
@@ -727,16 +1068,18 @@ function renderMap() {
   document.getElementById('map_title').textContent = `🛰️ แผนที่ — ${name}`;
 }
 
+// ───────────── VIEW CONTROL ─────────────
+const PANELS = ['forecast_section','analysis_section','rainchart_section','map_section'];
+function showPanel(id) {
+  PANELS.forEach(p => document.getElementById(p).classList.toggle('active', p === id));
+}
 function updateView() {
-  const showMap = currentView === 'map';
-  document.getElementById('map_section').classList.toggle('active', showMap);
-  document.getElementById('forecast_section').style.display = showMap ? 'none' : 'block';
-  if (showMap) {
-    renderMap();
-  } else if (weatherData) {
-    if (currentView === 'hourly') renderHourly(weatherData);
-    else renderDaily(weatherData);
-  }
+  if (currentView === 'map') { showPanel('map_section'); renderMap(); return; }
+  if (!weatherData) return;
+  if (currentView === 'hourly') { showPanel('forecast_section'); renderHourly(weatherData); }
+  else if (currentView === 'daily') { showPanel('forecast_section'); renderDaily(weatherData); }
+  else if (currentView === 'analysis') { showPanel('analysis_section'); renderAnalysis(weatherData); }
+  else if (currentView === 'rainchart') { showPanel('rainchart_section'); renderRainCharts(weatherData); }
 }
 
 function render() {
@@ -748,9 +1091,7 @@ function render() {
 
 async function loadAndRender(silent=false) {
   const btn = document.getElementById('btn_refresh');
-  if (!silent) {
-    document.getElementById('forecast_grid').innerHTML = '<div class="loading">⏳ กำลังโหลดข้อมูลพยากรณ์...</div>';
-  }
+  if (!silent) document.getElementById('forecast_grid').innerHTML = '<div class="loading">⏳ กำลังโหลดข้อมูลพยากรณ์...</div>';
   btn.classList.add('loading');
   try {
     weatherData = await fetchWeather(currentLoc);
@@ -770,17 +1111,14 @@ function scheduleNextRefresh() {
   refreshTimer = setTimeout(() => loadAndRender(true), AUTO_REFRESH_MS);
   startCountdown();
 }
-
 function startCountdown() {
   if (countdownTimer) clearInterval(countdownTimer);
   const update = () => {
-    const elapsed = Date.now() - lastFetchTime;
-    const remaining = AUTO_REFRESH_MS - elapsed;
+    const remaining = AUTO_REFRESH_MS - (Date.now() - lastFetchTime);
     const el = document.getElementById('next_refresh');
     if (!el) return;
     if (remaining <= 0) { el.textContent = 'กำลังอัปเดต...'; return; }
-    const min = Math.floor(remaining / 60000);
-    const sec = Math.floor((remaining % 60000) / 1000);
+    const min = Math.floor(remaining / 60000), sec = Math.floor((remaining % 60000) / 1000);
     el.textContent = `อัปเดตอัตโนมัติใน ${min}:${sec.toString().padStart(2, '0')}`;
   };
   update();
@@ -796,7 +1134,6 @@ document.getElementById('location_tabs').addEventListener('click', e => {
     loadAndRender();
   }
 });
-
 document.getElementById('view_toggle').addEventListener('click', e => {
   if (e.target.classList.contains('view-btn')) {
     document.querySelectorAll('#view_toggle .view-btn').forEach(b => b.classList.remove('active'));
@@ -805,8 +1142,6 @@ document.getElementById('view_toggle').addEventListener('click', e => {
     updateView();
   }
 });
-
-// Map layer switcher
 document.getElementById('map_layers').addEventListener('click', e => {
   if (e.target.classList.contains('layer-btn')) {
     document.querySelectorAll('#map_layers .layer-btn').forEach(b => b.classList.remove('active'));
@@ -815,21 +1150,13 @@ document.getElementById('map_layers').addEventListener('click', e => {
     renderMap();
   }
 });
-
-// Manual refresh button
 document.getElementById('btn_refresh').addEventListener('click', () => loadAndRender(true));
-
-// Auto-refresh on tab focus if data is stale (>1 hour old)
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && lastFetchTime > 0) {
-    const age = Date.now() - lastFetchTime;
-    if (age > STALE_THRESHOLD_MS) {
-      loadAndRender(true);
-    }
-  }
+  if (!document.hidden && lastFetchTime > 0 && (Date.now() - lastFetchTime) > STALE_THRESHOLD_MS) loadAndRender(true);
 });
 
-// Initial load
+// ───────────── INIT ─────────────
+initTheme();
 loadAndRender();
 </script>
 </body>
