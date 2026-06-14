@@ -1,342 +1,485 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>เครื่องมือสำหรับงานก่อสร้าง</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
+    /* ───────────────────────────────────────────
+       Anthropic-inspired theme · Light / Dark
+    ─────────────────────────────────────────── */
+    :root {
+      --clay:    #C9613F;   /* primary accent  */
+      --clay-2:  #D97757;   /* hover accent    */
+      --clay-soft: rgba(201,97,63,0.10);
+      --font-sans: 'Noto Sans Thai', 'Segoe UI', Helvetica, Arial, sans-serif;
+      --font-serif: 'Noto Serif', Georgia, 'Times New Roman', serif;
+      --radius: 14px;
+      --ease: cubic-bezier(.22,.61,.36,1);
+    }
+
+    [data-theme="light"] {
+      --bg:        #F4F2EC;
+      --bg-grad:   radial-gradient(1200px 600px at 80% -10%, #efe7df 0%, transparent 60%);
+      --surface:   #FBFAF7;
+      --surface-2: #FFFFFF;
+      --border:    #E4DFD4;
+      --border-strong: #D5CEBF;
+      --text:      #1A1A18;
+      --text-soft: #6B6557;
+      --text-mute: #9A9281;
+      --shadow:    0 1px 2px rgba(45,38,28,.04), 0 8px 24px rgba(45,38,28,.06);
+      --shadow-lg: 0 2px 4px rgba(45,38,28,.06), 0 18px 48px rgba(45,38,28,.12);
+    }
+
+    [data-theme="dark"] {
+      --bg:        #1C1B19;
+      --bg-grad:   radial-gradient(1200px 600px at 80% -10%, #2a2521 0%, transparent 60%);
+      --surface:   #25231F;
+      --surface-2: #2C2A25;
+      --border:    #3A372F;
+      --border-strong: #4A463C;
+      --text:      #F2EFE8;
+      --text-soft: #B5AE9E;
+      --text-mute: #837C6C;
+      --clay-soft: rgba(217,119,87,0.16);
+      --shadow:    0 1px 2px rgba(0,0,0,.30), 0 8px 24px rgba(0,0,0,.35);
+      --shadow-lg: 0 2px 4px rgba(0,0,0,.35), 0 18px 48px rgba(0,0,0,.50);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      background: #f0f4f8;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      background-image: var(--bg-grad);
+      background-attachment: fixed;
+      color: var(--text);
       min-height: 100vh;
+      padding: 40px 20px 80px;
+      transition: background-color .4s var(--ease), color .25s var(--ease);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { max-width: 1040px; margin: 0 auto; }
+
+    /* ── Top bar ── */
+    .topbar {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 48px 16px;
+      justify-content: space-between;
+      margin-bottom: 56px;
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 36px;
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .logo-mark {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      background: var(--clay);
+      display: grid; place-items: center;
+      color: #fff; font-size: 1.1rem;
+      box-shadow: 0 4px 12px var(--clay-soft);
+      flex-shrink: 0;
     }
 
-    header h1 {
-      font-size: 2rem;
+    .brand-name {
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .brand-sub { font-size: .72rem; color: var(--text-mute); letter-spacing: .04em; }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+    }
+    .theme-toggle button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      width: 34px; height: 34px;
+      border-radius: 999px;
+      display: grid; place-items: center;
+      font-size: .95rem;
+      color: var(--text-soft);
+      transition: all .2s var(--ease);
+    }
+    .theme-toggle button.active {
+      background: var(--clay);
+      color: #fff;
+      box-shadow: 0 3px 10px var(--clay-soft);
+    }
+    .theme-toggle button:not(.active):hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero { margin-bottom: 44px; }
+    .eyebrow {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--clay);
+      margin-bottom: 14px;
+    }
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 5vw, 3rem);
       font-weight: 700;
-      color: #1a202c;
-      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 14px;
     }
-
-    header p {
-      font-size: 1rem;
-      color: #718096;
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--text-soft);
+      max-width: 560px;
+      line-height: 1.6;
     }
 
     /* ── Page Navigation ── */
     .page-nav {
       display: flex;
-      gap: 12px;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .page-btn {
-      padding: 12px 24px;
-      border-radius: 40px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      border: 2px solid #cbd5e0;
-      background: #ffffff;
-      color: #4a5568;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
       gap: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
     }
-
-    .page-btn:hover {
-      border-color: #4a90e2;
-      color: #4a90e2;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 14px rgba(74,144,226,0.18);
+    .page-btn {
+      padding: 10px 16px;
+      font-family: var(--font-sans);
+      font-size: .9rem;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      border-radius: 9px 9px 0 0;
+      position: relative;
+      transition: color .2s var(--ease), background .2s var(--ease);
     }
-
-    .page-btn.active {
-      background: #1a202c;
-      border-color: #1a202c;
-      color: #ffffff;
-      box-shadow: 0 4px 16px rgba(26,32,44,0.25);
+    .page-btn:hover { color: var(--text); background: var(--clay-soft); }
+    .page-btn.active { color: var(--text); }
+    .page-btn.active::after {
+      content: "";
+      position: absolute;
+      left: 16px; right: 16px; bottom: -5px;
+      height: 2.5px;
+      background: var(--clay);
+      border-radius: 3px;
     }
 
     /* ── Pages ── */
-    .page { display: none; width: 100%; max-width: 960px; }
-    .page.active { display: block; }
+    .page { display: none; }
+    .page.active { display: block; animation: fade .4s var(--ease); }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
-    .page-title {
-      font-size: 0.75rem;
-      font-weight: 700;
+    .section-label {
+      font-size: .74rem;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #a0aec0;
-      margin-bottom: 20px;
+      letter-spacing: .12em;
+      color: var(--text-mute);
+      margin-bottom: 18px;
     }
 
     /* ── Grid ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      width: 100%;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 18px;
     }
 
     /* ── Card ── */
     .card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 32px 28px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 24px 24px;
+      box-shadow: var(--shadow);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      transition: transform 0.2s, box-shadow 0.2s;
       text-decoration: none;
       color: inherit;
+      overflow: hidden;
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
     }
-
-    .card:hover {
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--clay), var(--clay-2));
+      opacity: 0;
+      transition: opacity .25s var(--ease);
+    }
+    .card:not(.disabled):hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-strong);
     }
+    .card:not(.disabled):hover::before { opacity: 1; }
 
     .icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      font-size: 1.6rem;
+      width: 46px; height: 46px;
+      border-radius: 11px;
+      display: grid; place-items: center;
+      margin-bottom: 18px;
+      font-size: 1.35rem;
+      background: var(--clay-soft);
+      border: 1px solid var(--border);
     }
-
-    .icon-blue   { background: #ebf4ff; }
-    .icon-green  { background: #e6fffa; }
-    .icon-orange { background: #fffaf0; }
-    .icon-purple { background: #faf5ff; }
-    .icon-red    { background: #fff5f5; }
-    .icon-teal   { background: #e6fffa; }
-    .icon-amber  { background: #fffbeb; }
-    .icon-indigo { background: #eef2ff; }
-    .icon-sky    { background: #e0f2fe; }
 
     .card h2 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #1a202c;
+      font-family: var(--font-serif);
+      font-size: 1.12rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
       margin-bottom: 8px;
-      line-height: 1.4;
+      line-height: 1.35;
     }
-
     .card p {
-      font-size: 0.9rem;
-      color: #718096;
+      font-size: .88rem;
+      color: var(--text-soft);
       line-height: 1.6;
       flex: 1;
     }
 
-    .btn {
-      margin-top: 24px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 0.875rem;
+    .card-cta {
+      margin-top: 20px;
+      font-size: .85rem;
       font-weight: 600;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      transition: opacity 0.2s;
+      color: var(--clay);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap .2s var(--ease);
+    }
+    .card:not(.disabled):hover .card-cta { gap: 11px; }
+
+    .badge {
+      margin-top: 20px;
+      font-size: .74rem;
+      font-weight: 600;
+      color: var(--text-mute);
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px dashed var(--border-strong);
+      background: var(--surface-2);
     }
 
-    .btn:hover { opacity: 0.85; }
+    .card.disabled { opacity: .65; cursor: default; }
 
-    .btn-blue   { background: #3b82f6; color: #fff; }
-    .btn-green  { background: #10b981; color: #fff; }
-    .btn-orange { background: #f97316; color: #fff; }
-    .btn-purple { background: #8b5cf6; color: #fff; }
-    .btn-red    { background: #ef4444; color: #fff; }
-    .btn-teal   { background: #14b8a6; color: #fff; }
-    .btn-amber  { background: #f59e0b; color: #fff; }
-    .btn-indigo { background: #6366f1; color: #fff; }
-    .btn-sky    { background: #0ea5e9; color: #fff; }
-    .btn-gray   { background: #cbd5e0; color: #4a5568; cursor: not-allowed; }
-
-    .card.disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-    .card.disabled:hover {
-      transform: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
-    }
-
+    /* ── Footer ── */
     footer {
       margin-top: 64px;
-      font-size: 0.8rem;
-      color: #a0aec0;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: .8rem;
+      color: var(--text-mute);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
+    footer a { color: var(--clay); text-decoration: none; }
 
     @media (max-width: 600px) {
-      .page-btn { padding: 10px 16px; font-size: 0.82rem; }
-      header h1 { font-size: 1.5rem; }
+      body { padding: 24px 14px 60px; }
+      .topbar { margin-bottom: 36px; }
+      .hero { margin-bottom: 32px; }
+      .page-nav { gap: 2px; }
+      .page-btn { padding: 9px 11px; font-size: .82rem; }
     }
   </style>
 </head>
 <body>
+  <div class="wrap">
 
-  <header>
-    <h1>🏗️ เครื่องมือสำหรับงานก่อสร้าง</h1>
-    <p>เลือกเครื่องมือที่ต้องการใช้งาน</p>
-  </header>
-
-  <!-- Page Navigation -->
-  <nav class="page-nav">
-    <button class="page-btn active" onclick="showPage('tracking')">📊 Construction Tracking</button>
-    <button class="page-btn" onclick="showPage('engineering')">🔧 Engineering Tools</button>
-    <button class="page-btn" onclick="showPage('estimation')">📦 Planing & Estimation</button>
-    <button class="page-btn" onclick="showPage('weather')">⛅ Weather Forecast</button>
-  </nav>
-
-  <!-- ════════════════════════════════════════
-       Page 1 : Construction Tracking
-  ════════════════════════════════════════ -->
-  <div id="page-tracking" class="page active">
-    <div class="page-title">📊 Construction Tracking</div>
-    <div class="grid">
-
-      <a class="card" href="daily-report-dashboard.html">
-        <div class="icon icon-indigo">📝</div>
-        <h2>Daily Report Dashboard</h2>
-        <p>แดชบอร์ดสรุปรายงานประจำวันของโครงการ ติดตามความคืบหน้าและกิจกรรมหน้างานแบบรายวัน</p>
-        <span class="btn btn-indigo">เปิดใช้งาน →</span>
-      </a>
-
-      <div class="card disabled">
-        <div class="icon icon-blue">📊</div>
-        <h2>Arise hill Progress Tracker</h2>
-        <p>แดชบอร์ดสำหรับโครงการ Arise Hill แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
-        <span class="btn btn-gray">เร็ว ๆ นี้</span>
+    <!-- ── Top bar ── -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo-mark">◳</div>
+        <div>
+          <div class="brand-name">Construction Suite</div>
+          <div class="brand-sub">เครื่องมืองานก่อสร้าง</div>
+        </div>
       </div>
 
-      <a class="card" href="RoomTracker_Dashboard.html">
-        <div class="icon icon-green">🏠</div>
-        <h2>Arise hill Room Tracker</h2>
-        <p>ติดตามสถานะห้องและงานในแต่ละพื้นที่ของโครงการอย่างเป็นระบบ</p>
-        <span class="btn btn-green">เปิดใช้งาน →</span>
-      </a>
-
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════
-       Page 2 : Engineering Tools
-  ════════════════════════════════════════ -->
-  <div id="page-engineering" class="page">
-    <div class="page-title">🔧 Engineering Tools</div>
-    <div class="grid">
-
-      <a class="card" href="UnitConverter.html">
-        <div class="icon icon-purple">🔄</div>
-        <h2>Unit Converter</h2>
-        <p>แปลงหน่วยวัดต่าง ๆ ที่ใช้ในงานวิศวกรรมและก่อสร้าง ทั้งหน่วยความยาว น้ำหนัก และแรง</p>
-        <span class="btn btn-purple">เปิดใช้งาน →</span>
-      </a>
-
-      <a class="card" href="Engineering_Calculator.html">
-        <div class="icon icon-blue">🔢</div>
-        <h2>Engineering Calculator</h2>
-        <p>เครื่องคิดเลขวิศวกรรม คำนวณน้ำหนักเหล็กด่วน พร้อมสูตรที่ใช้บ่อยสำหรับงานคอนกรีต เหล็กเส้น และโครงสร้าง</p>
-        <span class="btn btn-blue">เปิดใช้งาน →</span>
-      </a>
-
-      <div class="card disabled">
-        <div class="icon icon-red">🏛️</div>
-        <h2>RD Design (SDM)</h2>
-        <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
-        <span class="btn btn-gray">เร็ว ๆ นี้</span>
+      <div class="theme-toggle" role="group" aria-label="เลือกธีม">
+        <button id="btn-light" onclick="setTheme('light')" title="Light mode" aria-label="Light mode">☀</button>
+        <button id="btn-dark" onclick="setTheme('dark')" title="Dark mode" aria-label="Dark mode">☾</button>
       </div>
-
-      <a class="card" href="SteelSectionDesign.html">
-        <div class="icon icon-teal">⚙️</div>
-        <h2>Steel Section Design</h2>
-        <p>ออกแบบและตรวจสอบหน้าตัดเหล็กรูปพรรณ สำหรับงานโครงสร้างเหล็ก</p>
-        <span class="btn btn-teal">เปิดใช้งาน →</span>
-      </a>
-
     </div>
-  </div>
 
-  <!-- ════════════════════════════════════════
-       Page 3 : Planing & Estimation
-  ════════════════════════════════════════ -->
-  <div id="page-estimation" class="page">
-    <div class="page-title">📦 Planing & Estimation</div>
-    <div class="grid">
-
-      <a class="card" href="WBS_Calculator.html">
-        <div class="icon icon-amber">🧱</div>
-        <h2>WBS Calculator</h2>
-        <p>เลือกรายการงานจาก WBS ป้อนปริมาณงาน แล้วคำนวณวัสดุที่ต้องสั่งซื้อได้ทันที</p>
-        <span class="btn btn-amber">เปิดใช้งาน →</span>
-      </a>
-
-      <a class="card" href="WorkingDays_Calculator.html">
-        <div class="icon icon-orange">📅</div>
-        <h2>Working Days Calculator</h2>
-        <p>คำนวณจำนวนวันทำงาน หักวันหยุดและวันฝนตก เพื่อวางแผนงานก่อสร้างได้แม่นยำ</p>
-        <span class="btn btn-orange">เปิดใช้งาน →</span>
-      </a>
-
+    <!-- ── Hero ── -->
+    <div class="hero">
+      <span class="eyebrow">Engineering Toolkit</span>
+      <h1>เครื่องมือสำหรับงานก่อสร้าง</h1>
+      <p>รวมเครื่องมือติดตามงาน คำนวณวิศวกรรม วางแผน และพยากรณ์อากาศ ไว้ในที่เดียว สำหรับงานก่อสร้างแบบมืออาชีพ</p>
     </div>
-  </div>
 
-  <!-- ════════════════════════════════════════
-       Page 4 : Weather Forecast
-  ════════════════════════════════════════ -->
-  <div id="page-weather" class="page">
-    <div class="page-title">⛅ Weather Forecast</div>
-    <div class="grid">
+    <!-- ── Page Navigation ── -->
+    <nav class="page-nav">
+      <button class="page-btn active" onclick="showPage('tracking', this)">Construction Tracking</button>
+      <button class="page-btn" onclick="showPage('engineering', this)">Engineering Tools</button>
+      <button class="page-btn" onclick="showPage('estimation', this)">Planning &amp; Estimation</button>
+      <button class="page-btn" onclick="showPage('weather', this)">Weather Forecast</button>
+    </nav>
 
-      <a class="card" href="construction-weather-app.html">
-        <div class="icon icon-sky">⛅</div>
-        <h2>Construction Weather App</h2>
-        <p>พยากรณ์อากาศสำหรับงานก่อสร้าง ตรวจสอบสภาพอากาศหน้างาน วางแผนงานล่วงหน้า ลดความเสี่ยงจากฝนและสภาพอากาศแปรปรวน</p>
-        <span class="btn btn-sky">เปิดใช้งาน →</span>
-      </a>
+    <!-- ════ Page 1 : Construction Tracking ════ -->
+    <div id="page-tracking" class="page active">
+      <div class="section-label">📊 Construction Tracking</div>
+      <div class="grid">
 
+        <a class="card" href="daily-report-dashboard.html">
+          <div class="icon">📝</div>
+          <h2>Daily Report Dashboard</h2>
+          <p>แดชบอร์ดสรุปรายงานประจำวันของโครงการ ติดตามความคืบหน้าและกิจกรรมหน้างานแบบรายวัน</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+        <div class="card disabled">
+          <div class="icon">📊</div>
+          <h2>Arise Hill Progress Tracker</h2>
+          <p>แดชบอร์ดสำหรับโครงการ Arise Hill แสดงข้อมูลภาพรวมและสถานะงานก่อสร้าง</p>
+          <span class="badge">เร็ว ๆ นี้</span>
+        </div>
+
+        <a class="card" href="RoomTracker_Dashboard.html">
+          <div class="icon">🏠</div>
+          <h2>Arise Hill Room Tracker</h2>
+          <p>ติดตามสถานะห้องและงานในแต่ละพื้นที่ของโครงการอย่างเป็นระบบ</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+      </div>
     </div>
-  </div>
 
-  <footer>สร้างด้วย Claude · Cowork Mode</footer>
+    <!-- ════ Page 2 : Engineering Tools ════ -->
+    <div id="page-engineering" class="page">
+      <div class="section-label">🔧 Engineering Tools</div>
+      <div class="grid">
+
+        <a class="card" href="UnitConverter.html">
+          <div class="icon">🔄</div>
+          <h2>Unit Converter</h2>
+          <p>แปลงหน่วยวัดต่าง ๆ ที่ใช้ในงานวิศวกรรมและก่อสร้าง ทั้งหน่วยความยาว น้ำหนัก และแรง</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+        <a class="card" href="Engineering_Calculator.html">
+          <div class="icon">🔢</div>
+          <h2>Engineering Calculator</h2>
+          <p>เครื่องคิดเลขวิศวกรรม คำนวณน้ำหนักเหล็กด่วน พร้อมสูตรที่ใช้บ่อยสำหรับงานคอนกรีต เหล็กเส้น และโครงสร้าง</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+        <div class="card disabled">
+          <div class="icon">🏛️</div>
+          <h2>RD Design (SDM)</h2>
+          <p>ออกแบบโครงสร้างด้วยวิธี Strength Design Method สำหรับงานคอนกรีตเสริมเหล็ก</p>
+          <span class="badge">เร็ว ๆ นี้</span>
+        </div>
+
+        <a class="card" href="SteelSectionDesign.html">
+          <div class="icon">⚙️</div>
+          <h2>Steel Section Design</h2>
+          <p>ออกแบบและตรวจสอบหน้าตัดเหล็กรูปพรรณ สำหรับงานโครงสร้างเหล็ก</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- ════ Page 3 : Planning & Estimation ════ -->
+    <div id="page-estimation" class="page">
+      <div class="section-label">📦 Planning &amp; Estimation</div>
+      <div class="grid">
+
+        <a class="card" href="WBS_Calculator.html">
+          <div class="icon">🧱</div>
+          <h2>WBS Calculator</h2>
+          <p>เลือกรายการงานจาก WBS ป้อนปริมาณงาน แล้วคำนวณวัสดุที่ต้องสั่งซื้อได้ทันที</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+        <a class="card" href="WorkingDays_Calculator.html">
+          <div class="icon">📅</div>
+          <h2>Working Days Calculator</h2>
+          <p>คำนวณจำนวนวันทำงาน หักวันหยุดและวันฝนตก เพื่อวางแผนงานก่อสร้างได้แม่นยำ</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- ════ Page 4 : Weather Forecast ════ -->
+    <div id="page-weather" class="page">
+      <div class="section-label">⛅ Weather Forecast</div>
+      <div class="grid">
+
+        <a class="card" href="construction-weather-app.html">
+          <div class="icon">⛅</div>
+          <h2>Construction Weather App</h2>
+          <p>พยากรณ์อากาศสำหรับงานก่อสร้าง ตรวจสอบสภาพอากาศหน้างาน วางแผนงานล่วงหน้า ลดความเสี่ยงจากฝนและสภาพอากาศแปรปรวน</p>
+          <span class="card-cta">เปิดใช้งาน →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <footer>
+      <span>สร้างด้วย Claude · Cowork Mode</span>
+      <span>© 2026 Construction Suite</span>
+    </footer>
+
+  </div>
 
   <script>
-    function showPage(name) {
-      // ซ่อนทุก page
-      document.querySelectorAll('.page').forEach(function(p) {
-        p.classList.remove('active');
-      });
-      // ปิด active ทุก button
-      document.querySelectorAll('.page-btn').forEach(function(b) {
-        b.classList.remove('active');
-      });
-      // เปิด page ที่เลือก
+    // ── Theme ──
+    function setTheme(mode) {
+      document.documentElement.setAttribute('data-theme', mode);
+      document.getElementById('btn-light').classList.toggle('active', mode === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', mode === 'dark');
+      try { localStorage.setItem('theme', mode); } catch (e) {}
+    }
+
+    (function initTheme() {
+      var saved;
+      try { saved = localStorage.getItem('theme'); } catch (e) {}
+      if (!saved) {
+        saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      setTheme(saved);
+    })();
+
+    // ── Page switching ──
+    function showPage(name, btn) {
+      document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+      document.querySelectorAll('.page-btn').forEach(function (b) { b.classList.remove('active'); });
       document.getElementById('page-' + name).classList.add('active');
-      // เปิด active button ที่กด
-      event.currentTarget.classList.add('active');
+      btn.classList.add('active');
     }
   </script>
 
