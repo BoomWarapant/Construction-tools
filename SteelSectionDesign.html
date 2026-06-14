@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" data-bs-theme="dark">
+<html lang="th" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,41 +8,58 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Anthropic-inspired typography: serif display + clean sans body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Custom Theme Variables (รองรับทั้ง Dark และ Light Mode) */
+        /* ============================================================
+           Anthropic-inspired Theme — warm, editorial, professional
+           ============================================================ */
+
+        /* ---------- DARK MODE (warm charcoal) ---------- */
         :root[data-bs-theme="dark"] {
-            --bg-main: #0f172a;       /* Slate 900 */
-            --bg-card: #1e293b;       /* Slate 800 */
-            --bg-input: #334155;      /* Slate 700 */
-            --border-color: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary-color: #6366f1; /* Indigo 500 */
-            --primary-hover: #4f46e5;
-            --accent-color: #3b82f6;  /* Blue 500 */
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            
-            /* Override Bootstrap Native Variables */
+            --bg-main: #1a1a18;       /* warm near-black */
+            --bg-elevated: #232220;   /* page surface */
+            --bg-card: #2a2825;       /* card */
+            --bg-input: #2f2d2a;
+            --border-color: #3a3733;
+            --border-soft: #322f2b;
+            --text-main: #f4f1ea;     /* warm ivory */
+            --text-muted: #a8a298;
+            --text-faint: #837d72;
+            --primary-color: #d97757; /* Anthropic clay */
+            --primary-hover: #c96342;
+            --primary-soft: rgba(217, 119, 87, 0.14);
+            --accent-color: #d4a27f;  /* warm tan */
+            --success-color: #6fae8f;
+            --warning-color: #e0a458;
+            --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
+
             --bs-body-bg: var(--bg-main);
             --bs-body-color: var(--text-main);
             --bs-secondary-color: var(--text-muted);
         }
 
+        /* ---------- LIGHT MODE (ivory / cream) ---------- */
         :root[data-bs-theme="light"] {
-            --bg-main: #f8fafc;       /* Slate 50 */
-            --bg-card: #ffffff;       /* White */
-            --bg-input: #ffffff;      
-            --border-color: #cbd5e1;  /* Slate 300 */
-            --text-main: #0f172a;     /* Slate 900 */
-            --text-muted: #64748b;    /* Slate 500 */
-            --primary-color: #4f46e5; /* Indigo 600 */
-            --primary-hover: #4338ca;
-            --accent-color: #2563eb;  /* Blue 600 */
-            --success-color: #059669;
-            --warning-color: #d97706;
+            --bg-main: #f0eee6;       /* Anthropic ivory */
+            --bg-elevated: #f7f5ef;
+            --bg-card: #fffdf8;       /* warm white */
+            --bg-input: #fffdf8;
+            --border-color: #ddd8cc;
+            --border-soft: #e7e2d6;
+            --text-main: #1f1e1c;     /* warm ink */
+            --text-muted: #6b6459;
+            --text-faint: #948c7e;
+            --primary-color: #c15f3c; /* clay (darker for contrast) */
+            --primary-hover: #a94e2e;
+            --primary-soft: rgba(193, 95, 60, 0.10);
+            --accent-color: #b07b50;
+            --success-color: #3f7d5f;
+            --warning-color: #b9802f;
+            --shadow: 0 1px 2px rgba(60,50,35,.05), 0 10px 30px rgba(60,50,35,.07);
 
-            /* Override Bootstrap Native Variables */
             --bs-body-bg: var(--bg-main);
             --bs-body-color: var(--text-main);
             --bs-secondary-color: var(--text-muted);
@@ -51,222 +68,347 @@
         body {
             background-color: var(--bg-main);
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-bottom: 50px;
-            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+            padding-bottom: 60px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.35s ease, color 0.35s ease;
         }
 
-        /* Top Bar */
+        h1, h2, h3, h4, h5, h6, .serif {
+            font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+            letter-spacing: -0.01em;
+        }
+
+        .container { max-width: 960px; }
+
+        /* ---------- Top Bar ---------- */
         .app-header {
-            background-color: var(--bg-card);
+            background-color: var(--bg-elevated);
             border-bottom: 1px solid var(--border-color);
-            padding: 15px 20px;
+            padding: 18px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: background-color 0.35s, border-color 0.35s;
         }
         .app-title {
-            font-size: 1.5rem;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 1.55rem;
             font-weight: 600;
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-title .title-mark {
             color: var(--primary-color);
+        }
+        .app-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-faint);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* ---------- Theme Switch (segmented Light / Dark) ---------- */
+        .theme-switch {
+            display: inline-flex;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .theme-opt {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .theme-opt:hover { color: var(--text-main); }
+        .theme-opt.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.18);
+        }
+
+        /* ---------- Hero / intro ---------- */
+        .report-intro {
+            margin: 32px 0 28px;
+        }
+        .report-intro h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+        .report-intro p {
+            color: var(--text-muted);
+            max-width: 640px;
             margin: 0;
         }
 
-        /* Custom Form Controls */
+        /* ---------- Panel wrapper ---------- */
+        .panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            transition: background-color 0.35s, border-color 0.35s;
+        }
+        .panel-eyebrow {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--primary-color);
+            margin-bottom: 18px;
+        }
+
+        /* ---------- Form Controls ---------- */
         .form-label {
             color: var(--text-muted);
             font-weight: 500;
-            margin-bottom: 0.4rem;
+            font-size: 0.88rem;
+            margin-bottom: 0.45rem;
         }
         .form-control, .form-select {
-            background-color: var(--bg-main);
+            background-color: var(--bg-input);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            border-radius: 6px;
+            border-radius: 10px;
+            padding: 0.6rem 0.85rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
+        .form-control::placeholder { color: var(--text-faint); }
         .form-control:focus, .form-select:focus {
             background-color: var(--bg-input);
             border-color: var(--primary-color);
             color: var(--text-main);
-            box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+            box-shadow: 0 0 0 0.2rem var(--primary-soft);
         }
-        
-        /* Checkbox Custom Styling for Section Types */
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .form-check-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem var(--primary-soft);
+        }
+        .form-check-label { color: var(--text-muted); }
+
+        /* ---------- Section Type chips ---------- */
         .section-type-btn {
-            background-color: var(--bg-card);
+            background-color: var(--bg-main);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            border-radius: 6px;
+            border-radius: 999px;
             padding: 8px 16px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.18s ease;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            font-weight: 500;
             user-select: none;
         }
+        .section-type-btn i { opacity: 0; transition: opacity 0.15s; font-size: 0.8rem; }
         .section-type-btn:hover {
-            border-color: var(--accent-color);
+            border-color: var(--primary-color);
             color: var(--text-main);
         }
         .section-type-checkbox:checked + .section-type-btn {
-            background-color: rgba(59, 130, 246, 0.1);
-            border-color: var(--accent-color);
-            color: var(--text-main);
+            background-color: var(--primary-soft);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
         }
-        .section-type-checkbox:checked + .section-type-btn i {
-            color: var(--accent-color);
-        }
+        .section-type-checkbox:checked + .section-type-btn i { opacity: 1; color: var(--primary-color); }
 
-        /* Calculate Button */
+        /* ---------- Calculate Button ---------- */
         .btn-calculate {
             background-color: var(--primary-color);
-            color: white;
+            color: #fff;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: background-color 0.2s;
+            padding: 14px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.02rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 14px var(--primary-soft);
         }
         .btn-calculate:hover {
             background-color: var(--primary-hover);
-            color: white;
+            color: #fff;
         }
+        .btn-calculate:active { transform: translateY(1px); }
 
-        /* Result Dashboard Cards */
+        /* ---------- Dashboard summary cards ---------- */
         .dashboard-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 16px 18px;
             height: 100%;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: background-color 0.35s, border-color 0.35s;
         }
         .dashboard-label {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 5px;
+            color: var(--text-faint);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
         }
         .dashboard-value {
-            font-size: 1.1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.05rem;
             font-weight: 600;
             color: var(--text-main);
         }
 
-        /* Sort Tabs */
+        /* ---------- Sort Tabs ---------- */
         .sort-tabs {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
         .sort-btn {
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            padding: 6px 16px;
-            border-radius: 6px;
+            padding: 7px 16px;
+            border-radius: 999px;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9rem;
+            transition: all 0.18s;
+            font-size: 0.86rem;
+            font-weight: 500;
         }
+        .sort-btn:hover { border-color: var(--primary-color); color: var(--text-main); }
         .sort-btn.active {
-            background-color: rgba(99, 102, 241, 0.1);
+            background-color: var(--primary-color);
             border-color: var(--primary-color);
-            color: var(--primary-color);
+            color: #fff;
             font-weight: 600;
         }
 
-        /* Result Item Card */
+        /* ---------- Result Item Card ---------- */
         .result-item {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px 20px;
-            margin-bottom: 15px;
-            transition: border-color 0.2s, background-color 0.3s;
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            transition: border-color 0.2s, transform 0.12s, background-color 0.35s;
         }
         .result-item:hover {
             border-color: var(--primary-color);
+            transform: translateY(-2px);
         }
         .result-item.rank-1 {
-            border-left: 4px solid var(--warning-color);
+            border-left: 4px solid var(--primary-color);
         }
-        
         .result-title {
-            font-size: 1.25rem;
-            font-weight: bold;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 600;
             color: var(--text-main);
             margin: 0;
         }
         .badge-type {
-            background-color: rgba(59, 130, 246, 0.15);
-            color: var(--accent-color);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background-color: var(--primary-soft);
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            border-radius: 999px;
         }
-        
         .stat-row {
             display: flex;
             justify-content: space-between;
             margin-top: 8px;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 4px;
+            border-bottom: 1px dashed var(--border-soft);
+            padding-bottom: 5px;
         }
-        .stat-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-        .stat-label {
-            color: var(--text-muted);
-        }
+        .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .stat-label { color: var(--text-muted); font-size: 0.9rem; }
         .stat-value {
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 600;
             color: var(--text-main);
+            font-size: 0.92rem;
         }
 
-        /* Assumptions Box */
+        /* ---------- Assumptions Box ---------- */
         .assumptions-box {
-            background-color: var(--bg-card);
+            background-color: var(--bg-elevated);
             border: 1px solid var(--border-color);
             border-left: 4px solid var(--accent-color);
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 14px;
+            padding: 26px 28px;
             margin-top: 30px;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: background-color 0.35s, border-color 0.35s;
         }
-        
-        /* Theme Toggle Button */
-        .theme-toggle-btn {
-            border-color: var(--border-color);
-            color: var(--text-muted);
-            background-color: var(--bg-main);
-        }
-        .theme-toggle-btn:hover {
-            background-color: var(--border-color);
-            color: var(--text-main);
+
+        .text-primary { color: var(--primary-color) !important; }
+        .text-success { color: var(--success-color) !important; }
+        .text-warning { color: var(--warning-color) !important; }
+
+        @media (max-width: 576px) {
+            .app-header { flex-direction: column; gap: 14px; align-items: flex-start; }
+            .panel { padding: 20px; }
         }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <div class="app-header shadow-sm">
-        <h1 class="app-title"><i class="fa-solid fa-ruler-combined me-2"></i>Steel Section Finder</h1>
-        <div class="d-flex align-items-center gap-2">
-            <!-- ปุ่มเปลี่ยนโหมด Light / Dark -->
-            <button id="themeToggleBtn" class="btn btn-sm theme-toggle-btn rounded-circle px-2" title="สลับโหมดการแสดงผล">
-                <i class="fa-solid fa-sun" id="themeIcon"></i>
+    <div class="app-header">
+        <div>
+            <h1 class="app-title"><i class="fa-solid fa-ruler-combined title-mark"></i>Steel Section Finder</h1>
+            <div class="app-subtitle">Preliminary bending design · ASD</div>
+        </div>
+        <!-- ปุ่มเลือกโหมด Light / Dark -->
+        <div class="theme-switch" role="group" aria-label="เลือกโหมดการแสดงผล">
+            <button type="button" class="theme-opt" data-theme="light">
+                <i class="fa-solid fa-sun"></i> Light
             </button>
-            <button class="btn btn-sm btn-outline-secondary border-0"><i class="fa-solid fa-xmark fs-5"></i></button>
+            <button type="button" class="theme-opt" data-theme="dark">
+                <i class="fa-solid fa-moon"></i> Dark
+            </button>
         </div>
     </div>
 
     <div class="container mt-4">
-        
+
+        <!-- Report intro -->
+        <div class="report-intro">
+            <h2>เครื่องมือเลือกหน้าตัดเหล็ก</h2>
+            <p>คำนวณหา section modulus ที่ต้องการจากค่าโมเมนต์ แล้วจัดอันดับหน้าตัดเหล็กมาตรฐานที่เหมาะสมที่สุด สำหรับการออกแบบเบื้องต้นตามหลัก Allowable Stress Design (ASD)</p>
+        </div>
+
         <!-- Input Form Section -->
-        <form id="finderForm">
+        <form id="finderForm" class="panel mb-4">
+            <div class="panel-eyebrow"><i class="fa-solid fa-sliders me-2"></i>พารามิเตอร์การออกแบบ</div>
             <div class="row mb-4">
                 <!-- Moment & Unit -->
                 <div class="col-md-6 mb-3">
@@ -451,32 +593,27 @@
     <!-- Bootstrap & App Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- 0. Theme Toggle Logic ---
+        // --- 0. Theme Switch Logic (Light / Dark) ---
         document.addEventListener('DOMContentLoaded', () => {
-            const themeToggleBtn = document.getElementById('themeToggleBtn');
-            const themeIcon = document.getElementById('themeIcon');
             const htmlElement = document.documentElement;
+            const themeButtons = document.querySelectorAll('.theme-opt');
 
-            // ตรวจสอบค่า Theme เดิมที่บันทึกไว้ (ถ้ามี) ถ้าไม่มีให้ใช้ Dark
-            const savedTheme = localStorage.getItem('steelAppTheme') || 'dark';
+            // ตรวจสอบค่า Theme เดิมที่บันทึกไว้ (ถ้ามี) ถ้าไม่มีให้ใช้ Light
+            const savedTheme = localStorage.getItem('steelAppTheme') || 'light';
             applyTheme(savedTheme);
 
-            themeToggleBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const currentTheme = htmlElement.getAttribute('data-bs-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                applyTheme(newTheme);
+            themeButtons.forEach(btn => {
+                btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
             });
 
             function applyTheme(theme) {
                 htmlElement.setAttribute('data-bs-theme', theme);
                 localStorage.setItem('steelAppTheme', theme);
-                
-                if (theme === 'dark') {
-                    themeIcon.className = 'fa-solid fa-sun text-warning'; // โชว์รูปพระอาทิตย์เมื่ออยู่โหมดมืด
-                } else {
-                    themeIcon.className = 'fa-solid fa-moon text-secondary'; // โชว์รูปพระจันทร์เมื่ออยู่โหมดสว่าง
-                }
+
+                // อัปเดตปุ่มที่ active ให้ตรงกับโหมดปัจจุบัน
+                themeButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === theme);
+                });
             }
         });
 
