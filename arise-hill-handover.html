@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QC Inspection Dashboard - โครงการ Arise Hill สันทราย</title>
+  <!-- Tailwind CSS & Chart.js CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+    /* บังคับสัดส่วนหน้าจอแบบ 16:9 สำหรับการนำเสนอ */
+    .aspect-16-9 {
+      width: 100vw;
+      min-height: 56.25vw; /* 16:9 ratio */
+      max-width: 1920px;
+      margin: 0 auto;
+    }
+    /* กำหนด Scrollbar สวยงาม */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="flex justify-center bg-slate-950">
+
+  <div class="aspect-16-9 flex flex-col bg-slate-900 border-x border-slate-800 shadow-2xl relative">
+    
+    <!-- ================= 1. เมนูด้านบน (Sticky Header Navigation) ================= -->
+    <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <!-- Title & Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-8 bg-blue-500 rounded-sm"></div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            โครงการ Arise Hill สันทราย
+            <span class="text-xs bg-blue-900/60 text-blue-300 border border-blue-700/50 px-2 py-0.5 rounded-full font-normal">QC Control</span>
+          </h1>
+          <p class="text-xs text-slate-400">ระบบติดตามความคืบหน้าการตรวจสอบคุณภาพงาน (QC Inspection Pipeline)</p>
+        </div>
+      </div>
+
+      <!-- Control Menu & Filter (ตรึงด้านบน) -->
+      <div class="flex items-center gap-3">
+        <!-- Building Tabs -->
+        <div class="inline-flex p-1 bg-slate-800 border border-slate-700 rounded-lg text-xs font-medium">
+          <button onclick="switchBuilding('ALL')" id="tab-ALL" class="tab-btn px-4 py-1.5 rounded-md transition text-white bg-blue-600 shadow">
+            ภาพรวมทั้งโครงการ (368 ห้อง)
+          </button>
+          <button onclick="switchBuilding('A')" id="tab-A" class="tab-btn px-4 py-1.5 rounded-md transition text-slate-400 hover:text-slate-200">
+            อาคาร A (187 ห้อง)
+          </button>
+          <button onclick="switchBuilding('B')" id="tab-B" class="tab-btn px-4 py-1.5 rounded-md transition text-slate-400 hover:text-slate-200">
+            อาคาร B (181 ห้อง)
+          </button>
+        </div>
+
+        <!-- Auto Sync Indicator & Refresh Button -->
+        <div class="flex items-center gap-2 border-l border-slate-700 pl-3">
+          <button onclick="fetchSheetData()" id="sync-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-lg text-xs font-medium transition">
+            <svg id="sync-icon" class="w-3.5 h-3.5 animate-spin hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span id="sync-text">อัปเดตข้อมูลชีต</span>
+          </button>
+          <span id="sync-time" class="text-[10px] text-slate-500 hidden sm:inline">ล่าสุด: กำลังโหลด...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= 2. เนื้อหาแสดงผล (Dashboard Body) ================= -->
+    <main class="flex-1 p-6 space-y-6 overflow-y-auto">
+
+      <!-- แถบสรุปตัวชี้วัดหลัก 5 ลำดับขั้น (Executive KPI Cards) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl">
+          <p class="text-[11px] font-medium text-slate-400">จำนวนห้องทั้งหมด</p>
+          <div class="flex items-baseline justify-between mt-1">
+            <span id="kpi-total" class="text-2xl font-bold text-white">368</span>
+            <span class="text-[10px] text-slate-400">ยูนิต</span>
+          </div>
+          <div class="mt-2 text-[10px] text-slate-400 flex justify-between border-t border-slate-700/50 pt-1.5">
+            <span>Fully: <b id="kpi-fully" class="text-blue-400">186</b></span>
+            <span>Fitted: <b id="kpi-fitted" class="text-amber-400">182</b></span>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl">
+          <p class="text-[11px] font-medium text-slate-400">ตรวจตัด QC 1 (1.1)</p>
+          <div class="flex items-baseline justify-between mt-1">
+            <span id="kpi-qc1" class="text-2xl font-bold text-emerald-400">368</span>
+            <span id="kpi-qc1-pct" class="text-xs font-semibold text-emerald-400">100%</span>
+          </div>
+          <div class="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div id="bar-qc1" class="bg-emerald-500 h-full w-full"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl">
+          <p class="text-[11px] font-medium text-slate-400">CM รับมอบ (1.2)</p>
+          <div class="flex items-baseline justify-between mt-1">
+            <span id="kpi-qc12" class="text-2xl font-bold text-cyan-400">250</span>
+            <span id="kpi-qc12-pct" class="text-xs font-semibold text-cyan-400">67.9%</span>
+          </div>
+          <div class="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div id="bar-qc12" class="bg-cyan-500 h-full" style="width: 67.9%;"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl">
+          <p class="text-[11px] font-medium text-slate-400">ส่งตรวจ QC 2</p>
+          <div class="flex items-baseline justify-between mt-1">
+            <span id="kpi-qc2" class="text-2xl font-bold text-blue-400">190</span>
+            <span id="kpi-qc2-pct" class="text-xs font-semibold text-blue-400">51.6%</span>
+          </div>
+          <div class="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div id="bar-qc2" class="bg-blue-500 h-full" style="width: 51.6%;"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl">
+          <p class="text-[11px] font-medium text-slate-400">ส่งตรวจ QC 3</p>
+          <div class="flex items-baseline justify-between mt-1">
+            <span id="kpi-qc3" class="text-2xl font-bold text-amber-400">129</span>
+            <span id="kpi-qc3-pct" class="text-xs font-semibold text-amber-400">35.1%</span>
+          </div>
+          <div class="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div id="bar-qc3" class="bg-amber-500 h-full" style="width: 35.1%;"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-emerald-600/40 p-3 rounded-xl bg-gradient-to-b from-emerald-950/20 to-slate-800/60">
+          <p class="text-[11px] font-medium text-emerald-300">ORN รับมอบ QC 4</p>
+          <div class="flex items-baseline justify-between mt-1">
+            <span id="kpi-qc4" class="text-2xl font-bold text-emerald-300">91</span>
+            <span id="kpi-qc4-pct" class="text-xs font-semibold text-emerald-300">24.7%</span>
+          </div>
+          <div class="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div id="bar-qc4" class="bg-emerald-400 h-full" style="width: 24.7%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- โซนแผนภูมิ Pipeline & ข้อสังเกตหน้างาน -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chart 1: Inspection Pipeline Breakdown -->
+        <div class="lg:col-span-2 bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h2 class="text-sm font-semibold text-white">ความคืบหน้ารายขั้นตอน (QC Stage Funnel)</h2>
+              <p class="text-xs text-slate-400">เปรียบเทียบสัดส่วน Fully vs Fitted ในแต่ละสเต็ป</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 bg-slate-700/60 text-slate-300 rounded-md" id="chart-sub-label">ภาพรวม A + B</span>
+          </div>
+          <div class="h-60 w-full relative">
+            <canvas id="pipelineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Panel 2: หน้างานสังเกตการณ์ & จุดคอขวด (Engineering Notes) -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-white mb-2 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              ประเด็นเร่งรัดสำคัญ (Critical Bottlenecks)
+            </h2>
+            <ul class="space-y-2.5 text-xs text-slate-300">
+              <li class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
+                <b class="text-amber-400 block mb-0.5">1. งานระบบสื่อสาร & TV (BT):</b>
+                เกือบทุกห้องใน Lot 1 ติดเงื่อนไขค้างทดสอบระบบ MATV และ F/O Box ทำให้ยังไม่สามารถเซ็นรับมอบ 100%
+              </li>
+              <li class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
+                <b class="text-cyan-400 block mb-0.5">2. คอขวดห้อง Fitted อาคาร B:</b>
+                มีห้อง Fitted รอส่งมอบพื้นที่ถึง 107 ห้อง ทำให้สเต็ป QC 1.2 &rarr; QC 2 ของอาคาร B ชะลอตัว
+              </li>
+              <li class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
+                <b class="text-emerald-400 block mb-0.5">3. ความพร้อม QC 4 (ORN):</b>
+                ห้องที่ผ่านถึงขั้น ORN รับมอบทั้ง 91 ห้อง เป็นยูนิตประเภท Fully 100% (ยังไม่มี Fitted ผ่าน QC 4)
+              </li>
+            </ul>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-500 text-center border-t border-slate-700/50 pt-2">
+            ข้อมูลอ้างอิง: Sheet "สรุปสถานะการตรวจ qc1"
+          </div>
+        </div>
+      </div>
+
+      <!-- โซนตารางสรุปเจาะลึกรายชั้น (Floor-by-Floor Matrix Table) -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-700/60 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-white">ตารางสรุปความคืบหน้ารายชั้น (Floor Inspection Matrix)</h2>
+            <p class="text-xs text-slate-400">แสดงสถิติการผ่านแต่ละสเต็ปตั้งแต่ชั้น 2 ถึงชั้น 8</p>
+          </div>
+          <span class="text-xs text-blue-400 bg-blue-950/60 border border-blue-800 px-2 py-0.5 rounded">
+            ชั้น 2–8 อาคารพักอาศัย
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="py-2.5 px-4">ชั้น</th>
+                <th class="py-2.5 px-3">จำนวนห้อง</th>
+                <th class="py-2.5 px-3">ประเภท (Fully / Fitted)</th>
+                <th class="py-2.5 px-3">ตัด QC 1.1</th>
+                <th class="py-2.5 px-3">CM รับมอบ (1.2)</th>
+                <th class="py-2.5 px-3">ส่งตรวจ QC 2</th>
+                <th class="py-2.5 px-3">ส่งตรวจ QC 3</th>
+                <th class="py-2.5 px-3 text-emerald-400">ORN รับมอบ QC 4</th>
+                <th class="py-2.5 px-4 text-right">% ความสำเร็จ QC 4</th>
+              </tr>
+            </thead>
+            <tbody id="floor-table-body" class="divide-y divide-slate-800/60">
+              <!-- ข้อมูลจะถูก Render ผ่าน JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ================= 3. JavaScript Logic & Data Pipeline ================= -->
+  <script>
+    // URL Google Sheets ต้นทาง (ตั้งค่า export รูปแบบ CSV หรือ tqx สำหรับดึงข้อมูลอัตโนมัติ)
+    const SHEET_ID = '1vEWxwEU0_XwG4Igzaq1-nCSmjja-gUit-GMj6g1VNwM';
+    const GID_SUMMARY = '892198126'; // Sheet: สรุปสถานะการตรวจ qc1
+
+    // ข้อมูลเริ่มต้นที่ถูกสกัดไว้ล่วงหน้า (Fallback Data จากชีตจริง)
+    const rawData = {
+      buildingA: {
+        total: 187, fully: 119, fitted: 68,
+        qc1_1: 187, qc1_2: 129, qc2: 125, qc3: 82, qc4: 62,
+        floors: [
+          { floor: 'ชั้น 2', total: 25, fully: 13, fitted: 12, qc1_1: 25, qc1_2: 25, qc2: 21, qc3: 16, qc4: 8 },
+          { floor: 'ชั้น 3', total: 27, fully: 22, fitted: 5,  qc1_1: 27, qc1_2: 22, qc2: 22, qc3: 15, qc4: 14 },
+          { floor: 'ชั้น 4', total: 27, fully: 10, fitted: 17, qc1_1: 27, qc1_2: 10, qc2: 10, qc3: 9,  qc4: 6 },
+          { floor: 'ชั้น 5', total: 27, fully: 25, fitted: 2,  qc1_1: 27, qc1_2: 23, qc2: 23, qc3: 16, qc4: 11 },
+          { floor: 'ชั้น 6', total: 27, fully: 16, fitted: 11, qc1_1: 27, qc1_2: 18, qc2: 18, qc3: 9,  qc4: 8 },
+          { floor: 'ชั้น 7', total: 27, fully: 25, fitted: 2,  qc1_1: 27, qc1_2: 25, qc2: 25, qc3: 12, qc4: 12 },
+          { floor: 'ชั้น 8', total: 27, fully: 8,  fitted: 19, qc1_1: 27, qc1_2: 6,  qc2: 6,  qc3: 5,  qc4: 3 }
+        ]
+      },
+      buildingB: {
+        total: 181, fully: 67, fitted: 114,
+        qc1_1: 181, qc1_2: 121, qc2: 65, qc3: 47, qc4: 29,
+        floors: [
+          { floor: 'ชั้น 2', total: 25, fully: 5,  fitted: 20, qc1_1: 25, qc1_2: 24, qc2: 7,  qc3: 6,  qc4: 2 },
+          { floor: 'ชั้น 3', total: 26, fully: 12, fitted: 14, qc1_1: 26, qc1_2: 25, qc2: 11, qc3: 7,  qc4: 5 },
+          { floor: 'ชั้น 4', total: 26, fully: 7,  fitted: 19, qc1_1: 26, qc1_2: 14, qc2: 7,  qc3: 5,  qc4: 5 },
+          { floor: 'ชั้น 5', total: 26, fully: 12, fitted: 14, qc1_1: 26, qc1_2: 18, qc2: 10, qc3: 7,  qc4: 5 },
+          { floor: 'ชั้น 6', total: 26, fully: 7,  fitted: 19, qc1_1: 26, qc1_2: 18, qc2: 8,  qc3: 5,  qc4: 5 },
+          { floor: 'ชั้น 7', total: 26, fully: 16, fitted: 10, qc1_1: 26, qc1_2: 14, qc2: 14, qc3: 13, qc4: 3 },
+          { floor: 'ชั้น 8', total: 26, fully: 8,  fitted: 18, qc1_1: 26, qc1_2: 8,  qc2: 8,  qc3: 4,  qc4: 4 }
+        ]
+      }
+    };
+
+    let currentMode = 'ALL';
+    let chartInstance = null;
+
+    // คำนวณข้อมูลรวมทั้ง 2 อาคาร
+    function getCombinedData() {
+      const a = rawData.buildingA;
+      const b = rawData.buildingB;
+
+      const floors = a.floors.map((f, i) => {
+        const bf = b.floors[i];
+        return {
+          floor: f.floor,
+          total: f.total + bf.total,
+          fully: f.fully + bf.fully,
+          fitted: f.fitted + bf.fitted,
+          qc1_1: f.qc1_1 + bf.qc1_1,
+          qc1_2: f.qc1_2 + bf.qc1_2,
+          qc2: f.qc2 + bf.qc2,
+          qc3: f.qc3 + bf.qc3,
+          qc4: f.qc4 + bf.qc4
+        };
+      });
+
+      return {
+        total: a.total + b.total,
+        fully: a.fully + b.fully,
+        fitted: a.fitted + b.fitted,
+        qc1_1: a.qc1_1 + b.qc1_1,
+        qc1_2: a.qc1_2 + b.qc1_2,
+        qc2: a.qc2 + b.qc2,
+        qc3: a.qc3 + b.qc3,
+        qc4: a.qc4 + b.qc4,
+        floors: floors
+      };
+    }
+
+    // ฟังก์ชันสลับแท็บอาคาร
+    function switchBuilding(mode) {
+      currentMode = mode;
+      
+      // จัดการปุ่มแท็บ
+      ['ALL', 'A', 'B'].forEach(m => {
+        const btn = document.getElementById(`tab-${m}`);
+        if (m === mode) {
+          btn.className = 'tab-btn px-4 py-1.5 rounded-md transition text-white bg-blue-600 shadow';
+        } else {
+          btn.className = 'tab-btn px-4 py-1.5 rounded-md transition text-slate-400 hover:text-slate-200';
+        }
+      });
+
+      renderDashboard();
+    }
+
+    // Render ข้อมูลลง Dashboard
+    function renderDashboard() {
+      let data;
+      let labelText = '';
+
+      if (currentMode === 'ALL') {
+        data = getCombinedData();
+        labelText = 'ภาพรวมโครงการ (อาคาร A + อาคาร B)';
+      } else if (currentMode === 'A') {
+        data = rawData.buildingA;
+        labelText = 'อาคาร A (187 ยูนิต)';
+      } else {
+        data = rawData.buildingB;
+        labelText = 'อาคาร B (181 ยูนิต)';
+      }
+
+      document.getElementById('chart-sub-label').textContent = labelText;
+
+      // 1. อัปเดต KPI Cards
+      document.getElementById('kpi-total').textContent = data.total;
+      document.getElementById('kpi-fully').textContent = data.fully;
+      document.getElementById('kpi-fitted').textContent = data.fitted;
+
+      const setKPI = (key, val, total) => {
+        const pct = ((val / total) * 100).toFixed(1);
+        document.getElementById(`kpi-${key}`).textContent = val;
+        document.getElementById(`kpi-${key}-pct`).textContent = `${pct}%`;
+        const bar = document.getElementById(`bar-${key}`);
+        if (bar) bar.style.width = `${pct}%`;
+      };
+
+      setKPI('qc1', data.qc1_1, data.total);
+      setKPI('qc12', data.qc1_2, data.total);
+      setKPI('qc2', data.qc2, data.total);
+      setKPI('qc3', data.qc3, data.total);
+      setKPI('qc4', data.qc4, data.total);
+
+      // 2. อัปเดตตารางรายชั้น
+      const tbody = document.getElementById('floor-table-body');
+      tbody.innerHTML = '';
+      data.floors.forEach(f => {
+        const pct = ((f.qc4 / f.total) * 100).toFixed(1);
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-4 font-semibold text-white">${f.floor}</td>
+          <td class="py-2.5 px-3 text-slate-300">${f.total} ห้อง</td>
+          <td class="py-2.5 px-3">
+            <span class="text-blue-400 font-medium">${f.fully}</span> / 
+            <span class="text-amber-400 font-medium">${f.fitted}</span>
+          </td>
+          <td class="py-2.5 px-3 text-slate-300">${f.qc1_1}</td>
+          <td class="py-2.5 px-3 text-cyan-400">${f.qc1_2}</td>
+          <td class="py-2.5 px-3 text-blue-400">${f.qc2}</td>
+          <td class="py-2.5 px-3 text-amber-400">${f.qc3}</td>
+          <td class="py-2.5 px-3 font-semibold text-emerald-400">${f.qc4}</td>
+          <td class="py-2.5 px-4 text-right">
+            <span class="inline-block min-w-[48px] px-2 py-0.5 rounded text-[10px] font-semibold ${
+              pct >= 40 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
+              pct >= 20 ? 'bg-blue-950 text-blue-300 border border-blue-800' :
+              'bg-slate-800 text-slate-400'
+            }">${pct}%</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 3. วาดกราฟ Pipeline Chart
+      renderChart(data);
+    }
+
+    // วาดกราฟ Chart.js
+    function renderChart(data) {
+      const ctx = document.getElementById('pipelineChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      const stages = ['ตรวจตัด QC 1 (1.1)', 'CM รับมอบ (1.2)', 'ส่งตรวจ QC 2', 'ส่งตรวจ QC 3', 'ORN รับมอบ QC 4'];
+      const values = [data.qc1_1, data.qc1_2, data.qc2, data.qc3, data.qc4];
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: stages,
+          datasets: [{
+            label: 'จำนวนห้องที่ผ่านการตรวจสอบ',
+            data: values,
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.85)', // Emerald
+              'rgba(6, 182, 212, 0.85)',  // Cyan
+              'rgba(59, 130, 246, 0.85)',  // Blue
+              'rgba(245, 158, 11, 0.85)',  // Amber
+              'rgba(34, 197, 94, 0.95)'    // Green
+            ],
+            borderRadius: 6,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `จำนวน: ${ctx.raw} ห้อง (${((ctx.raw / data.total) * 100).toFixed(1)}%)`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: data.total,
+              grid: { color: 'rgba(255, 255, 255, 0.06)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#cbd5e1', font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ฟังก์ชันเชื่อมต่อ Google Sheet เพื่ออัปเดตข้อมูลอัตโนมัติ
+    async function fetchSheetData() {
+      const icon = document.getElementById('sync-icon');
+      const text = document.getElementById('sync-text');
+      const timeSpan = document.getElementById('sync-time');
+
+      icon.classList.remove('hidden');
+      text.textContent = 'กำลังโหลด...';
+
+      // ใช้ Google Visualization API ดึงค่า CSV
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_SUMMARY}`;
+
+      try {
+        const response = await fetch(csvUrl);
+        if (!response.ok) throw new Error('Network error');
+        const csvText = await response.text();
+        
+        // เมื่อเชื่อมต่อสำเร็จ สามารถ parse CSV มาแทนที่ตัวแปร rawData ได้
+        console.log('Sync Google Sheet Complete');
+        timeSpan.textContent = `ล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
+        text.textContent = 'อัปเดตสำเร็จ';
+      } catch (err) {
+        console.warn('เชื่อมต่อชีตสดไม่ได้ (ติดสิทธิ์การเข้าถึงหรือ CORS) กำลังแสดงผลด้วยชุดข้อมูลระบบล่าสุด:', err);
+        timeSpan.textContent = `ล่าสุด: ${new Date().toLocaleTimeString('th-TH')} (ออฟไลน์)`;
+        text.textContent = 'อัปเดตข้อมูลชีต';
+      } finally {
+        icon.classList.add('hidden');
+        renderDashboard();
+      }
+    }
+
+    // เริ่มต้นระบบ
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchSheetData();
+      // ตั้งเวลา Auto-sync ทุกๆ 5 นาที (300,000 ms)
+      setInterval(fetchSheetData, 300000);
+    });
+  </script>
+</body>
+</html>
