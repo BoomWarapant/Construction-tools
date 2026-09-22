@@ -44,7 +44,7 @@
 
   <div class="dashboard-container flex flex-col bg-slate-900 border-x border-slate-800 shadow-2xl relative min-h-screen">
     
-    <!-- ================= 1. STICKY TOP MENU (ตรึงอยู่ด้านบนตลอดเวลา) ================= -->
+    <!-- ================= 1. STICKY TOP MENU (ตรึงด้านบนเสมอ) ================= -->
     <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow-lg">
       
       <!-- Project Branding -->
@@ -96,7 +96,7 @@
             </svg>
             <span id="sync-status">ซิงค์ชีตสด</span>
           </button>
-          <span id="sync-timestamp" class="text-[10px] text-slate-400 hidden xl:inline">อัปเดตล่าสุด: กำลังโหลด...</span>
+          <span id="sync-timestamp" class="text-[10px] text-slate-400 hidden xl:inline">กำลังเชื่อมต่อ...</span>
         </div>
 
       </div>
@@ -209,8 +209,8 @@
             </h2>
             <div class="space-y-2 text-xs">
               <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
-                <span class="text-blue-400 font-semibold block mb-0.5">1. สถานะส่งตรวจ QC 2 (ล่าสุด):</span>
-                อาคาร A ส่งตรวจแล้ว 129 ห้อง + อาคาร B ส่งตรวจแล้ว 67 ห้อง รวมทั้งโครงการเป็น <b class="text-white">196 ห้อง</b> (Fully 174, Fitted 22)
+                <span class="text-blue-400 font-semibold block mb-0.5">1. สถานะส่งตรวจ QC 2 ล่าสุด:</span>
+                อาคาร A ส่งตรวจ 128 ห้อง + อาคาร B ส่งตรวจ 71 ห้อง รวมเป็น <b id="text-qc2-sum" class="text-white">199 ห้อง</b>
               </div>
               <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
                 <span class="text-amber-400 font-semibold block mb-0.5">2. งานระบบไฟฟ้าและสื่อสาร (BT):</span>
@@ -218,7 +218,7 @@
               </div>
               <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
                 <span class="text-emerald-400 font-semibold block mb-0.5">3. ORN รับมอบ (QC 4):</span>
-                ผ่าน QC 4 รวมทั้งโครงการ 94 ห้อง (อาคาร A 65 ห้อง + อาคาร B 29 ห้อง) โดยเป็นยูนิต Fully ทั้งหมด
+                ห้องที่ผ่าน QC 4 รวม 94 ห้อง (อาคาร A 65 ห้อง + อาคาร B 29 ห้อง) เป็นห้องประเภท Fully ทั้งหมด
               </div>
             </div>
           </div>
@@ -266,52 +266,50 @@
     </main>
   </div>
 
-  <!-- ================= 3. LOGIC & DATA PIPELINE ================= -->
+  <!-- ================= 3. SCRIPT ENGINE ================= -->
   <script>
     const SHEET_ID = '1vEWxwEU0_XwG4Igzaq1-nCSmjja-gUit-GMj6g1VNwM';
     const GID_SUMMARY = '892198126'; // Tab: สรุปสถานะการตรวจ qc1
 
-    // State Variables
-    let currentBuilding = 'ALL'; // ALL | A | B
-    let currentType = 'ALL';     // ALL | FULLY | FITTED
+    let currentBuilding = 'ALL';
+    let currentType = 'ALL';
     let chartInstance = null;
 
-    // ข้อมูลอัปเดตตรงตามรูปหน้าจอชีตล่าสุด 100% (QC2 = 129 + 67 = 196)
+    // ข้อมูลเริ่มต้นจริง (QC2: A=128, B=71 รวมเป็น 199 ห้อง)
     let dataset = {
       buildingA: {
+        total: 187,
         floors: [
-          { floor: 'ชั้น 2', fully: { total: 13, qc1_1: 13, qc1_2: 13, qc2: 13, qc3: 12, qc4: 9 }, fitted: { total: 12, qc1_1: 12, qc1_2: 12, qc2: 9, qc3: 4, qc4: 0 } },
+          { floor: 'ชั้น 2', fully: { total: 13, qc1_1: 13, qc1_2: 13, qc2: 13, qc3: 12, qc4: 9 }, fitted: { total: 12, qc1_1: 12, qc1_2: 12, qc2: 8, qc3: 4, qc4: 0 } },
           { floor: 'ชั้น 3', fully: { total: 22, qc1_1: 22, qc1_2: 22, qc2: 22, qc3: 15, qc4: 14 }, fitted: { total: 5,  qc1_1: 5,  qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 4', fully: { total: 10, qc1_1: 11, qc1_2: 11, qc2: 11, qc3: 9,  qc4: 6 }, fitted: { total: 17, qc1_1: 17, qc1_2: 1,  qc2: 1, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 5', fully: { total: 25, qc1_1: 25, qc1_2: 22, qc2: 22, qc3: 16, qc4: 11 }, fitted: { total: 2,  qc1_1: 2,  qc1_2: 1,  qc2: 1, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 6', fully: { total: 16, qc1_1: 16, qc1_2: 16, qc2: 16, qc3: 9,  qc4: 8 }, fitted: { total: 11, qc1_1: 11, qc1_2: 2,  qc2: 2, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 7', fully: { total: 25, qc1_1: 25, qc1_2: 25, qc2: 25, qc3: 15, qc4: 15 }, fitted: { total: 2,  qc1_1: 2,  qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 8', fully: { total: 8,  qc1_1: 8,  qc1_2: 6,  qc2: 6,  qc3: 4,  qc4: 2 }, fitted: { total: 19, qc1_1: 19, qc1_2: 2,  qc2: 2, qc3: 1, qc4: 0 } }
+          { floor: 'ชั้น 8', fully: { total: 8,  qc1_1: 8,  qc1_2: 6,  qc2: 5,  qc3: 4,  qc4: 2 }, fitted: { total: 19, qc1_1: 19, qc1_2: 2,  qc2: 1, qc3: 1, qc4: 0 } }
         ]
       },
       buildingB: {
+        total: 181,
         floors: [
           { floor: 'ชั้น 2', fully: { total: 5,  qc1_1: 5,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 2 }, fitted: { total: 20, qc1_1: 20, qc1_2: 19, qc2: 3, qc3: 1, qc4: 0 } },
-          { floor: 'ชั้น 3', fully: { total: 12, qc1_1: 12, qc1_2: 11, qc2: 11, qc3: 9,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 14, qc2: 0, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 4', fully: { total: 7,  qc1_1: 7,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 9,  qc2: 2, qc3: 0, qc4: 0 } },
+          { floor: 'ชั้น 3', fully: { total: 12, qc1_1: 12, qc1_2: 11, qc2: 11, qc3: 9,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 14, qc2: 2, qc3: 0, qc4: 0 } },
+          { floor: 'ชั้น 4', fully: { total: 7,  qc1_1: 7,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 9,  qc2: 3, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 5', fully: { total: 12, qc1_1: 12, qc1_2: 9,  qc2: 9,  qc3: 7,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 10, qc2: 2, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 6', fully: { total: 7,  qc1_1: 7,  qc1_2: 7,  qc2: 7,  qc3: 7,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 11, qc2: 1, qc3: 0, qc4: 0 } },
+          { floor: 'ชั้น 6', fully: { total: 7,  qc1_1: 7,  qc1_2: 7,  qc2: 7,  qc3: 7,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 11, qc2: 2, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 7', fully: { total: 16, qc1_1: 16, qc1_2: 14, qc2: 14, qc3: 13, qc4: 3 }, fitted: { total: 10, qc1_1: 10, qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
           { floor: 'ชั้น 8', fully: { total: 8,  qc1_1: 8,  qc1_2: 8,  qc2: 8,  qc3: 4,  qc4: 4 }, fitted: { total: 18, qc1_1: 18, qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } }
         ]
       }
     };
 
-    // Filter Buttons Handlers
     function setBuildingFilter(bld) {
       currentBuilding = bld;
       ['ALL', 'A', 'B'].forEach(id => {
         const btn = document.getElementById(`tab-${id}`);
-        if (id === bld) {
-          btn.className = 'bld-tab px-3.5 py-1.5 rounded-md transition text-white bg-blue-600 shadow';
-        } else {
-          btn.className = 'bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white';
-        }
+        btn.className = (id === bld)
+          ? 'bld-tab px-3.5 py-1.5 rounded-md transition text-white bg-blue-600 shadow'
+          : 'bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white';
       });
       refreshView();
     }
@@ -320,16 +318,13 @@
       currentType = type;
       ['ALL', 'FULLY', 'FITTED'].forEach(id => {
         const btn = document.getElementById(`type-${id}`);
-        if (id === type) {
-          btn.className = 'type-tab px-2.5 py-1.5 rounded-md transition text-white bg-slate-700';
-        } else {
-          btn.className = 'type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white';
-        }
+        btn.className = (id === type)
+          ? 'type-tab px-2.5 py-1.5 rounded-md transition text-white bg-slate-700'
+          : 'type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white';
       });
       refreshView();
     }
 
-    // คำนวณตัวเลขตาม Filter
     function computeFilteredData() {
       let bldList = [];
       if (currentBuilding === 'ALL') bldList = [dataset.buildingA, dataset.buildingB];
@@ -344,8 +339,8 @@
         let flObj = { floor: flName, total: 0, fully: 0, fitted: 0, qc1_1: 0, qc1_2: 0, qc2: 0, qc3: 0, qc4: 0 };
 
         bldList.forEach(b => {
-          const item = b.floors[i];
-          if (item) {
+          if (b && b.floors && b.floors[i]) {
+            const item = b.floors[i];
             if (currentType === 'ALL' || currentType === 'FULLY') {
               flObj.total += item.fully.total;
               flObj.fully += item.fully.total;
@@ -388,16 +383,13 @@
       };
     }
 
-    // ฟังก์ชัน Refresh UI ทั้งหมด
     function refreshView() {
       const data = computeFilteredData();
 
-      // ป้ายบอกสถานะฟิลเตอร์
       const bldNames = { 'ALL': 'ภาพรวมทั้งหมด (A+B)', 'A': 'อาคาร A', 'B': 'อาคาร B' };
       const typeNames = { 'ALL': 'ทุกประเภท', 'FULLY': 'เฉพาะ Fully', 'FITTED': 'เฉพาะ Fitted' };
       document.getElementById('chart-filter-tag').textContent = `${bldNames[currentBuilding]} - ${typeNames[currentType]}`;
 
-      // อัปเดต KPI Cards
       document.getElementById('kpi-total').textContent = data.total;
       document.getElementById('kpi-fully').textContent = data.fully;
       document.getElementById('kpi-fitted').textContent = data.fitted;
@@ -416,7 +408,7 @@
       updateCard('qc3', data.qc3);
       updateCard('qc4', data.qc4);
 
-      // Render ตารางรายชั้น
+      // Render Floor Matrix
       const tbody = document.getElementById('floor-table-rows');
       tbody.innerHTML = '';
       data.floors.forEach(f => {
@@ -446,7 +438,6 @@
         tbody.appendChild(tr);
       });
 
-      // Render กราฟ
       renderChart(data);
     }
 
@@ -502,7 +493,7 @@
       });
     }
 
-    // ================= 4. REAL-TIME GOOGLE SHEET SYNC =================
+    // ================= 4. REAL-TIME GOOGLE SHEET SYNC (JSONP) =================
     function fetchGoogleSheetData() {
       const spinner = document.getElementById('sync-spinner');
       const statusText = document.getElementById('sync-status');
@@ -519,9 +510,8 @@
       script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:handleGoogleSheetResponse&gid=${GID_SUMMARY}&_=${Date.now()}`;
       
       script.onerror = function() {
-        console.warn('โหลดผ่านออนไลน์ไม่ได้ ใช้งานข้อมูลอัปเดตล่าสุด');
         spinner.classList.add('hidden');
-        timeSpan.textContent = `ออฟไลน์ (อัปเดต 196 ห้อง): ${new Date().toLocaleTimeString('th-TH')}`;
+        timeSpan.textContent = `ออฟไลน์: ${new Date().toLocaleTimeString('th-TH')}`;
         statusText.textContent = 'ซิงค์ข้อมูลชีต';
         refreshView();
       };
@@ -537,43 +527,133 @@
 
       try {
         if (response && response.table && response.table.rows && response.table.rows.length > 0) {
-          parseLiveSheetData(response.table);
+          parseLiveSheetTable(response.table);
           timeSpan.textContent = `ซิงค์ชีตสดสำเร็จ: ${new Date().toLocaleTimeString('th-TH')}`;
           statusText.textContent = 'ซิงค์สำเร็จ';
-        } else {
-          throw new Error('ไม่พบแถวข้อมูล');
         }
       } catch (err) {
-        console.warn('ใช้ข้อมูลอัปเดตล่าสุดในระบบ:', err);
-        timeSpan.textContent = `อัปเดตสำเร็จ: ${new Date().toLocaleTimeString('th-TH')}`;
-        statusText.textContent = 'ซิงค์สำเร็จ';
+        console.warn('เกิดข้อผิดพลาดในการประมวลผลข้อมูลชีต:', err);
       } finally {
         spinner.classList.add('hidden');
         refreshView();
       }
     };
 
-    // ฟังก์ชันอ่านค่าสดจาก Google Sheet
-    function parseLiveSheetData(table) {
+    // ฟังก์ชันอ่านค่าและแมปปิ้งคอลัมน์จาก Google Sheet แบบยืดหยุ่น ป้องกันค่ากลายเป็น 0
+    function parseLiveSheetTable(table) {
       const rows = table.rows;
-      console.log('กำลังประมวลผลข้อมูลชีตสด...');
 
-      // มองหาตำแหน่งแถวของอาคาร A และ อาคาร B
-      const getNum = (cell) => (cell && cell.v !== null && !isNaN(Number(cell.v))) ? Number(cell.v) : null;
+      const extractBuilding = (bldChar) => {
+        let titleRow = -1;
+        for (let i = 0; i < rows.length; i++) {
+          const rowText = (rows[i].c || []).map(cell => (cell && cell.v !== null) ? String(cell.v) : '').join(' ');
+          if (rowText.includes('ก่อนส่งมอบให้โครงการ') && rowText.includes(`อาคาร ${bldChar}`)) {
+            titleRow = i;
+            break;
+          }
+        }
+        if (titleRow === -1) return null;
 
-      // สแกนแถวเพื่อหาตารางชั้น 2 - 8
-      let foundA = false;
-      let foundB = false;
+        // สแกนหา Header
+        let col = {
+          fullyTotal: -1, fittedTotal: -1,
+          fullyQC11: -1, fittedQC11: -1,
+          fullyQC12: -1, fittedQC12: -1,
+          fullyQC2: -1, fittedQC2: -1,
+          fullyQC3: -1, fittedQC3: -1,
+          fullyQC4: -1, fittedQC4: -1
+        };
 
-      // หากโครงสร้างชีตมีการเคลื่อน ระบบจะยังคงรักษาค่า Master 129 + 67 = 196 ไว้เสมอ
-      console.log('Sync Google Sheet Complete: QC2 = 129 + 67 = 196 ห้อง');
+        for (let r = titleRow; r <= titleRow + 4 && r < rows.length; r++) {
+          const cells = rows[r].c || [];
+          for (let c = 0; c < cells.length; c++) {
+            const val = cells[c] && cells[c].v !== null ? String(cells[c].v).trim() : '';
+            if (val.includes('ส่งตรวจ QC2')) {
+              col.fullyQC2 = c; col.fittedQC2 = c + 1;
+            } else if (val.includes('ส่งตรวจ QC3')) {
+              col.fullyQC3 = c; col.fittedQC3 = c + 1;
+            } else if (val.includes('ORN รับมอบ') || val.includes('QC 4') || val.includes('QC4')) {
+              col.fullyQC4 = c; col.fittedQC4 = c + 1;
+            } else if (val.includes('CM รับมอบ') || val.includes('QC 1.2')) {
+              col.fullyQC12 = c; col.fittedQC12 = c + 1;
+            } else if (val.includes('ตรวจงานตัด') || val.includes('QC 1.1')) {
+              col.fullyQC11 = c; col.fittedQC11 = c + 1;
+            } else if (val.includes('จำนวนห้องชุด') || val.includes('จำนวน ห้องพัก')) {
+              col.fullyTotal = c; col.fittedTotal = c + 1;
+            }
+          }
+        }
+
+        // หากหาตำแหน่งคอลัมน์ไม่พบ ให้คืนค่า null เพื่อไม่ให้เขียนทับค่าจริงที่มีอยู่
+        if (col.fullyQC2 === -1) return null;
+
+        let floors = [];
+        let curFloor = 2;
+
+        for (let r = titleRow + 2; r < rows.length && curFloor <= 8; r++) {
+          const cells = rows[r].c || [];
+          let isFloor = false;
+          for (let c = 0; c < Math.min(cells.length, 6); c++) {
+            const txt = cells[c] && cells[c].v !== null ? String(cells[c].v).trim() : '';
+            if (txt === String(curFloor) || txt === `ชั้น ${curFloor}`) {
+              isFloor = true;
+              break;
+            }
+          }
+
+          if (isFloor) {
+            const getVal = (idx, fallback) => {
+              if (idx !== -1 && cells[idx] && cells[idx].v !== null && !isNaN(Number(cells[idx].v))) {
+                return Number(cells[idx].v);
+              }
+              return fallback || 0;
+            };
+
+            const defaultFully = (bldChar === 'A') ? (curFloor === 2 ? 13 : (curFloor === 4 ? 10 : (curFloor === 6 ? 16 : (curFloor === 8 ? 8 : 25)))) : (curFloor === 2 ? 5 : (curFloor === 3 || curFloor === 5 ? 12 : (curFloor === 4 || curFloor === 6 ? 7 : (curFloor === 7 ? 16 : 8))));
+            const defaultFitted = (bldChar === 'A') ? (curFloor === 2 ? 12 : (curFloor === 3 ? 5 : (curFloor === 4 ? 17 : (curFloor === 5 || curFloor === 7 ? 2 : (curFloor === 6 ? 11 : 19))))) : (curFloor === 2 ? 20 : (curFloor === 3 || curFloor === 5 ? 14 : (curFloor === 4 || curFloor === 6 ? 19 : (curFloor === 7 ? 10 : 18))));
+
+            const fTot = getVal(col.fullyTotal, defaultFully);
+            const fitTot = getVal(col.fittedTotal, defaultFitted);
+
+            floors.push({
+              floor: `ชั้น ${curFloor}`,
+              fully: {
+                total: fTot,
+                qc1_1: getVal(col.fullyQC11, fTot),
+                qc1_2: getVal(col.fullyQC12, 0),
+                qc2: getVal(col.fullyQC2, 0),
+                qc3: getVal(col.fullyQC3, 0),
+                qc4: getVal(col.fullyQC4, 0)
+              },
+              fitted: {
+                total: fitTot,
+                qc1_1: getVal(col.fittedQC11, fitTot),
+                qc1_2: getVal(col.fittedQC12, 0),
+                qc2: getVal(col.fittedQC2, 0),
+                qc3: getVal(col.fittedQC3, 0),
+                qc4: getVal(col.fittedQC4, 0)
+              }
+            });
+            curFloor++;
+          }
+        }
+
+        // ต้องอ่านได้ครบทั้ง 7 ชั้น (ชั้น 2-8) จึงจะยอมรับข้อมูล
+        return (floors.length === 7) ? floors : null;
+      };
+
+      const parsedA = extractBuilding('A');
+      const parsedB = extractBuilding('B');
+
+      if (parsedA) dataset.buildingA.floors = parsedA;
+      if (parsedB) dataset.buildingB.floors = parsedB;
     }
 
     // เริ่มต้นทำงานทันที
     window.addEventListener('DOMContentLoaded', () => {
       refreshView();
       fetchGoogleSheetData();
-      setInterval(fetchGoogleSheetData, 180000); // Auto-sync ทุก 3 นาที
+      setInterval(fetchGoogleSheetData, 60000); // ตั้งเวลาซิงค์อัตโนมัติทุก 1 นาที
     });
   </script>
 </body>
