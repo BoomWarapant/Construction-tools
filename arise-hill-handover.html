@@ -24,29 +24,36 @@
       max-width: 1920px;
       margin: 0 auto;
     }
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* ไฮไลต์ตัวเลขที่เปลี่ยนแปลงหลังซิงค์สำเร็จ */
+    @keyframes valueFlash {
+      0%   { background-color: rgba(250, 204, 21, 0.45); }
+      100% { background-color: rgba(250, 204, 21, 0); }
     }
-    ::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
+    .value-changed {
+      animation: valueFlash 2.4s ease-out 1;
       border-radius: 4px;
+      padding: 0 3px;
+      margin: 0 -3px;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
+    @keyframes rowFlash {
+      0%   { background-color: rgba(250, 204, 21, 0.16); }
+      100% { background-color: rgba(250, 204, 21, 0); }
     }
+    .row-changed { animation: rowFlash 2.4s ease-out 1; }
   </style>
 </head>
 <body class="flex justify-center bg-slate-950">
 
   <div class="dashboard-container flex flex-col bg-slate-900 border-x border-slate-800 shadow-2xl relative min-h-screen">
-    
-    <!-- ================= 1. STICKY TOP MENU (ตรึงด้านบนเสมอ) ================= -->
+
+    <!-- ================= 1. STICKY TOP MENU ================= -->
     <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow-lg">
-      
+
       <!-- Project Branding -->
       <div class="flex items-center gap-3">
         <div class="w-2.5 h-9 bg-blue-500 rounded-sm"></div>
@@ -61,53 +68,61 @@
 
       <!-- Controls & Filters -->
       <div class="flex flex-wrap items-center gap-3">
-        
+
         <!-- Filter อาคาร -->
         <div class="inline-flex p-1 bg-slate-800/90 border border-slate-700 rounded-lg text-xs font-medium">
-          <button onclick="setBuildingFilter('ALL')" id="tab-ALL" class="bld-tab px-3.5 py-1.5 rounded-md transition text-white bg-blue-600 shadow">
-            ภาพรวมทั้งโครงการ
-          </button>
-          <button onclick="setBuildingFilter('A')" id="tab-A" class="bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">
-            อาคาร A
-          </button>
-          <button onclick="setBuildingFilter('B')" id="tab-B" class="bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">
-            อาคาร B
-          </button>
+          <button onclick="setBuildingFilter('ALL')" id="tab-ALL" class="bld-tab px-3.5 py-1.5 rounded-md transition text-white bg-blue-600 shadow">ภาพรวมทั้งโครงการ</button>
+          <button onclick="setBuildingFilter('A')" id="tab-A" class="bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">อาคาร A</button>
+          <button onclick="setBuildingFilter('B')" id="tab-B" class="bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">อาคาร B</button>
         </div>
 
         <!-- Filter ประเภทห้องชุด -->
         <div class="inline-flex p-1 bg-slate-800/90 border border-slate-700 rounded-lg text-xs font-medium">
-          <button onclick="setTypeFilter('ALL')" id="type-ALL" class="type-tab px-2.5 py-1.5 rounded-md transition text-white bg-slate-700">
-            ทุกประเภท
-          </button>
-          <button onclick="setTypeFilter('FULLY')" id="type-FULLY" class="type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">
-            Fully
-          </button>
-          <button onclick="setTypeFilter('FITTED')" id="type-FITTED" class="type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">
-            Fitted
-          </button>
+          <button onclick="setTypeFilter('ALL')" id="type-ALL" class="type-tab px-2.5 py-1.5 rounded-md transition text-white bg-slate-700">ทุกประเภท</button>
+          <button onclick="setTypeFilter('FULLY')" id="type-FULLY" class="type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">Fully</button>
+          <button onclick="setTypeFilter('FITTED')" id="type-FITTED" class="type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white">Fitted</button>
         </div>
 
         <!-- Sync Button & Status Indicator -->
         <div class="flex items-center gap-2 border-l border-slate-700 pl-3">
-          <button onclick="fetchGoogleSheetData()" id="sync-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg text-xs font-medium transition active:scale-95">
+          <button onclick="syncNow('manual')" id="sync-btn"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg text-xs font-medium transition active:scale-95">
             <svg id="sync-spinner" class="w-3.5 h-3.5 animate-spin hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             <span id="sync-status">ซิงค์ชีตสด</span>
           </button>
-          <span id="sync-timestamp" class="text-[10px] text-slate-400 hidden xl:inline">กำลังเชื่อมต่อ...</span>
+
+          <!-- Auto sync toggle -->
+          <button onclick="toggleAutoSync()" id="auto-btn"
+                  class="px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition bg-emerald-600/15 text-emerald-300 border-emerald-500/30">
+            อัตโนมัติ: เปิด
+          </button>
+
+          <button onclick="dumpDiagnostics()" id="diag-btn"
+                  class="px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition bg-slate-800 text-slate-300 border-slate-700 hover:text-white">
+            วินิจฉัย
+          </button>
+
+          <div class="hidden xl:flex flex-col leading-tight">
+            <span id="sync-pill" class="text-[10px] px-2 py-0.5 rounded-full border bg-slate-800 text-slate-400 border-slate-700 text-center">ยังไม่ซิงค์</span>
+            <span id="sync-timestamp" class="text-[10px] text-slate-500 mt-0.5">กำลังเชื่อมต่อ...</span>
+          </div>
         </div>
 
       </div>
     </header>
+
+    <!-- แถบเตือนสถานะข้อมูล -->
+    <div id="data-banner" class="px-6 py-2 text-[11px] border-b border-amber-700/40 bg-amber-950/40 text-amber-300 flex items-center gap-2">
+      <span id="data-banner-text">ยังไม่ได้ซิงค์กับ Google Sheet — ตัวเลขที่แสดงเป็นชุดข้อมูลสำรองที่ฝังไว้ในไฟล์ ยังไม่ใช่ข้อมูลสด</span>
+    </div>
 
     <!-- ================= 2. DASHBOARD BODY ================= -->
     <main class="flex-1 p-5 md:p-6 space-y-6 overflow-y-auto">
 
       <!-- Executive KPI Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <!-- Total Units -->
         <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl shadow-sm">
           <p class="text-[11px] font-medium text-slate-400">จำนวนห้องชุด</p>
           <div class="flex items-baseline justify-between mt-1">
@@ -120,7 +135,6 @@
           </div>
         </div>
 
-        <!-- QC 1.1 -->
         <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl shadow-sm">
           <p class="text-[11px] font-medium text-slate-400">ตรวจตัด QC 1 (1.1)</p>
           <div class="flex items-baseline justify-between mt-1">
@@ -132,7 +146,6 @@
           </div>
         </div>
 
-        <!-- QC 1.2 -->
         <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl shadow-sm">
           <p class="text-[11px] font-medium text-slate-400">CM รับมอบ (1.2)</p>
           <div class="flex items-baseline justify-between mt-1">
@@ -144,7 +157,6 @@
           </div>
         </div>
 
-        <!-- QC 2 -->
         <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl shadow-sm">
           <p class="text-[11px] font-medium text-slate-400">ส่งตรวจ QC 2</p>
           <div class="flex items-baseline justify-between mt-1">
@@ -156,7 +168,6 @@
           </div>
         </div>
 
-        <!-- QC 3 -->
         <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-xl shadow-sm">
           <p class="text-[11px] font-medium text-slate-400">ส่งตรวจ QC 3</p>
           <div class="flex items-baseline justify-between mt-1">
@@ -168,7 +179,6 @@
           </div>
         </div>
 
-        <!-- QC 4 (ORN Handover) -->
         <div class="bg-slate-800/60 border border-emerald-500/40 p-3.5 rounded-xl shadow-sm bg-gradient-to-b from-emerald-950/30 to-slate-800/60">
           <p class="text-[11px] font-medium text-emerald-300">ORN รับมอบ QC 4</p>
           <div class="flex items-baseline justify-between mt-1">
@@ -183,8 +193,7 @@
 
       <!-- Charts & Bottlenecks -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Pipeline Funnel Chart -->
+
         <div class="lg:col-span-2 bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between">
           <div class="flex items-center justify-between mb-2">
             <div>
@@ -193,12 +202,12 @@
             </div>
             <span id="chart-filter-tag" class="text-xs px-2.5 py-1 bg-slate-700/60 text-slate-300 rounded-md font-medium">ภาพรวมทั้งหมด</span>
           </div>
-          <div class="h-64 w-full relative">
+          <div id="chart-area" class="h-64 w-full relative">
             <canvas id="pipelineChart"></canvas>
           </div>
         </div>
 
-        <!-- Bottlenecks & Critical Insights -->
+        <!-- Bottlenecks & Critical Insights (คำนวณจากข้อมูลสดทั้งหมด) -->
         <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between">
           <div>
             <h2 class="text-sm font-semibold text-white mb-2 flex items-center gap-1.5">
@@ -207,23 +216,13 @@
               </svg>
               ข้อสังเกตและประเด็นหน้างานสำคัญ
             </h2>
-            <div class="space-y-2 text-xs">
-              <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
-                <span class="text-blue-400 font-semibold block mb-0.5">1. สถานะส่งตรวจ QC 2 ล่าสุด:</span>
-                อาคาร A ส่งตรวจ 128 ห้อง + อาคาร B ส่งตรวจ 71 ห้อง รวมเป็น <b id="text-qc2-sum" class="text-white">199 ห้อง</b>
-              </div>
-              <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
-                <span class="text-amber-400 font-semibold block mb-0.5">2. งานระบบไฟฟ้าและสื่อสาร (BT):</span>
-                ห้องส่วนใหญ่ใน Lot 1 โดนโน้ตติดเงื่อนไขค้างทดสอบระบบ MATV, เต้ารับคอมพิวเตอร์ และกล่อง F/O Box
-              </div>
-              <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
-                <span class="text-emerald-400 font-semibold block mb-0.5">3. ORN รับมอบ (QC 4):</span>
-                ห้องที่ผ่าน QC 4 รวม 94 ห้อง (อาคาร A 65 ห้อง + อาคาร B 29 ห้อง) เป็นห้องประเภท Fully ทั้งหมด
-              </div>
+            <div id="insight-box" class="space-y-2 text-xs">
+              <!-- Dynamically populated -->
             </div>
           </div>
           <div class="text-[10px] text-slate-500 text-center border-t border-slate-700/40 pt-2.5 mt-2">
-            แหล่งข้อมูล: Google Sheet "สถานะการตรวจสอบคุณภาพงาน QC 1 ห้องพัก"
+            แหล่งข้อมูล: Google Sheet แท็บ &ldquo;สรุปสถานะการตรวจ qc1&rdquo; &middot;
+            <a id="sheet-link" href="#" target="_blank" rel="noopener" class="text-blue-400 hover:underline">เปิดชีตต้นทาง</a>
           </div>
         </div>
 
@@ -234,10 +233,10 @@
         <div class="px-4 py-3 border-b border-slate-700/60 flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-white">ตารางสรุปความคืบหน้ารายชั้น (Floor Inspection Matrix)</h2>
-            <p class="text-xs text-slate-400">เปรียบเทียบจำนวนห้องและสถิติผ่านการตรวจในแต่ละชั้น (ชั้น 2–8)</p>
+            <p class="text-xs text-slate-400">เปรียบเทียบจำนวนห้องและสถิติผ่านการตรวจในแต่ละชั้น</p>
           </div>
-          <span class="text-xs text-blue-400 bg-blue-950/60 border border-blue-800 px-2 py-0.5 rounded">
-            ชั้น 2–8 อาคารชุดพักอาศัย
+          <span id="floor-range-tag" class="text-xs text-blue-400 bg-blue-950/60 border border-blue-800 px-2 py-0.5 rounded">
+            อาคารชุดพักอาศัย
           </span>
         </div>
 
@@ -259,8 +258,18 @@
             <tbody id="floor-table-rows" class="divide-y divide-slate-800/50">
               <!-- Dynamically populated via JavaScript -->
             </tbody>
+            <tfoot id="floor-table-foot" class="bg-slate-950/60 border-t border-slate-700/60 font-semibold text-slate-200"></tfoot>
           </table>
         </div>
+      </div>
+
+      <!-- Sync log -->
+      <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs font-semibold text-slate-300">บันทึกการซิงค์ข้อมูล (Sync Log)</h2>
+          <button onclick="copyLog()" class="text-[10px] px-2 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 hover:text-white">คัดลอกบันทึก</button>
+        </div>
+        <div id="sync-log" class="text-[11px] text-slate-400 space-y-1 max-h-60 overflow-y-auto font-mono"></div>
       </div>
 
     </main>
@@ -268,119 +277,772 @@
 
   <!-- ================= 3. SCRIPT ENGINE ================= -->
   <script>
-    const SHEET_ID = '1vEWxwEU0_XwG4Igzaq1-nCSmjja-gUit-GMj6g1VNwM';
-    const GID_SUMMARY = '892198126'; // Tab: สรุปสถานะการตรวจ qc1
+  (function () {
+    'use strict';
 
+    /* =========================================================
+       CONFIG — แก้ค่าตรงนี้จุดเดียวหากเปลี่ยนชีต/แท็บ/ความถี่ซิงค์
+       ========================================================= */
+    const CONFIG = {
+      SHEET_ID: '1vEWxwEU0_XwG4Igzaq1-nCSmjja-gUit-GMj6g1VNwM',
+      GID: '892198126',                 // แท็บ: สรุปสถานะการตรวจ qc1
+      AUTO_SYNC_SEC: 60,                // ความถี่ซิงค์อัตโนมัติ (วินาที)
+      REQUEST_TIMEOUT_MS: 20000,        // หมดเวลารอชีตตอบกลับ
+      STALE_AFTER_SEC: 300,             // เกินกี่วินาทีถือว่าข้อมูลค้าง
+      SECTION_KEY: 'ก่อนส่งมอบให้โครงการ' // ข้อความในหัวบล็อกของแต่ละอาคาร
+    };
+
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/edit#gid=${CONFIG.GID}`;
+
+    /* =========================================================
+       STATE
+       ========================================================= */
     let currentBuilding = 'ALL';
     let currentType = 'ALL';
     let chartInstance = null;
 
-    // ข้อมูลเริ่มต้นจริง (QC2: A=128, B=71 รวมเป็น 199 ห้อง)
-    let dataset = {
-      buildingA: {
-        total: 187,
-        floors: [
-          { floor: 'ชั้น 2', fully: { total: 13, qc1_1: 13, qc1_2: 13, qc2: 13, qc3: 12, qc4: 9 }, fitted: { total: 12, qc1_1: 12, qc1_2: 12, qc2: 8, qc3: 4, qc4: 0 } },
-          { floor: 'ชั้น 3', fully: { total: 22, qc1_1: 22, qc1_2: 22, qc2: 22, qc3: 15, qc4: 14 }, fitted: { total: 5,  qc1_1: 5,  qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 4', fully: { total: 10, qc1_1: 11, qc1_2: 11, qc2: 11, qc3: 9,  qc4: 6 }, fitted: { total: 17, qc1_1: 17, qc1_2: 1,  qc2: 1, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 5', fully: { total: 25, qc1_1: 25, qc1_2: 22, qc2: 22, qc3: 16, qc4: 11 }, fitted: { total: 2,  qc1_1: 2,  qc1_2: 1,  qc2: 1, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 6', fully: { total: 16, qc1_1: 16, qc1_2: 16, qc2: 16, qc3: 9,  qc4: 8 }, fitted: { total: 11, qc1_1: 11, qc1_2: 2,  qc2: 2, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 7', fully: { total: 25, qc1_1: 25, qc1_2: 25, qc2: 25, qc3: 15, qc4: 15 }, fitted: { total: 2,  qc1_1: 2,  qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 8', fully: { total: 8,  qc1_1: 8,  qc1_2: 6,  qc2: 5,  qc3: 4,  qc4: 2 }, fitted: { total: 19, qc1_1: 19, qc1_2: 2,  qc2: 1, qc3: 1, qc4: 0 } }
-        ]
-      },
-      buildingB: {
-        total: 181,
-        floors: [
-          { floor: 'ชั้น 2', fully: { total: 5,  qc1_1: 5,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 2 }, fitted: { total: 20, qc1_1: 20, qc1_2: 19, qc2: 3, qc3: 1, qc4: 0 } },
-          { floor: 'ชั้น 3', fully: { total: 12, qc1_1: 12, qc1_2: 11, qc2: 11, qc3: 9,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 14, qc2: 2, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 4', fully: { total: 7,  qc1_1: 7,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 9,  qc2: 3, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 5', fully: { total: 12, qc1_1: 12, qc1_2: 9,  qc2: 9,  qc3: 7,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 10, qc2: 2, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 6', fully: { total: 7,  qc1_1: 7,  qc1_2: 7,  qc2: 7,  qc3: 7,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 11, qc2: 2, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 7', fully: { total: 16, qc1_1: 16, qc1_2: 14, qc2: 14, qc3: 13, qc4: 3 }, fitted: { total: 10, qc1_1: 10, qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
-          { floor: 'ชั้น 8', fully: { total: 8,  qc1_1: 8,  qc1_2: 8,  qc2: 8,  qc3: 4,  qc4: 4 }, fitted: { total: 18, qc1_1: 18, qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } }
-        ]
-      }
+    let autoSyncOn = true;
+    let autoTimer = null;
+    let inFlight = false;
+    let reqSeq = 0;
+    let lastGoodAt = null;       // เวลาที่ซิงค์สำเร็จล่าสุด
+    let isLiveData = false;      // true = ข้อมูลมาจากชีตแล้ว
+    let lastSignature = null;    // ลายเซ็นข้อมูลชุดล่าสุด ใช้ตรวจจับการเปลี่ยนแปลง
+    let prevSnapshot = null;     // ค่าที่แสดงอยู่ก่อนหน้า ใช้ไฮไลต์ช่องที่เปลี่ยน
+    let changedKeys = new Set(); // key ที่เพิ่งเปลี่ยนในรอบซิงค์ล่าสุด
+    let lastTable = null;        // ข้อมูลดิบจากชีตรอบล่าสุด ใช้สำหรับการวินิจฉัย
+
+    /* ข้อมูลสำรอง (seed) — ใช้แสดงก่อนซิงค์รอบแรกเท่านั้น
+       จะถูกแทนที่ทั้งชุดเมื่อซิงค์สำเร็จ ไม่ถูกนำไปผสมกับข้อมูลสด */
+    const SEED = {
+      A: { total: 187, floors: [
+        { floor: 2, fully: { total: 13, qc1_1: 13, qc1_2: 13, qc2: 13, qc3: 12, qc4: 9 }, fitted: { total: 12, qc1_1: 12, qc1_2: 12, qc2: 8, qc3: 4, qc4: 0 } },
+        { floor: 3, fully: { total: 22, qc1_1: 22, qc1_2: 22, qc2: 22, qc3: 15, qc4: 14 }, fitted: { total: 5,  qc1_1: 5,  qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
+        { floor: 4, fully: { total: 10, qc1_1: 10, qc1_2: 10, qc2: 10, qc3: 9,  qc4: 6 }, fitted: { total: 17, qc1_1: 17, qc1_2: 1,  qc2: 1, qc3: 0, qc4: 0 } },
+        { floor: 5, fully: { total: 25, qc1_1: 25, qc1_2: 22, qc2: 22, qc3: 16, qc4: 11 }, fitted: { total: 2,  qc1_1: 2,  qc1_2: 1,  qc2: 1, qc3: 0, qc4: 0 } },
+        { floor: 6, fully: { total: 16, qc1_1: 16, qc1_2: 16, qc2: 16, qc3: 9,  qc4: 8 }, fitted: { total: 11, qc1_1: 11, qc1_2: 2,  qc2: 2, qc3: 0, qc4: 0 } },
+        { floor: 7, fully: { total: 25, qc1_1: 25, qc1_2: 25, qc2: 25, qc3: 15, qc4: 15 }, fitted: { total: 2,  qc1_1: 2,  qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
+        { floor: 8, fully: { total: 8,  qc1_1: 8,  qc1_2: 6,  qc2: 6,  qc3: 4,  qc4: 3 }, fitted: { total: 19, qc1_1: 19, qc1_2: 2,  qc2: 2, qc3: 1, qc4: 0 } }
+      ]},
+      B: { total: 181, floors: [
+        { floor: 2, fully: { total: 5,  qc1_1: 5,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 2 }, fitted: { total: 20, qc1_1: 20, qc1_2: 19, qc2: 3, qc3: 1, qc4: 0 } },
+        { floor: 3, fully: { total: 12, qc1_1: 12, qc1_2: 11, qc2: 11, qc3: 9,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 14, qc2: 0, qc3: 0, qc4: 0 } },
+        { floor: 4, fully: { total: 7,  qc1_1: 7,  qc1_2: 5,  qc2: 5,  qc3: 5,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 9,  qc2: 2, qc3: 0, qc4: 0 } },
+        { floor: 5, fully: { total: 12, qc1_1: 12, qc1_2: 9,  qc2: 9,  qc3: 7,  qc4: 5 }, fitted: { total: 14, qc1_1: 14, qc1_2: 10, qc2: 2, qc3: 0, qc4: 0 } },
+        { floor: 6, fully: { total: 7,  qc1_1: 7,  qc1_2: 7,  qc2: 7,  qc3: 7,  qc4: 5 }, fitted: { total: 19, qc1_1: 19, qc1_2: 11, qc2: 1, qc3: 0, qc4: 0 } },
+        { floor: 7, fully: { total: 16, qc1_1: 16, qc1_2: 14, qc2: 14, qc3: 13, qc4: 3 }, fitted: { total: 10, qc1_1: 10, qc1_2: 0,  qc2: 0, qc3: 0, qc4: 0 } },
+        { floor: 8, fully: { total: 8,  qc1_1: 8,  qc1_2: 8,  qc2: 8,  qc3: 4,  qc4: 4 }, fitted: { total: 18, qc1_1: 18, qc1_2: 6,  qc2: 6, qc3: 6, qc4: 0 } }
+      ]}
     };
 
+    // dataset ที่ใช้เรนเดอร์จริง
+    let dataset = JSON.parse(JSON.stringify(SEED));
+
+    /* =========================================================
+       PARSER — อ่าน Google Sheet ผ่าน gviz
+       หลักการ: หาหัวบล็อกของอาคาร -> แมปคอลัมน์จากข้อความหัวตารางจริง
+                -> ไล่อ่านแถวชั้น จนถึงแถว "สรุปจำนวนห้องที่ดำเนินการ"
+       ถ้าอ่านไม่ครบ จะ throw ออกไปเลย ไม่เติมค่าเดาแทน
+       ========================================================= */
+
+    const norm = (s) => String(s == null ? '' : s).replace(/\s+/g, '').trim();
+
+    function cellRaw(row, idx) {
+      if (idx < 0) return null;
+      const cells = row && row.c ? row.c : [];
+      const cell = cells[idx];
+      if (!cell || cell.v === null || cell.v === undefined) return null;
+      return cell.v;
+    }
+
+    function cellNum(row, idx) {
+      const v = cellRaw(row, idx);
+      if (v === null) return null;
+      if (typeof v === 'number') return v;
+      if (typeof v === 'boolean') return null;
+      let n = Number(String(v).replace(/,/g, '').trim());
+      if (!isNaN(n)) return n;
+      // Google อาจส่งค่าดิบมาในรูปแบบอื่น (เช่นตีความเป็นวันที่) แต่ยังมีข้อความที่จัดรูปแบบไว้ใน f
+      const cell = row && row.c ? row.c[idx] : null;
+      if (cell && typeof cell.f === 'string') {
+        n = Number(cell.f.replace(/,/g, '').trim());
+        if (!isNaN(n)) return n;
+      }
+      return null;
+    }
+
+    function rowText(row) {
+      const cells = row && row.c ? row.c : [];
+      return cells.map(c => (c && c.v !== null && c.v !== undefined) ? String(c.v) : '').join(' ');
+    }
+
+    // ป้ายหัวคอลัมน์ที่ต้องเจอครบ (คีย์ -> ข้อความหลังตัดช่องว่าง)
+    const COL_LABELS = [
+      ['total', 'จำนวนห้องชุด'],
+      ['qc1_1', 'ตรวจงานตัด'],
+      ['qc1_2', 'CMรับมอบ'],
+      ['qc2',   'ส่งตรวจQC2'],
+      ['qc3',   'ส่งตรวจQC3'],
+      ['qc4',   'ORNรับมอบ']
+    ];
+
+    /* ตำแหน่งคอลัมน์สำรอง (0-based ตามลำดับคอลัมน์ในชีต ณ วันที่ตรวจสอบ 22 ก.ย. 2569)
+       AF/AG=จำนวนห้องชุด, AL/AM=ตรวจงานตัด 1.1, AN/AO=CM รับมอบ 1.2,
+       AP/AQ=ส่งตรวจ QC2, AR/AS=ส่งตรวจ QC3, AT/AU=ORN รับมอบ QC4
+       ใช้ต่อเมื่ออ่านข้อความหัวตารางไม่ได้ (Google อาจคืนค่าเซลล์หัวตารางเป็น null
+       เมื่อจัดชนิดคอลัมน์เป็นตัวเลข) และต้องผ่านการตรวจความสมเหตุสมผลก่อนเสมอ */
+    const FALLBACK_COLS = { total: 31, qc1_1: 37, qc1_2: 39, qc2: 41, qc3: 43, qc4: 45 };
+
+    /* ลำดับคู่คอลัมน์ในบล็อกสรุปของแต่ละอาคาร (FULLY, FITTED สลับกัน 9 คู่):
+       0 จำนวนห้องชุด | 1 ส่งตรวจ QC1 | 2 เก็บงาน QC1 | 3 ตรวจงานตัด 1.1
+       4 CM รับมอบ 1.2 | 5 ส่งตรวจ QC2 | 6 ส่งตรวจ QC3 | 7 ORN รับมอบ QC4 | 8 รวม   */
+    const BLOCK_PAIRS = 9;
+    const BLOCK_WIDTH = BLOCK_PAIRS * 2;
+    const STAGE_OFFSETS = { total: 0, qc1_1: 6, qc1_2: 8, qc2: 10, qc3: 12, qc4: 14 };
+
+    // วิธีที่ 1: อ่านตำแหน่งจากข้อความหัวตาราง (ใช้ได้เมื่อ Google ส่งข้อความหัวตารางมาด้วย)
+    function detectColsByLabel(rows, titleRow) {
+      const col = {};
+      for (let r = titleRow; r <= titleRow + 4 && r < rows.length; r++) {
+        const cells = (rows[r] && rows[r].c) ? rows[r].c : [];
+        for (let c = 0; c < cells.length; c++) {
+          const v = cells[c] && cells[c].v != null ? norm(cells[c].v) : '';
+          if (!v) continue;
+          for (const [key, label] of COL_LABELS) {
+            if (col[key] === undefined && v.indexOf(label) !== -1) col[key] = c;
+          }
+        }
+      }
+      const missing = COL_LABELS.filter(([k]) => col[k] === undefined).map(([, l]) => l);
+      return missing.length ? null : { col, missing: [] };
+    }
+
+    /* วิธีที่ 2: หาตำแหน่งจากรูปแบบข้อมูล — มองหาช่วงตัวเลขติดกัน 18 ช่อง
+       (9 คู่ FULLY/FITTED) ในแถวชั้น วิธีนี้ไม่ขึ้นกับหมายเลขคอลัมน์
+       จึงทนต่อการแทรก/ลบคอลัมน์ และใช้ได้แม้หัวตารางถูกส่งมาเป็นค่าว่าง */
+    function detectColsByShape(rows, candidateRows) {
+      const out = [];
+      for (const r of candidateRows) {
+        const cells = (rows[r] && rows[r].c) ? rows[r].c : [];
+        for (let i = 2; i + BLOCK_WIDTH <= cells.length; i++) {
+          if (cellNum(rows[r], i) === null) continue;        // บล็อกต้องเริ่มด้วยตัวเลข
+          if (cellNum(rows[r], i - 1) !== null) continue;    // ต้องเป็นขอบซ้ายของบล็อก
+          let clean = true, nums = 0;
+          for (let k = 0; k < BLOCK_WIDTH; k++) {
+            if (cellNum(rows[r], i + k) !== null) nums++;
+            else if (cellRaw(rows[r], i + k) !== null) { clean = false; break; } // มีข้อความปน
+          }
+          if (clean && nums >= 12) {
+            const col = {};
+            Object.keys(STAGE_OFFSETS).forEach(k => { col[k] = i + STAGE_OFFSETS[k]; });
+            out.push({ col, base: i, sampleRow: r });
+          }
+        }
+      }
+      return out;
+    }
+
+    /* วิธีที่ 3 (ผ่อนเกณฑ์): ยอมให้มีเซลล์ที่ไม่ใช่ตัวเลขแทรกในบล็อกได้
+       แต่ช่องที่ต้องใช้จริง (total, 1.1, 1.2, QC2, QC3, QC4 ฝั่ง FULLY) ต้องเป็นตัวเลขทุกช่อง */
+    function detectColsRelaxed(rows, candidateRows) {
+      const out = [];
+      const offs = Object.keys(STAGE_OFFSETS).map(k => STAGE_OFFSETS[k]);
+      for (const r of candidateRows) {
+        const cells = (rows[r] && rows[r].c) ? rows[r].c : [];
+        for (let i = 2; i + BLOCK_WIDTH <= cells.length; i++) {
+          if (!offs.every(o => cellNum(rows[r], i + o) !== null)) continue;
+          let nums = 0;
+          for (let k = 0; k < BLOCK_WIDTH; k++) if (cellNum(rows[r], i + k) !== null) nums++;
+          if (nums < 14) continue;
+          const col = {};
+          Object.keys(STAGE_OFFSETS).forEach(k => { col[k] = i + STAGE_OFFSETS[k]; });
+          out.push({ col, base: i, sampleRow: r });
+        }
+      }
+      return out;
+    }
+
+    function parseBuilding(rows, bldChar) {
+      // 1) หาแถวหัวบล็อกของอาคารนี้
+      let titleRow = -1;
+      for (let i = 0; i < rows.length; i++) {
+        const t = norm(rowText(rows[i]));
+        if (t.indexOf(norm(CONFIG.SECTION_KEY)) !== -1 && t.indexOf('อาคาร' + bldChar) !== -1) {
+          titleRow = i;
+          break;
+        }
+      }
+      if (titleRow === -1) throw new Error(`ไม่พบหัวตารางของอาคาร ${bldChar} ในชีต`);
+
+      // 2) หาแถวชั้นและแถวสรุป โดยยังไม่ต้องรู้ตำแหน่งคอลัมน์
+      //    เกณฑ์แถวชั้น: คอลัมน์ B เป็นเลขชั้น และในแถวมีตัวเลขอย่างน้อย 10 ช่อง
+      const candidateRows = [];
+      let summaryRow = -1;
+      for (let r = titleRow + 1; r < rows.length; r++) {
+        const t = norm(rowText(rows[r]));
+        if (r > titleRow + 4 && t.indexOf(norm(CONFIG.SECTION_KEY)) !== -1) break;
+        if (t.indexOf('สรุปจำนวนห้องที่ดำเนินการ') !== -1) { summaryRow = r; break; }
+
+        const fl = cellRaw(rows[r], 1);
+        if (fl === null) continue;
+        const flNum = Number(String(fl).replace(/[^0-9.-]/g, ''));
+        if (!isFinite(flNum) || flNum <= 0 || flNum > 99) continue;
+
+        const cells = (rows[r] && rows[r].c) ? rows[r].c : [];
+        let numCount = 0;
+        for (let c = 2; c < cells.length; c++) if (cellNum(rows[r], c) !== null) numCount++;
+        if (numCount >= 10) candidateRows.push({ row: r, floor: flNum });
+      }
+      if (!candidateRows.length) {
+        throw new Error(`อาคาร ${bldChar}: ไม่พบแถวข้อมูลรายชั้นใต้หัวตาราง`);
+      }
+
+      // 3) รวบรวมตัวเลือกวิธีระบุตำแหน่งคอลัมน์ (เรียงตามความน่าเชื่อถือ)
+      const rowIdx = candidateRows.map(c => c.row);
+      const options = [];
+      const byLabel = detectColsByLabel(rows, titleRow);
+      if (byLabel) options.push({ col: byLabel.col, source: 'หัวตาราง', base: null });
+      detectColsByShape(rows, rowIdx).forEach(o => options.push({ col: o.col, source: 'รูปแบบบล็อกตัวเลข', base: o.base }));
+      detectColsRelaxed(rows, rowIdx).forEach(o => options.push({ col: o.col, source: 'รูปแบบบล็อกตัวเลข (ผ่อนเกณฑ์)', base: o.base }));
+
+      if (!options.length) {
+        throw new Error(`อาคาร ${bldChar}: ระบุตำแหน่งคอลัมน์ไม่ได้เลย — โครงสร้างชีตเปลี่ยนไปมาก กดปุ่ม "วินิจฉัย" เพื่อดูรายละเอียด`);
+      }
+
+      // 4) ลองอ่านทีละตัวเลือก ตัวไหนผ่านการตรวจสอบก่อนถือว่าใช้ได้
+      const tried = [];
+      for (const opt of options) {
+        const r = buildFloors(rows, candidateRows, summaryRow, opt.col);
+        if (!r) { tried.push(`${opt.source}: อ่านรายชั้นไม่ได้`); continue; }
+        if (!r.valid) { tried.push(`${opt.source}${opt.base !== null ? '@' + opt.base : ''}: ${r.reason}`); continue; }
+
+        const warn = [];
+        if (opt.source !== 'หัวตาราง') {
+          warn.push(`อาคาร ${bldChar}: อ่านหัวตารางไม่ได้ จึงระบุคอลัมน์จาก${opt.source} (เริ่มที่คอลัมน์ลำดับ ${opt.base}) และผ่านการตรวจสอบแล้ว`);
+        }
+        return {
+          total: r.sumTotal, floors: r.floors, summary: r.summary,
+          warn: warn.length ? warn.join(' · ') : null,
+          debug: { titleRow, summaryRow, colSource: opt.source, base: opt.base, col: opt.col, floorRows: candidateRows.length }
+        };
+      }
+
+      const uniq = Array.from(new Set(tried)).slice(0, 3);
+      throw new Error(`อาคาร ${bldChar}: อ่านข้อมูลได้แต่ไม่ผ่านการตรวจสอบ [${uniq.join(' | ')}] — กดปุ่ม "วินิจฉัย" แล้วส่งบันทึกให้ผู้ดูแลระบบ`);
+    }
+
+    /* อ่านค่ารายชั้นตามตำแหน่งคอลัมน์ที่กำหนด พร้อมตรวจความสมเหตุสมผล */
+    function buildFloors(rows, candidateRows, summaryRow, col) {
+      const floors = [];
+      const seen = new Set();
+
+      /* ในชีต 1 ชั้นกินพื้นที่หลายแถว (แถวเลขห้อง + แถวสถานะ) และเซลล์ตัวเลขถูก merge แนวตั้ง
+         Google จะส่งค่ามาเฉพาะเซลล์ต้นทางของ merge ซึ่งอาจอยู่แถวที่ 2 ของชั้นก็ได้
+         จึงอ่านทั้งช่วงแถวของชั้น โดยยึดความยาวช่วงจากระยะห่างระหว่างแถวชั้นที่พบบ่อยที่สุด */
+      const gaps = {};
+      for (let i = 1; i < candidateRows.length; i++) {
+        const g = candidateRows[i].row - candidateRows[i - 1].row;
+        gaps[g] = (gaps[g] || 0) + 1;
+      }
+      let spanLen = 1;
+      Object.keys(gaps).forEach(g => { if (gaps[g] > (gaps[spanLen] || 0)) spanLen = Number(g); });
+      spanLen = Math.min(Math.max(spanLen, 1), 3);
+
+      candidateRows.forEach(({ row: r, floor: flNum }, i) => {
+        if (seen.has(flNum)) return;
+        let end = r + spanLen;                                   // ไม่รวม end
+        if (i + 1 < candidateRows.length) end = Math.min(end, candidateRows[i + 1].row);
+        if (summaryRow !== -1) end = Math.min(end, summaryRow);
+
+        const read = (idx) => {
+          for (let rr = r; rr < end; rr++) {
+            const n = cellNum(rows[rr], idx);
+            if (n !== null) return n;
+          }
+          return null;
+        };
+        if (read(col.total) === null) return;
+        seen.add(flNum);
+        const g = (idx) => { const n = read(idx); return n === null ? 0 : n; };
+        floors.push({
+          floor: flNum,
+          fully: {
+            total: g(col.total), qc1_1: g(col.qc1_1), qc1_2: g(col.qc1_2),
+            qc2: g(col.qc2), qc3: g(col.qc3), qc4: g(col.qc4)
+          },
+          fitted: {
+            total: g(col.total + 1), qc1_1: g(col.qc1_1 + 1), qc1_2: g(col.qc1_2 + 1),
+            qc2: g(col.qc2 + 1), qc3: g(col.qc3 + 1), qc4: g(col.qc4 + 1)
+          }
+        });
+      });
+      if (!floors.length) return null;
+      floors.sort((a, b) => a.floor - b.floor);
+
+      let summary = null;
+      if (summaryRow !== -1) {
+        summary = {
+          total: cellNum(rows[summaryRow], col.total),
+          qc1_2: cellNum(rows[summaryRow], col.qc1_2),
+          qc2:   cellNum(rows[summaryRow], col.qc2),
+          qc3:   cellNum(rows[summaryRow], col.qc3)
+        };
+      }
+
+      const sumTotal = floors.reduce((s, f) => s + f.fully.total + f.fitted.total, 0);
+      const agg = { total: 0, qc1_1: 0, qc1_2: 0, qc2: 0, qc3: 0, qc4: 0 };
+      floors.forEach(f => Object.keys(agg).forEach(k => { agg[k] += f.fully[k] + f.fitted[k]; }));
+
+      const chain = [agg.total, agg.qc1_1, agg.qc1_2, agg.qc2, agg.qc3, agg.qc4];
+      const chainOK = chain.every((v, i) => i === 0 || v <= chain[i - 1]);
+      const totalOK = !(summary && summary.total !== null) || summary.total === sumTotal;
+
+      let reason = '';
+      if (sumTotal <= 0) reason = 'ผลรวมห้องเป็นศูนย์';
+      else if (!chainOK) reason = `ลำดับขั้นผิดปกติ (${chain.join(' → ')})`;
+      else if (!totalOK) reason = `ผลรวมรายชั้น ${sumTotal} ไม่ตรงแถวสรุปชีต ${summary.total}`;
+
+      return { floors, summary, sumTotal, valid: !reason, reason };
+    }
+
+    function parseSheet(table) {
+      const rows = (table && table.rows) ? table.rows : [];
+      if (!rows.length) throw new Error('ชีตตอบกลับมาแต่ไม่มีข้อมูลแถว');
+      const A = parseBuilding(rows, 'A');
+      const B = parseBuilding(rows, 'B');
+      return { A, B };
+    }
+
+    /* =========================================================
+       SYNC ENGINE (JSONP) — ทำงานได้ทั้งเปิดจากไฟล์และจากเว็บ
+       ========================================================= */
+    /* หาแถวหัวบล็อก A/B และแถวสรุปของ B เพื่อใช้กำหนดช่วงแถวในการดึงรอบสอง */
+    function colLetter(n) {          // 1-based -> A, B, ..., Z, AA, ...
+      let s = '';
+      while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+      return s || 'A';
+    }
+
+    function locateBlocks(rows) {
+      const tA = findTitleRow(rows, 'A');
+      const tB = findTitleRow(rows, 'B');
+      let sB = -1;
+      const from = Math.max(tA, tB, 0);
+      for (let r = from + 1; r < rows.length; r++) {
+        if (norm(rowText(rows[r])).indexOf('สรุปจำนวนห้องที่ดำเนินการ') !== -1) sB = r;
+      }
+      return { tA, tB, sB };
+    }
+
+    function syncNow(trigger, opts) {
+      opts = opts || {};
+      if (inFlight && !opts.retry) return;
+      inFlight = true;
+      reqSeq += 1;
+      const mySeq = reqSeq;
+
+      setSyncUI('loading');
+
+      const cbName = '__gvizCB_' + mySeq;
+      const scriptId = 'gviz-jsonp-' + mySeq;
+      let settled = false;
+
+      const cleanup = () => {
+        const el = document.getElementById(scriptId);
+        if (el) el.remove();
+        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+      };
+
+      const finish = (ok, message) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        cleanup();
+        inFlight = false;
+        if (!ok) {
+          setSyncUI('error', message);
+          log('ซิงค์ไม่สำเร็จ — ' + message);
+          quickDiag();
+        }
+        scheduleAuto();
+      };
+
+      const timer = setTimeout(() => {
+        finish(false, `หมดเวลารอชีต (${CONFIG.REQUEST_TIMEOUT_MS / 1000} วินาที)`);
+      }, CONFIG.REQUEST_TIMEOUT_MS);
+
+      window[cbName] = function (response) {
+        if (mySeq !== reqSeq) { cleanup(); return; }   // ทิ้งผลลัพธ์ที่ล้าสมัย
+        if (response && response.table) lastTable = response.table;
+        try {
+          if (!response || response.status === 'error') {
+            const msg = (response && response.errors && response.errors[0])
+              ? (response.errors[0].detailed_message || response.errors[0].message)
+              : 'ชีตตอบกลับเป็นข้อผิดพลาด';
+            throw new Error(String(msg).replace(/<[^>]*>/g, ''));
+          }
+          let parsed;
+          try {
+            parsed = parseSheet(response.table);
+          } catch (parseErr) {
+            /* รอบแรกดึงทั้งแท็บ — Google กำหนดชนิดคอลัมน์จากข้อมูลทั้งคอลัมน์ ถ้าด้านบนของแท็บ
+               มีข้อมูลชนิดอื่น (วันที่/ข้อความ/ช่องติ๊ก) ในคอลัมน์เดียวกัน ตัวเลขของเราจะถูกส่งมาเป็นค่าว่าง
+               ทางแก้: ดึงใหม่เฉพาะช่วงแถวของบล็อกสรุป เพื่อให้กำหนดชนิดคอลัมน์จากข้อมูลในบล็อกเท่านั้น */
+            const loc = locateBlocks(response.table.rows || []);
+            if (!opts.range && loc.tA !== -1 && loc.sB !== -1) {
+              const r1 = Math.max(1, loc.tA + 1 - 5);
+              const r2 = loc.sB + 1 + 5;
+              const maxCol = (response.table.rows || []).reduce((m, r) => Math.max(m, (r.c || []).length), 0);
+              const range = `A${r1}:${colLetter(Math.max(maxCol, 52))}${r2}`;
+              log(`รอบแรกไม่ผ่าน (${parseErr.message.slice(0, 80)}…) — ลองดึงใหม่เฉพาะช่วง ${range}`);
+              settled = true;
+              clearTimeout(timer);
+              cleanup();
+              syncNow(trigger, { retry: true, range, firstError: parseErr.message });
+              return;
+            }
+            throw parseErr;
+          }
+          applyParsed(parsed, trigger, opts);
+          settled = true;
+          clearTimeout(timer);
+          cleanup();
+          inFlight = false;
+          scheduleAuto();
+        } catch (err) {
+          const msg = err && err.message ? err.message : String(err);
+          finish(false, opts.firstError ? `${msg} [รอบแรก: ${opts.firstError.slice(0, 120)}]` : msg);
+        }
+      };
+
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq`
+                 + `?tqx=responseHandler:${cbName}`
+                 + `&gid=${CONFIG.GID}`
+                 + `&headers=0`
+                 + (opts.range ? `&range=${encodeURIComponent(opts.range)}` : '')
+                 + `&_=${Date.now()}`;
+      script.onerror = () => finish(false, 'เชื่อมต่อ Google Sheet ไม่ได้ (ตรวจสอบอินเทอร์เน็ต หรือสิทธิ์การแชร์ชีต)');
+      document.body.appendChild(script);
+    }
+    window.syncNow = syncNow;
+
+    function applyParsed(parsed, trigger, opts) {
+      const next = {
+        A: { total: parsed.A.total, floors: parsed.A.floors },
+        B: { total: parsed.B.total, floors: parsed.B.floors }
+      };
+      const sig = JSON.stringify(next);
+      const changed = (sig !== lastSignature);
+
+      // เก็บค่าที่แสดงอยู่เดิมไว้เทียบ เพื่อไฮไลต์เฉพาะตัวเลขที่เปลี่ยน
+      prevSnapshot = isLiveData ? JSON.parse(JSON.stringify(dataset)) : null;
+
+      dataset = next;
+      lastSignature = sig;
+      lastGoodAt = new Date();
+      isLiveData = true;
+
+      changedKeys = changed && prevSnapshot ? diffKeys(prevSnapshot, next) : new Set();
+
+      // การเรนเดอร์ล้มเหลวต้องไม่ทำให้สถานะซิงค์ผิดเพี้ยน
+      try { refreshView(); }
+      catch (e) { log('⚠ แสดงผลบางส่วนไม่สำเร็จ: ' + (e && e.message ? e.message : e)); }
+      setSyncUI(changed ? 'changed' : 'ok');
+
+      const warns = [parsed.A.warn, parsed.B.warn].filter(Boolean);
+      if (opts && opts.range) log(`ดึงข้อมูลแบบจำกัดช่วงแถว (${opts.range}) สำเร็จ`);
+      const tag = trigger === 'manual' ? '[กดเอง]' : (trigger === 'visible' ? '[กลับมาที่แท็บ]' : '[อัตโนมัติ]');
+      log(`${tag} ${changed ? 'พบข้อมูลใหม่ อัปเดตแดชบอร์ดแล้ว' : 'ข้อมูลตรงกับชีต ไม่มีการเปลี่ยนแปลง'}`
+          + ` · A=${next.A.total} ห้อง / B=${next.B.total} ห้อง`);
+      warns.forEach(w => log('⚠ ' + w));
+    }
+
+    function diffKeys(oldD, newD) {
+      const set = new Set();
+      ['A', 'B'].forEach(b => {
+        const of = (oldD[b] && oldD[b].floors) || [];
+        const nf = (newD[b] && newD[b].floors) || [];
+        nf.forEach(f => {
+          const o = of.find(x => x.floor === f.floor);
+          if (!o) { set.add(`${b}-${f.floor}`); return; }
+          ['fully', 'fitted'].forEach(t => {
+            ['total', 'qc1_1', 'qc1_2', 'qc2', 'qc3', 'qc4'].forEach(k => {
+              if (o[t][k] !== f[t][k]) set.add(`${b}-${f.floor}`);
+            });
+          });
+        });
+      });
+      return set;
+    }
+
+    /* =========================================================
+       AUTO SYNC / VISIBILITY
+       ========================================================= */
+    function scheduleAuto() {
+      clearTimeout(autoTimer);
+      if (!autoSyncOn) return;
+      autoTimer = setTimeout(() => syncNow('auto'), CONFIG.AUTO_SYNC_SEC * 1000);
+    }
+
+    function toggleAutoSync() {
+      autoSyncOn = !autoSyncOn;
+      const btn = document.getElementById('auto-btn');
+      btn.textContent = 'อัตโนมัติ: ' + (autoSyncOn ? 'เปิด' : 'ปิด');
+      btn.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition ' + (autoSyncOn
+        ? 'bg-emerald-600/15 text-emerald-300 border-emerald-500/30'
+        : 'bg-slate-800 text-slate-400 border-slate-700');
+      if (autoSyncOn) { log('เปิดการซิงค์อัตโนมัติ'); syncNow('auto'); }
+      else { clearTimeout(autoTimer); log('ปิดการซิงค์อัตโนมัติ'); }
+    }
+    window.toggleAutoSync = toggleAutoSync;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !autoSyncOn) return;
+      const age = lastGoodAt ? (Date.now() - lastGoodAt.getTime()) / 1000 : Infinity;
+      if (age > 20) syncNow('visible');
+    });
+
+    /* =========================================================
+       UI — สถานะซิงค์ / log
+       ========================================================= */
+    function setSyncUI(state, message) {
+      const spinner = document.getElementById('sync-spinner');
+      const statusText = document.getElementById('sync-status');
+      const pill = document.getElementById('sync-pill');
+      const time = document.getElementById('sync-timestamp');
+      const banner = document.getElementById('data-banner');
+      const bannerText = document.getElementById('data-banner-text');
+
+      const pillBase = 'text-[10px] px-2 py-0.5 rounded-full border text-center ';
+      spinner.classList.toggle('hidden', state !== 'loading');
+
+      if (state === 'loading') {
+        statusText.textContent = 'กำลังซิงค์...';
+        pill.className = pillBase + 'bg-blue-950/60 text-blue-300 border-blue-700/50';
+        pill.textContent = 'กำลังดึงข้อมูล';
+        return;
+      }
+
+      statusText.textContent = 'ซิงค์ชีตสด';
+      const stamp = lastGoodAt ? lastGoodAt.toLocaleTimeString('th-TH') : '-';
+
+      if (state === 'changed') {
+        pill.className = pillBase + 'bg-amber-950/60 text-amber-300 border-amber-600/50';
+        pill.textContent = 'อัปเดตข้อมูลใหม่';
+        time.textContent = 'ล่าสุด ' + stamp;
+        banner.className = 'px-6 py-2 text-[11px] border-b border-emerald-700/40 bg-emerald-950/40 text-emerald-300 flex items-center gap-2';
+        bannerText.textContent = `ซิงค์กับ Google Sheet สำเร็จ และพบการเปลี่ยนแปลง — ปรับปรุงตัวเลขทั้งหมดแล้วเมื่อ ${stamp} (ช่องที่เปลี่ยนถูกไฮไลต์ชั่วคราว)`;
+      } else if (state === 'ok') {
+        pill.className = pillBase + 'bg-emerald-950/60 text-emerald-300 border-emerald-700/50';
+        pill.textContent = 'ข้อมูลเป็นปัจจุบัน';
+        time.textContent = 'ล่าสุด ' + stamp;
+        banner.className = 'px-6 py-2 text-[11px] border-b border-slate-700/60 bg-slate-800/40 text-slate-400 flex items-center gap-2';
+        bannerText.textContent = `ข้อมูลตรงกับ Google Sheet — ตรวจสอบล่าสุดเมื่อ ${stamp} · ซิงค์อัตโนมัติทุก ${CONFIG.AUTO_SYNC_SEC} วินาที`;
+      } else if (state === 'error') {
+        pill.className = pillBase + 'bg-red-950/60 text-red-300 border-red-700/50';
+        pill.textContent = 'ซิงค์ไม่สำเร็จ';
+        time.textContent = lastGoodAt ? ('ค้างที่ ' + stamp) : 'ยังไม่เคยซิงค์สำเร็จ';
+        banner.className = 'px-6 py-2 text-[11px] border-b border-red-700/40 bg-red-950/40 text-red-300 flex items-center gap-2';
+        bannerText.textContent = isLiveData
+          ? `ซิงค์รอบล่าสุดไม่สำเร็จ (${message}) — ตัวเลขที่แสดงคือข้อมูลสดครั้งล่าสุดเมื่อ ${stamp}`
+          : `ซิงค์ไม่สำเร็จ (${message}) — ตัวเลขที่แสดงเป็นชุดข้อมูลสำรองในไฟล์ ยังไม่ใช่ข้อมูลจริงจากชีต`;
+      }
+      markStale();
+    }
+
+    // เตือนเมื่อข้อมูลค้างนานเกินกำหนด
+    setInterval(markStale, 15000);
+    function markStale() {
+      if (!isLiveData || !lastGoodAt) return;
+      const age = (Date.now() - lastGoodAt.getTime()) / 1000;
+      if (age <= CONFIG.STALE_AFTER_SEC) return;
+      const pill = document.getElementById('sync-pill');
+      pill.className = 'text-[10px] px-2 py-0.5 rounded-full border text-center bg-amber-950/60 text-amber-300 border-amber-600/50';
+      pill.textContent = 'ข้อมูลค้าง';
+    }
+
+    /* =========================================================
+       DIAGNOSTICS — ใช้ตรวจสอบเมื่อซิงค์ไม่สำเร็จ
+       ========================================================= */
+    function findTitleRow(rows, bld) {
+      for (let i = 0; i < rows.length; i++) {
+        const t = norm(rowText(rows[i]));
+        if (t.indexOf(norm(CONFIG.SECTION_KEY)) !== -1 && t.indexOf('อาคาร' + bld) !== -1) return i;
+      }
+      return -1;
+    }
+
+    // สรุปสั้น ๆ อัตโนมัติเมื่อเกิดข้อผิดพลาด
+    function quickDiag() {
+      if (!lastTable) { log('  (ยังไม่ได้รับข้อมูลดิบจากชีต)'); return; }
+      const rows = lastTable.rows || [];
+      const maxCol = rows.reduce((m, r) => Math.max(m, (r.c || []).length), 0);
+      log(`  โครงสร้างที่ได้รับ: ${rows.length} แถว × ${maxCol} คอลัมน์ · หัวบล็อก A=แถว ${findTitleRow(rows, 'A')}, B=แถว ${findTitleRow(rows, 'B')}`);
+      log('  กดปุ่ม "วินิจฉัย" เพื่อดูรายละเอียดคอลัมน์ แล้วส่งบันทึกนี้ให้ผู้ดูแลระบบ');
+    }
+
+    // รายละเอียดเต็ม สำหรับคัดลอกส่งให้ผู้ดูแลระบบ
+    function dumpDiagnostics() {
+      if (!lastTable) { log('วินิจฉัย: ยังไม่มีข้อมูลดิบจากชีต — กดปุ่มซิงค์ก่อน'); return; }
+      const rows = lastTable.rows || [];
+      const maxCol = rows.reduce((m, r) => Math.max(m, (r.c || []).length), 0);
+      log('===== เริ่มข้อมูลวินิจฉัย =====');
+      log(`ชีต ${CONFIG.SHEET_ID} / gid ${CONFIG.GID} · ได้รับ ${rows.length} แถว × ${maxCol} คอลัมน์`);
+      const cols = lastTable.cols || [];
+      if (cols.length) {
+        log('ชนิดคอลัมน์ที่ Google กำหนด (ลำดับ:ชนิด): ' + cols.map((c, i) => `${i}:${c.type || '?'}`).join(' '));
+      }
+
+      ['A', 'B'].forEach(bld => {
+        const tr = findTitleRow(rows, bld);
+        log(`--- อาคาร ${bld}: หัวบล็อกที่แถว ${tr} ---`);
+        if (tr === -1) { log('   หาหัวบล็อกไม่พบ'); return; }
+        for (let r = tr; r < Math.min(tr + 8, rows.length); r++) {
+          const cells = (rows[r] && rows[r].c) ? rows[r].c : [];
+          const desc = cells
+            .map((c, i) => {
+              if (!c || c.v === null || c.v === undefined) return null;
+              const f = (typeof c.f === 'string' && c.f !== String(c.v)) ? `(f=${c.f.slice(0, 12)})` : '';
+              return `${i}:${String(c.v).slice(0, 16)}${f}`;
+            })
+            .filter(Boolean).join('  ');
+          log(`   แถว ${r} » ${desc ? desc.slice(0, 700) : '(ว่างทั้งแถว)'}`);
+        }
+        // ค่าดิบทุกช่อง (รวมช่องว่าง) ในคอลัมน์ 28–50 ของ 3 แถวแรกหลังหัวบล็อก เพื่อดูว่าช่องไหนหาย
+        for (let r = tr + 2; r < Math.min(tr + 5, rows.length); r++) {
+          const cells = (rows[r] && rows[r].c) ? rows[r].c : [];
+          const raw = [];
+          for (let i = 28; i <= 50; i++) {
+            const c = cells[i];
+            raw.push(`${i}=${(!c || c.v === null || c.v === undefined) ? '∅' : JSON.stringify(c.v).slice(0, 14)}`);
+          }
+          log(`   ดิบ ${r} » ${raw.join(' ')}`);
+        }
+      });
+      log('===== จบข้อมูลวินิจฉัย =====');
+    }
+    window.dumpDiagnostics = dumpDiagnostics;
+
+    function copyLog() {
+      const text = Array.from(document.getElementById('sync-log').children)
+        .map(el => el.textContent).reverse().join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          () => log('คัดลอกบันทึกลงคลิปบอร์ดแล้ว'),
+          () => log('คัดลอกไม่สำเร็จ — กรุณาลากเลือกข้อความเอง')
+        );
+      } else {
+        log('เบราว์เซอร์นี้ไม่รองรับการคัดลอกอัตโนมัติ — กรุณาลากเลือกข้อความเอง');
+      }
+    }
+    window.copyLog = copyLog;
+
+    function log(msg) {
+      const box = document.getElementById('sync-log');
+      const line = document.createElement('div');
+      line.textContent = `${new Date().toLocaleTimeString('th-TH')} — ${msg}`;
+      box.prepend(line);
+      while (box.childElementCount > 40) box.removeChild(box.lastChild);
+    }
+
+    /* =========================================================
+       FILTER + AGGREGATION
+       ========================================================= */
     function setBuildingFilter(bld) {
       currentBuilding = bld;
       ['ALL', 'A', 'B'].forEach(id => {
-        const btn = document.getElementById(`tab-${id}`);
-        btn.className = (id === bld)
+        document.getElementById(`tab-${id}`).className = (id === bld)
           ? 'bld-tab px-3.5 py-1.5 rounded-md transition text-white bg-blue-600 shadow'
           : 'bld-tab px-3.5 py-1.5 rounded-md transition text-slate-400 hover:text-white';
       });
       refreshView();
     }
+    window.setBuildingFilter = setBuildingFilter;
 
     function setTypeFilter(type) {
       currentType = type;
       ['ALL', 'FULLY', 'FITTED'].forEach(id => {
-        const btn = document.getElementById(`type-${id}`);
-        btn.className = (id === type)
+        document.getElementById(`type-${id}`).className = (id === type)
           ? 'type-tab px-2.5 py-1.5 rounded-md transition text-white bg-slate-700'
           : 'type-tab px-2.5 py-1.5 rounded-md transition text-slate-400 hover:text-white';
       });
       refreshView();
     }
+    window.setTypeFilter = setTypeFilter;
+
+    const METRICS = ['qc1_1', 'qc1_2', 'qc2', 'qc3', 'qc4'];
+
+    function blankFloor(floor) {
+      const o = { floor, total: 0, fully: 0, fitted: 0 };
+      METRICS.forEach(m => o[m] = 0);
+      return o;
+    }
+
+    function addType(target, src) {
+      target.total += src.total;
+      METRICS.forEach(m => target[m] += src[m]);
+    }
 
     function computeFilteredData() {
-      let bldList = [];
-      if (currentBuilding === 'ALL') bldList = [dataset.buildingA, dataset.buildingB];
-      else if (currentBuilding === 'A') bldList = [dataset.buildingA];
-      else bldList = [dataset.buildingB];
+      const keys = currentBuilding === 'ALL' ? ['A', 'B'] : [currentBuilding];
 
-      const floorCount = 7;
-      let aggregatedFloors = [];
+      // รวมรายชื่อชั้นจากทุกอาคารที่เลือก (ไม่ fix ไว้ที่ 7 ชั้น)
+      const floorNos = new Set();
+      keys.forEach(k => (dataset[k]?.floors || []).forEach(f => floorNos.add(f.floor)));
+      const sortedFloors = Array.from(floorNos).sort((a, b) => a - b);
 
-      for (let i = 0; i < floorCount; i++) {
-        let flName = `ชั้น ${i + 2}`;
-        let flObj = { floor: flName, total: 0, fully: 0, fitted: 0, qc1_1: 0, qc1_2: 0, qc2: 0, qc3: 0, qc4: 0 };
-
-        bldList.forEach(b => {
-          if (b && b.floors && b.floors[i]) {
-            const item = b.floors[i];
-            if (currentType === 'ALL' || currentType === 'FULLY') {
-              flObj.total += item.fully.total;
-              flObj.fully += item.fully.total;
-              flObj.qc1_1 += item.fully.qc1_1;
-              flObj.qc1_2 += item.fully.qc1_2;
-              flObj.qc2 += item.fully.qc2;
-              flObj.qc3 += item.fully.qc3;
-              flObj.qc4 += item.fully.qc4;
-            }
-            if (currentType === 'ALL' || currentType === 'FITTED') {
-              flObj.total += item.fitted.total;
-              flObj.fitted += item.fitted.total;
-              flObj.qc1_1 += item.fitted.qc1_1;
-              flObj.qc1_2 += item.fitted.qc1_2;
-              flObj.qc2 += item.fitted.qc2;
-              flObj.qc3 += item.fitted.qc3;
-              flObj.qc4 += item.fitted.qc4;
-            }
-          }
+      const aggregatedFloors = sortedFloors.map(no => {
+        const o = blankFloor(no);
+        o.changed = false;
+        keys.forEach(k => {
+          const item = (dataset[k]?.floors || []).find(f => f.floor === no);
+          if (!item) return;
+          if (changedKeys.has(`${k}-${no}`)) o.changed = true;
+          if (currentType === 'ALL' || currentType === 'FULLY') { addType(o, item.fully); o.fully += item.fully.total; }
+          if (currentType === 'ALL' || currentType === 'FITTED') { addType(o, item.fitted); o.fitted += item.fitted.total; }
         });
-
-        aggregatedFloors.push(flObj);
-      }
-
-      let total = 0, fully = 0, fitted = 0, qc1_1 = 0, qc1_2 = 0, qc2 = 0, qc3 = 0, qc4 = 0;
-      aggregatedFloors.forEach(f => {
-        total += f.total;
-        fully += f.fully;
-        fitted += f.fitted;
-        qc1_1 += f.qc1_1;
-        qc1_2 += f.qc1_2;
-        qc2 += f.qc2;
-        qc3 += f.qc3;
-        qc4 += f.qc4;
+        return o;
       });
 
-      return {
-        total, fully, fitted, qc1_1, qc1_2, qc2, qc3, qc4,
-        floors: aggregatedFloors
-      };
+      const sum = { total: 0, fully: 0, fitted: 0 };
+      METRICS.forEach(m => sum[m] = 0);
+      aggregatedFloors.forEach(f => {
+        sum.total += f.total; sum.fully += f.fully; sum.fitted += f.fitted;
+        METRICS.forEach(m => sum[m] += f[m]);
+      });
+
+      return Object.assign(sum, { floors: aggregatedFloors });
+    }
+
+    // ยอดรวมรายอาคาร (ไม่ขึ้นกับตัวกรอง) ใช้ในกล่องข้อสังเกต
+    function buildingTotals(key) {
+      const floors = dataset[key]?.floors || [];
+      const o = { total: 0, fully: 0, fitted: 0 };
+      METRICS.forEach(m => o[m] = 0);
+      floors.forEach(f => {
+        o.total += f.fully.total + f.fitted.total;
+        o.fully += f.fully.total;
+        o.fitted += f.fitted.total;
+        METRICS.forEach(m => o[m] += f.fully[m] + f.fitted[m]);
+      });
+      return o;
+    }
+
+    /* =========================================================
+       RENDER
+       ========================================================= */
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const old = el.textContent;
+      el.textContent = value;
+      if (isLiveData && old !== String(value) && old !== '0' && old !== '') {
+        el.classList.remove('value-changed');
+        void el.offsetWidth;
+        el.classList.add('value-changed');
+      }
     }
 
     function refreshView() {
@@ -390,36 +1052,45 @@
       const typeNames = { 'ALL': 'ทุกประเภท', 'FULLY': 'เฉพาะ Fully', 'FITTED': 'เฉพาะ Fitted' };
       document.getElementById('chart-filter-tag').textContent = `${bldNames[currentBuilding]} - ${typeNames[currentType]}`;
 
-      document.getElementById('kpi-total').textContent = data.total;
-      document.getElementById('kpi-fully').textContent = data.fully;
-      document.getElementById('kpi-fitted').textContent = data.fitted;
+      const floorsList = data.floors.map(f => f.floor);
+      document.getElementById('floor-range-tag').textContent = floorsList.length
+        ? `ชั้น ${Math.min(...floorsList)}–${Math.max(...floorsList)} อาคารชุดพักอาศัย`
+        : 'ไม่มีข้อมูลชั้น';
 
-      const updateCard = (id, count) => {
-        const pct = data.total > 0 ? ((count / data.total) * 100).toFixed(1) : 0;
-        document.getElementById(`kpi-${id}`).textContent = count;
-        document.getElementById(`kpi-${id}-pct`).textContent = `${pct}%`;
+      setText('kpi-total', data.total);
+      setText('kpi-fully', data.fully);
+      setText('kpi-fitted', data.fitted);
+
+      const card = (id, count) => {
+        const pct = data.total > 0 ? ((count / data.total) * 100).toFixed(1) : '0.0';
+        setText(`kpi-${id}`, count);
+        setText(`kpi-${id}-pct`, `${pct}%`);
         const bar = document.getElementById(`bar-${id}`);
         if (bar) bar.style.width = `${pct}%`;
       };
+      card('qc1', data.qc1_1);
+      card('qc12', data.qc1_2);
+      card('qc2', data.qc2);
+      card('qc3', data.qc3);
+      card('qc4', data.qc4);
 
-      updateCard('qc1', data.qc1_1);
-      updateCard('qc12', data.qc1_2);
-      updateCard('qc2', data.qc2);
-      updateCard('qc3', data.qc3);
-      updateCard('qc4', data.qc4);
+      renderTable(data);
+      renderInsights(data);
+      renderChart(data);
+    }
 
-      // Render Floor Matrix
+    function renderTable(data) {
       const tbody = document.getElementById('floor-table-rows');
       tbody.innerHTML = '';
       data.floors.forEach(f => {
-        const pct = f.total > 0 ? ((f.qc4 / f.total) * 100).toFixed(1) : 0;
+        const pct = f.total > 0 ? ((f.qc4 / f.total) * 100).toFixed(1) : '0.0';
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition duration-150';
+        tr.className = 'hover:bg-slate-800/40 transition duration-150' + (f.changed ? ' row-changed' : '');
         tr.innerHTML = `
-          <td class="py-2.5 px-4 font-semibold text-white">${f.floor}</td>
+          <td class="py-2.5 px-4 font-semibold text-white">ชั้น ${f.floor}</td>
           <td class="py-2.5 px-3 text-slate-300 font-medium">${f.total} ห้อง</td>
           <td class="py-2.5 px-3">
-            <span class="text-blue-400 font-medium">${f.fully}</span> / 
+            <span class="text-blue-400 font-medium">${f.fully}</span> /
             <span class="text-amber-400 font-medium">${f.fitted}</span>
           </td>
           <td class="py-2.5 px-3 text-slate-300">${f.qc1_1}</td>
@@ -433,27 +1104,93 @@
               pct >= 20 ? 'bg-blue-950 text-blue-300 border border-blue-800' :
               'bg-slate-800 text-slate-400'
             }">${pct}%</span>
-          </td>
-        `;
+          </td>`;
         tbody.appendChild(tr);
       });
 
-      renderChart(data);
+      const totalPct = data.total > 0 ? ((data.qc4 / data.total) * 100).toFixed(1) : '0.0';
+      document.getElementById('floor-table-foot').innerHTML = `
+        <tr class="text-xs">
+          <td class="py-2.5 px-4 text-white">รวม</td>
+          <td class="py-2.5 px-3 text-white">${data.total} ห้อง</td>
+          <td class="py-2.5 px-3"><span class="text-blue-400">${data.fully}</span> / <span class="text-amber-400">${data.fitted}</span></td>
+          <td class="py-2.5 px-3 text-slate-200">${data.qc1_1}</td>
+          <td class="py-2.5 px-3 text-cyan-300">${data.qc1_2}</td>
+          <td class="py-2.5 px-3 text-blue-300">${data.qc2}</td>
+          <td class="py-2.5 px-3 text-amber-300">${data.qc3}</td>
+          <td class="py-2.5 px-3 text-emerald-300">${data.qc4}</td>
+          <td class="py-2.5 px-4 text-right text-emerald-300">${totalPct}%</td>
+        </tr>`;
+    }
+
+    function renderInsights(data) {
+      const A = buildingTotals('A');
+      const B = buildingTotals('B');
+      const box = document.getElementById('insight-box');
+
+      // หาคอขวด = ขั้นที่จำนวนห้องตกมากที่สุดเทียบกับขั้นก่อนหน้า
+      const stages = [
+        { label: 'ตรวจตัด QC 1.1', v: data.qc1_1 },
+        { label: 'CM รับมอบ 1.2', v: data.qc1_2 },
+        { label: 'ส่งตรวจ QC 2', v: data.qc2 },
+        { label: 'ส่งตรวจ QC 3', v: data.qc3 },
+        { label: 'ORN รับมอบ QC 4', v: data.qc4 }
+      ];
+      let worst = { from: 'จำนวนห้องชุด', to: stages[0].label, drop: data.total - stages[0].v };
+      for (let i = 1; i < stages.length; i++) {
+        const drop = stages[i - 1].v - stages[i].v;
+        if (drop > worst.drop) worst = { from: stages[i - 1].label, to: stages[i].label, drop };
+      }
+
+      const qc4Pct = data.total > 0 ? ((data.qc4 / data.total) * 100).toFixed(1) : '0.0';
+
+      const items = [
+        {
+          color: 'text-blue-400',
+          title: '1. สถานะส่งตรวจ QC 2 ล่าสุด:',
+          body: `อาคาร A ส่งตรวจ ${A.qc2} ห้อง + อาคาร B ส่งตรวจ ${B.qc2} ห้อง รวมเป็น <b id="text-qc2-sum" class="text-white">${A.qc2 + B.qc2} ห้อง</b> จากทั้งโครงการ ${A.total + B.total} ห้อง`
+        },
+        {
+          color: 'text-amber-400',
+          title: '2. คอขวดของสายการตรวจ (ตามตัวกรองปัจจุบัน):',
+          body: `ห้องตกค้างมากที่สุดระหว่าง <b class="text-white">${worst.from}</b> &rarr; <b class="text-white">${worst.to}</b> จำนวน <b class="text-amber-300">${worst.drop} ห้อง</b> ควรเร่งปิดงานช่วงนี้ก่อน`
+        },
+        {
+          color: 'text-emerald-400',
+          title: '3. ORN รับมอบ (QC 4):',
+          body: `ผ่าน QC 4 แล้ว ${data.qc4} ห้อง (${qc4Pct}% ของขอบเขตที่เลือก) &mdash; อาคาร A ${A.qc4} ห้อง + อาคาร B ${B.qc4} ห้อง · คงเหลือรอส่งมอบ ${data.total - data.qc4} ห้อง`
+        }
+      ];
+
+      box.innerHTML = items.map(it => `
+        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
+          <span class="${it.color} font-semibold block mb-0.5">${it.title}</span>
+          ${it.body}
+        </div>`).join('');
     }
 
     function renderChart(data) {
-      const ctx = document.getElementById('pipelineChart').getContext('2d');
+      // ถ้าโหลด Chart.js จากอินเทอร์เน็ตไม่ได้ ให้แจ้งเตือนแทน ไม่ให้ทั้งหน้าพัง
+      const canvas = document.getElementById('pipelineChart');
+      if (typeof Chart === 'undefined' || !canvas) {
+        const box = document.getElementById('chart-area');
+        if (box && !box.dataset.fallback) {
+          box.dataset.fallback = '1';
+          box.innerHTML = '<div class="h-full w-full flex items-center justify-center text-center text-xs text-amber-300 px-4">'
+            + 'โหลดไลบรารีกราฟ (Chart.js) จากอินเทอร์เน็ตไม่สำเร็จ — ตัวเลขใน KPI และตารางรายชั้นยังถูกต้องและอัปเดตตามปกติ'
+            + '</div>';
+        }
+        return;
+      }
+      const ctx = canvas.getContext('2d');
       if (chartInstance) chartInstance.destroy();
-
-      const labels = ['ตรวจตัด QC 1 (1.1)', 'CM รับมอบ (1.2)', 'ส่งตรวจ QC 2', 'ส่งตรวจ QC 3', 'ORN รับมอบ (QC 4)'];
-      const values = [data.qc1_1, data.qc1_2, data.qc2, data.qc3, data.qc4];
 
       chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: labels,
+          labels: ['ตรวจตัด QC 1 (1.1)', 'CM รับมอบ (1.2)', 'ส่งตรวจ QC 2', 'ส่งตรวจ QC 3', 'ORN รับมอบ (QC 4)'],
           datasets: [{
-            data: values,
+            data: [data.qc1_1, data.qc1_2, data.qc2, data.qc3, data.qc4],
             backgroundColor: [
               'rgba(16, 185, 129, 0.85)',
               'rgba(6, 182, 212, 0.85)',
@@ -469,11 +1206,12 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: { duration: 450 },
           plugins: {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (ctx) => `จำนวน: ${ctx.raw} ห้อง (${data.total > 0 ? ((ctx.raw / data.total) * 100).toFixed(1) : 0}%)`
+                label: (c) => `จำนวน: ${c.raw} ห้อง (${data.total > 0 ? ((c.raw / data.total) * 100).toFixed(1) : 0}%)`
               }
             }
           },
@@ -493,168 +1231,16 @@
       });
     }
 
-    // ================= 4. REAL-TIME GOOGLE SHEET SYNC (JSONP) =================
-    function fetchGoogleSheetData() {
-      const spinner = document.getElementById('sync-spinner');
-      const statusText = document.getElementById('sync-status');
-      const timeSpan = document.getElementById('sync-timestamp');
-
-      spinner.classList.remove('hidden');
-      statusText.textContent = 'กำลังซิงค์...';
-
-      const oldScript = document.getElementById('gviz-jsonp-script');
-      if (oldScript) oldScript.remove();
-
-      const script = document.createElement('script');
-      script.id = 'gviz-jsonp-script';
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:handleGoogleSheetResponse&gid=${GID_SUMMARY}&_=${Date.now()}`;
-      
-      script.onerror = function() {
-        spinner.classList.add('hidden');
-        timeSpan.textContent = `ออฟไลน์: ${new Date().toLocaleTimeString('th-TH')}`;
-        statusText.textContent = 'ซิงค์ข้อมูลชีต';
-        refreshView();
-      };
-
-      document.body.appendChild(script);
-    }
-
-    // Callback รับข้อมูลเมื่อ Google Sheet ตอบกลับมาสำเร็จ
-    window.handleGoogleSheetResponse = function(response) {
-      const spinner = document.getElementById('sync-spinner');
-      const statusText = document.getElementById('sync-status');
-      const timeSpan = document.getElementById('sync-timestamp');
-
-      try {
-        if (response && response.table && response.table.rows && response.table.rows.length > 0) {
-          parseLiveSheetTable(response.table);
-          timeSpan.textContent = `ซิงค์ชีตสดสำเร็จ: ${new Date().toLocaleTimeString('th-TH')}`;
-          statusText.textContent = 'ซิงค์สำเร็จ';
-        }
-      } catch (err) {
-        console.warn('เกิดข้อผิดพลาดในการประมวลผลข้อมูลชีต:', err);
-      } finally {
-        spinner.classList.add('hidden');
-        refreshView();
-      }
-    };
-
-    // ฟังก์ชันอ่านค่าและแมปปิ้งคอลัมน์จาก Google Sheet แบบยืดหยุ่น ป้องกันค่ากลายเป็น 0
-    function parseLiveSheetTable(table) {
-      const rows = table.rows;
-
-      const extractBuilding = (bldChar) => {
-        let titleRow = -1;
-        for (let i = 0; i < rows.length; i++) {
-          const rowText = (rows[i].c || []).map(cell => (cell && cell.v !== null) ? String(cell.v) : '').join(' ');
-          if (rowText.includes('ก่อนส่งมอบให้โครงการ') && rowText.includes(`อาคาร ${bldChar}`)) {
-            titleRow = i;
-            break;
-          }
-        }
-        if (titleRow === -1) return null;
-
-        // สแกนหา Header
-        let col = {
-          fullyTotal: -1, fittedTotal: -1,
-          fullyQC11: -1, fittedQC11: -1,
-          fullyQC12: -1, fittedQC12: -1,
-          fullyQC2: -1, fittedQC2: -1,
-          fullyQC3: -1, fittedQC3: -1,
-          fullyQC4: -1, fittedQC4: -1
-        };
-
-        for (let r = titleRow; r <= titleRow + 4 && r < rows.length; r++) {
-          const cells = rows[r].c || [];
-          for (let c = 0; c < cells.length; c++) {
-            const val = cells[c] && cells[c].v !== null ? String(cells[c].v).trim() : '';
-            if (val.includes('ส่งตรวจ QC2')) {
-              col.fullyQC2 = c; col.fittedQC2 = c + 1;
-            } else if (val.includes('ส่งตรวจ QC3')) {
-              col.fullyQC3 = c; col.fittedQC3 = c + 1;
-            } else if (val.includes('ORN รับมอบ') || val.includes('QC 4') || val.includes('QC4')) {
-              col.fullyQC4 = c; col.fittedQC4 = c + 1;
-            } else if (val.includes('CM รับมอบ') || val.includes('QC 1.2')) {
-              col.fullyQC12 = c; col.fittedQC12 = c + 1;
-            } else if (val.includes('ตรวจงานตัด') || val.includes('QC 1.1')) {
-              col.fullyQC11 = c; col.fittedQC11 = c + 1;
-            } else if (val.includes('จำนวนห้องชุด') || val.includes('จำนวน ห้องพัก')) {
-              col.fullyTotal = c; col.fittedTotal = c + 1;
-            }
-          }
-        }
-
-        // หากหาตำแหน่งคอลัมน์ไม่พบ ให้คืนค่า null เพื่อไม่ให้เขียนทับค่าจริงที่มีอยู่
-        if (col.fullyQC2 === -1) return null;
-
-        let floors = [];
-        let curFloor = 2;
-
-        for (let r = titleRow + 2; r < rows.length && curFloor <= 8; r++) {
-          const cells = rows[r].c || [];
-          let isFloor = false;
-          for (let c = 0; c < Math.min(cells.length, 6); c++) {
-            const txt = cells[c] && cells[c].v !== null ? String(cells[c].v).trim() : '';
-            if (txt === String(curFloor) || txt === `ชั้น ${curFloor}`) {
-              isFloor = true;
-              break;
-            }
-          }
-
-          if (isFloor) {
-            const getVal = (idx, fallback) => {
-              if (idx !== -1 && cells[idx] && cells[idx].v !== null && !isNaN(Number(cells[idx].v))) {
-                return Number(cells[idx].v);
-              }
-              return fallback || 0;
-            };
-
-            const defaultFully = (bldChar === 'A') ? (curFloor === 2 ? 13 : (curFloor === 4 ? 10 : (curFloor === 6 ? 16 : (curFloor === 8 ? 8 : 25)))) : (curFloor === 2 ? 5 : (curFloor === 3 || curFloor === 5 ? 12 : (curFloor === 4 || curFloor === 6 ? 7 : (curFloor === 7 ? 16 : 8))));
-            const defaultFitted = (bldChar === 'A') ? (curFloor === 2 ? 12 : (curFloor === 3 ? 5 : (curFloor === 4 ? 17 : (curFloor === 5 || curFloor === 7 ? 2 : (curFloor === 6 ? 11 : 19))))) : (curFloor === 2 ? 20 : (curFloor === 3 || curFloor === 5 ? 14 : (curFloor === 4 || curFloor === 6 ? 19 : (curFloor === 7 ? 10 : 18))));
-
-            const fTot = getVal(col.fullyTotal, defaultFully);
-            const fitTot = getVal(col.fittedTotal, defaultFitted);
-
-            floors.push({
-              floor: `ชั้น ${curFloor}`,
-              fully: {
-                total: fTot,
-                qc1_1: getVal(col.fullyQC11, fTot),
-                qc1_2: getVal(col.fullyQC12, 0),
-                qc2: getVal(col.fullyQC2, 0),
-                qc3: getVal(col.fullyQC3, 0),
-                qc4: getVal(col.fullyQC4, 0)
-              },
-              fitted: {
-                total: fitTot,
-                qc1_1: getVal(col.fittedQC11, fitTot),
-                qc1_2: getVal(col.fittedQC12, 0),
-                qc2: getVal(col.fittedQC2, 0),
-                qc3: getVal(col.fittedQC3, 0),
-                qc4: getVal(col.fittedQC4, 0)
-              }
-            });
-            curFloor++;
-          }
-        }
-
-        // ต้องอ่านได้ครบทั้ง 7 ชั้น (ชั้น 2-8) จึงจะยอมรับข้อมูล
-        return (floors.length === 7) ? floors : null;
-      };
-
-      const parsedA = extractBuilding('A');
-      const parsedB = extractBuilding('B');
-
-      if (parsedA) dataset.buildingA.floors = parsedA;
-      if (parsedB) dataset.buildingB.floors = parsedB;
-    }
-
-    // เริ่มต้นทำงานทันที
+    /* =========================================================
+       BOOTSTRAP
+       ========================================================= */
     window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('sheet-link').href = SHEET_URL;
       refreshView();
-      fetchGoogleSheetData();
-      setInterval(fetchGoogleSheetData, 60000); // ตั้งเวลาซิงค์อัตโนมัติทุก 1 นาที
+      log('เปิดแดชบอร์ด — กำลังเชื่อมต่อ Google Sheet');
+      syncNow('auto');
     });
+  })();
   </script>
 </body>
 </html>
